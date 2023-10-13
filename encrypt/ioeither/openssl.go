@@ -135,7 +135,7 @@ var (
 				version,
 				O.FromPredicate(P.ContraMap(EC.GetVersion)(EC.IncludesOpenSSL)),
 				O.Map(EC.GetPath),
-				E.FromOption[error, string](errors.OnNone("openSSL Version [%s] is unsupported", version)),
+				E.FromOption[string](errors.OnNone("openSSL Version [%s] is unsupported", version)),
 			)
 		}),
 		IOE.Memoize[error, string],

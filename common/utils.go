@@ -62,7 +62,7 @@ func ToTypeE[A any](data any) E.Either[error, A] {
 	return F.Pipe2(
 		data,
 		ToTypeO[A],
-		E.FromOption[error, A](func() error {
+		E.FromOption[A](func() error {
 			return fmt.Errorf("invalid type of input [%T]", data)
 		}),
 	)

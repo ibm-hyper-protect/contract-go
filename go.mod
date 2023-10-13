@@ -3,12 +3,12 @@ module github.com/ibm-hyper-protect/contract-go
 go 1.20
 
 require (
-	github.com/IBM/fp-go v1.0.36
+	github.com/IBM/fp-go v1.0.49
 	github.com/iancoleman/strcase v0.3.0
 	github.com/joho/godotenv v1.5.1
 	github.com/qri-io/jsonschema v0.2.1
 	github.com/stretchr/testify v1.8.4
-	golang.org/x/crypto v0.13.0
+	golang.org/x/crypto v0.14.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
