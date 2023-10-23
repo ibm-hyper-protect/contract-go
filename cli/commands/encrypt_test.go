@@ -13,26 +13,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package main contains the entry point for the code generator
-package main
+package commands
 
 import (
-	"log"
+	"fmt"
 	"os"
+	"testing"
 
-	C "github.com/ibm-hyper-protect/contract-go/cli/commands"
+	A "github.com/IBM/fp-go/array"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v2"
 )
 
-func main() {
+func TestEncryptCommand(t *testing.T) {
+
+	require.NoError(t, os.MkdirAll("../../build", os.ModePerm))
+
+	inName := "../samples/simple.yaml"
+	outName := "../../build/TestEncryptCommand.yaml"
+
+	cmd := EncryptCommand()
 
 	app := &cli.App{
 		Name:     "contract-cli",
-		Usage:    "Utilities for working with an HPCR contract",
-		Commands: C.Commands(),
+		Commands: A.Of(cmd),
 	}
 
-	if err := app.Run(os.Args); err != nil {
-		log.Fatal(err)
-	}
+	args := A.From(os.Args[0], cmd.Name, fmt.Sprintf("--%s", flagInput.Name), inName, fmt.Sprintf("--%s", flagOutput.Name), outName)
+	assert.NoError(t, app.Run(args))
+
+	// TODO validate output here
 }

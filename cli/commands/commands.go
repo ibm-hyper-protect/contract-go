@@ -1,10 +1,11 @@
-// Copyright 2023 IBM Corp.
+// Copyright (c) 2023 IBM Corp.
+// All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//	http://www.apache.org/licenses/LICENSE-2.0
+// http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -12,14 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package Data
+package commands
 
 import (
-	_ "embed"
+	"github.com/urfave/cli/v2"
 )
 
-//go:embed ibm-hyper-protect-container-runtime-1-0-s390x-12-encrypt.crt
-var DefaultCertificate string
-
-//go:embed hpse-contract-schema-1.0.49.json
-var ContractSchema string
+func Commands() []*cli.Command {
+	return []*cli.Command{
+		EncryptCommand(),
+	}
+}

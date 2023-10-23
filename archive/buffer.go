@@ -32,9 +32,7 @@ func (wrt *Base64Writer) Write(p []byte) (n int, err error) {
 }
 
 func (wrt *Base64Writer) Close() E.Either[error, *bytes.Buffer] {
-	return E.TryCatchError(func() (*bytes.Buffer, error) {
-		return wrt.body, wrt.base64.Close()
-	})
+	return E.TryCatchError(wrt.body, wrt.base64.Close())
 }
 
 // CreateBase64Writer creates a writer that encodes its input as base64 into a buffer
