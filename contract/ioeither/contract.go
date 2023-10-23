@@ -177,13 +177,15 @@ func upsertEncrypted(enc func(data []byte) IOE.IOEither[error, string]) func(str
 			return F.Pipe3(
 				dst,
 				getKey,
-				O.Map(F.Flow6(
+				O.Map(F.Flow4(
 					stringify,
 					IOE.FromEither[error, []byte],
 					IOE.Chain(enc),
-					IOE.Map[error](toAny[string]),
-					IOE.Map[error](setKey),
-					IOE.Map[error](I.Ap[Contract.RawMap, Contract.RawMap](dst)),
+					IOE.Map[error](F.Flow3(
+						toAny[string],
+						setKey,
+						I.Ap[Contract.RawMap, Contract.RawMap](dst),
+					)),
 				)),
 				O.GetOrElse(F.Constant(IOE.Of[error](dst))),
 			)

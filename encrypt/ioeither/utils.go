@@ -35,7 +35,7 @@ const (
 func EncryptBasic(
 	genPwd IOE.IOEither[error, []byte],
 	asymmEncrypt func([]byte) IOE.IOEither[error, string],
-	symmEncrypt func([]byte) func([]byte) IOE.IOEither[error, string],
+	symmEncrypt EncryptBasicFunc,
 ) func([]byte) IOE.IOEither[error, string] {
 
 	return func(data []byte) IOE.IOEither[error, string] {

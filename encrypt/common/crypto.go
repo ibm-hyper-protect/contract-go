@@ -18,6 +18,7 @@ import (
 	"encoding/pem"
 
 	RA "github.com/IBM/fp-go/array"
+	F "github.com/IBM/fp-go/function"
 	P "github.com/IBM/fp-go/predicate"
 	S "github.com/IBM/fp-go/string"
 )
@@ -31,9 +32,10 @@ func GetTypeFromBlock(block *pem.Block) string {
 	return block.Type
 }
 
-func IsType(tp string) func(block *pem.Block) bool {
-	return P.ContraMap(GetTypeFromBlock)(S.Equals(tp))
-}
+var IsType = F.Flow2(
+	S.Equals,
+	P.ContraMap(GetTypeFromBlock),
+)
 
 // PemDecodeAll will decode the complete PEM structure
 func PemDecodeAll(data []byte) []*pem.Block {

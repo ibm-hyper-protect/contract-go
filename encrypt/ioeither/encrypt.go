@@ -21,25 +21,34 @@ import (
 	IOE "github.com/IBM/fp-go/ioeither"
 )
 
+type (
+	EncryptBasicFunc       = func([]byte) func([]byte) IOE.IOEither[error, string]
+	CertFingerprintFunc    = func([]byte) E.Either[error, []byte]
+	PrivKeyFingerprintFunc = func([]byte) E.Either[error, []byte]
+	Key                    = IOE.IOEither[error, []byte]
+	PubKeyFunc             = func([]byte) E.Either[error, []byte]
+	SignDigestFunc         = func([]byte) func([]byte) IOE.IOEither[error, []byte]
+)
+
 // Encryption captures the crypto functions required to implement the source providers
 type Encryption struct {
 	// EncryptBasic implements basic encryption given the certificate (side effect because of random passphrase)
-	EncryptBasic func([]byte) func([]byte) IOE.IOEither[error, string]
+	EncryptBasic EncryptBasicFunc
 	// CertFingerprint computes the fingerprint of a certificate
-	CertFingerprint func([]byte) E.Either[error, []byte]
+	CertFingerprint CertFingerprintFunc
 	// PrivKeyFingerprint computes the fingerprint of a private key
-	PrivKeyFingerprint func([]byte) E.Either[error, []byte]
+	PrivKeyFingerprint PrivKeyFingerprintFunc
 	// PrivKey computes a new private key
-	PrivKey IOE.IOEither[error, []byte]
+	PrivKey Key
 	// PubKey computes a public key from a private key
-	PubKey func([]byte) E.Either[error, []byte]
+	PubKey PubKeyFunc
 	// SignDigest computes the sha256 signature using a private key (side effect because of RSA blinding)
-	SignDigest func([]byte) func([]byte) IOE.IOEither[error, []byte]
+	SignDigest SignDigestFunc
 }
 
 var (
-	// openSSLEncryption returns the encryption environment using OpenSSL
-	openSSLEncryption = IO.MakeIO(func() Encryption {
+	// OpenSSLEncryption returns the encryption environment using OpenSSL
+	OpenSSLEncryption = IO.MakeIO(func() Encryption {
 		return Encryption{
 			EncryptBasic:       OpenSSLEncryptBasic,
 			CertFingerprint:    OpenSSLCertFingerprint,
@@ -50,8 +59,8 @@ var (
 		}
 	})
 
-	// cryptoEncryption returns the encryption environment using golang crypto
-	cryptoEncryption = IO.MakeIO(func() Encryption {
+	// CryptoEncryption returns the encryption environment using golang crypto
+	CryptoEncryption = IO.MakeIO(func() Encryption {
 		return Encryption{
 			EncryptBasic:       CryptoEncryptBasic,
 			CertFingerprint:    CryptoCertFingerprint,
@@ -65,6 +74,6 @@ var (
 	// DefaultEncryption detects the encryption environment
 	DefaultEncryption = F.Pipe1(
 		validOpenSSL,
-		IOE.Fold(F.Constant1[error](cryptoEncryption), F.Constant1[string](openSSLEncryption)),
+		IOE.Fold(F.Constant1[error](CryptoEncryption), F.Constant1[string](OpenSSLEncryption)),
 	)
 )

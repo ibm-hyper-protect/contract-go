@@ -18,6 +18,7 @@ import (
 	F "github.com/IBM/fp-go/function"
 	IO "github.com/IBM/fp-go/io"
 	IOO "github.com/IBM/fp-go/iooption"
+	L "github.com/IBM/fp-go/lazy"
 	S "github.com/IBM/fp-go/string"
 	T "github.com/IBM/fp-go/tuple"
 	CIOO "github.com/ibm-hyper-protect/contract-go/common/iooption"
@@ -45,6 +46,6 @@ var (
 	OpenSSLBinary = F.Pipe2(
 		KeyEnvOpenSSL,
 		CIOO.LookupEnv,
-		IOO.Fold(F.Constant(IO.Of(DefaultOpenSSL)), IO.Of[string]),
+		IOO.Fold(L.Of(IO.Of(DefaultOpenSSL)), IO.Of[string]),
 	)
 )
