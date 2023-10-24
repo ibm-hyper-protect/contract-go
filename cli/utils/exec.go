@@ -13,32 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package commands
+package utils
 
 import (
-	F "github.com/IBM/fp-go/function"
-	U "github.com/ibm-hyper-protect/contract-go/cli/utils"
-	"github.com/urfave/cli/v2"
+	E "github.com/IBM/fp-go/either"
+	IOE "github.com/IBM/fp-go/ioeither"
 )
 
-// EncryptAndSignCommand returns a command that encrypts and signs a contract
-func EncryptAndSignCommand() *cli.Command {
-	return &cli.Command{
-		Name:        "encrypt",
-		Usage:       "encrypt a contract",
-		Description: "Encypts an HPCR contract",
-		Flags: []cli.Flag{
-			flagInput,
-			flagOutput,
-			flagMode,
-			flagPrivKey,
-			flagPrivKeyFile,
-			flagCert,
-			flagCertFile,
-		},
-		Action: F.Flow2(
-			EncryptSignAndWriteFromContext,
-			U.RunIOEither[[]byte],
-		),
-	}
+// RunIOEither executes an [IOE.IOEither], ignores the return value and only dispatches the error
+func RunIOEither[T any](cmd IOE.IOEither[error, T]) error {
+	_, err := E.Unwrap(cmd())
+	return err
 }

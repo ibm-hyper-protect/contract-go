@@ -21,6 +21,7 @@ import (
 	"path/filepath"
 
 	A "github.com/IBM/fp-go/array"
+	E "github.com/IBM/fp-go/either"
 	"github.com/IBM/fp-go/errors"
 	F "github.com/IBM/fp-go/function"
 	I "github.com/IBM/fp-go/identity"
@@ -32,7 +33,10 @@ import (
 	T "github.com/IBM/fp-go/tuple"
 	U "github.com/ibm-hyper-protect/contract-go/cli/utils"
 	Encrypt "github.com/ibm-hyper-protect/contract-go/encrypt/ioeither"
+	SC "github.com/ibm-hyper-protect/contract-go/service/common"
 	SVIOE "github.com/ibm-hyper-protect/contract-go/service/ioeither"
+	"github.com/ibm-hyper-protect/contract-go/types"
+	Y "github.com/ibm-hyper-protect/contract-go/yaml"
 	"github.com/urfave/cli/v2"
 )
 
@@ -155,6 +159,54 @@ var (
 		RR.Lookup[IO.IO[Encrypt.Encryption], string],
 		I.Ap[O.Option[IO.IO[Encrypt.Encryption]]](modeToEncrypt),
 		O.GetOrElse(F.Constant(Encrypt.DefaultEncryption)),
+	)
+
+	// ContractEncrypterFromContext returns a [SVIOE.ContractEncrypter] based on a [cli.Context]
+	ContractEncrypterFromContext = F.Flow2(
+		EncryptAndSignConfigFromContext,
+		ContractEncrypterFromConfig,
+	)
+
+	// ValidatedContractFromContext returns a [types.Contract] from a [cli.Context] and validates it against the schema
+	ValidatedContractFromContext = F.Flow3(
+		lookupInput,
+		U.ReadFromInput,
+		IOE.ChainEitherK(F.Flow2(
+			Y.Parse[types.AnyMap],
+			E.Chain(types.ValidateContract),
+		)),
+	)
+
+	// writeFromContext writes binary data to a location specified by the [cli.Context]
+	writeFromContext = F.Flow2(
+		lookupOutput,
+		U.WriteToOutput,
+	)
+
+	WriteContractFromContext = F.Flow2(
+		writeFromContext,
+		func(fct func(data []byte) IOE.IOEither[error, []byte]) func(c SC.EncryptedContract) IOE.IOEither[error, []byte] {
+			return F.Flow3(
+				Y.Stringify[SC.EncryptedContract],
+				IOE.FromEither[error, []byte],
+				IOE.Chain(fct),
+			)
+		},
+	)
+
+	// EncryptAndSignFromContext returns an [SC.EncryptedContract] from information on the [cli.Context]
+	EncryptAndSignFromContext = F.Flow4(
+		T.Replicate2[*cli.Context],
+		T.Map2(ContractEncrypterFromContext, ValidatedContractFromContext),
+		T.Tupled2(IOE.MonadAp[IOE.IOEither[error, SC.EncryptedContract], error, *types.Contract]),
+		IOE.Flatten[error, SC.EncryptedContract],
+	)
+
+	// EncryptSignAndWriteFromContext transforms an unencrypted contract into an encrypted and signed contract from information on the [cli.Context]
+	EncryptSignAndWriteFromContext = F.Flow3(
+		T.Replicate2[*cli.Context],
+		T.Map2(EncryptAndSignFromContext, WriteContractFromContext),
+		T.Tupled2(IOE.MonadChain[error, SC.EncryptedContract, []byte]),
 	)
 )
 
