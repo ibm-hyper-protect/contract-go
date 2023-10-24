@@ -45,14 +45,13 @@ var (
 )
 
 // getKey returns key content, either from direct input, a file or as a fallback transiently
-func getKey(direct, filename string) func(Encrypt.Key) Encrypt.Key {
-	fromNonEmptyString := O.FromPredicate(S.IsNonEmpty)
+func getKey(direct, filename O.Option[string]) func(Encrypt.Key) Encrypt.Key {
 	fromDirect := F.Pipe1(
-		fromNonEmptyString(direct),
+		direct,
 		O.Map(keyDirect),
 	)
 	fromFile := F.Pipe1(
-		fromNonEmptyString(filename),
+		filename,
 		O.Map(keyFromFile),
 	)
 	alt := O.AltMonoid[Encrypt.Key]()

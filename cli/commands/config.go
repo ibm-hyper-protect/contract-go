@@ -23,21 +23,41 @@ import (
 	A "github.com/IBM/fp-go/array"
 	"github.com/IBM/fp-go/errors"
 	F "github.com/IBM/fp-go/function"
+	I "github.com/IBM/fp-go/identity"
+	IO "github.com/IBM/fp-go/io"
+	IOE "github.com/IBM/fp-go/ioeither"
 	O "github.com/IBM/fp-go/option"
+	RR "github.com/IBM/fp-go/record"
 	S "github.com/IBM/fp-go/string"
+	T "github.com/IBM/fp-go/tuple"
 	U "github.com/ibm-hyper-protect/contract-go/cli/utils"
+	Encrypt "github.com/ibm-hyper-protect/contract-go/encrypt/ioeither"
+	SVIOE "github.com/ibm-hyper-protect/contract-go/service/ioeither"
 	"github.com/urfave/cli/v2"
 )
 
 const (
 	ModeOpenSSL = "openssl"
 	ModeCrypto  = "crypto"
-	ModeDefault = "default"
+	ModeAuto    = "auto"
+)
+
+type (
+	KeyConfig struct {
+		FromDirect O.Option[string] // key as a PEM encoded string
+		FromFile   O.Option[string] // filename to a PEM encoded key
+	}
+
+	EncryptAndSignConfig struct {
+		Mode    string    // one of the mode flags
+		PrivKey KeyConfig // private key used for signing
+		PubCert KeyConfig // public key used for encryption
+	}
 )
 
 var (
 	// valid modes
-	validModes = A.From(ModeOpenSSL, ModeCrypto, ModeDefault)
+	validModes = A.From(ModeOpenSSL, ModeCrypto, ModeAuto)
 	// flagInput defines the CLI flag for the main input
 	flagInput = &cli.StringFlag{
 		Name: "in",
@@ -49,6 +69,7 @@ var (
 		Value:     U.StdInOutIdentifier,
 		Usage:     fmt.Sprintf("Name of the input file or '%s' for stdin", U.StdInOutIdentifier),
 	}
+	lookupInput = U.LookupStringFlag(flagInput.Name)
 
 	// flagOutput defines the CLI flag for the main output
 	flagOutput = &cli.StringFlag{
@@ -61,6 +82,7 @@ var (
 		Value:     U.StdInOutIdentifier,
 		Usage:     fmt.Sprintf("Name of the output file or '%s' for stdout", U.StdInOutIdentifier),
 	}
+	lookupOutput = U.LookupStringFlag(flagOutput.Name)
 
 	// flagPrivKey defines the CLI flag for the private key
 	flagPrivKey = &cli.StringFlag{
@@ -71,6 +93,7 @@ var (
 		TakesFile: false,
 		Usage:     "Content of the private signing key as a string. If absent the tool creates a transient key",
 	}
+	lookupPrivKey = U.LookupStringFlagOpt(flagPrivKey.Name)
 
 	// flagPrivKeyFile defines the CLI flag for a private key file
 	flagPrivKeyFile = &cli.StringFlag{
@@ -82,6 +105,7 @@ var (
 		TakesFile: true,
 		Usage:     "Content of the private signing key as a filepath. If absent the tool creates a transient key",
 	}
+	lookupPrivKeyFile = U.LookupStringFlagOpt(flagPrivKeyFile.Name)
 
 	// flagCert defines the CLI flag for the public encryption certificate
 	flagCert = &cli.StringFlag{
@@ -92,6 +116,7 @@ var (
 		TakesFile: false,
 		Usage:     "Content of the encryption certificate as a string. If absent the tool uses a built-in default",
 	}
+	lookupCert = U.LookupStringFlagOpt(flagCert.Name)
 
 	// flagPrivKeyFile defines the CLI flag for a private key file
 	flagCertFile = &cli.StringFlag{
@@ -103,6 +128,7 @@ var (
 		TakesFile: true,
 		Usage:     "Content of the encryption certificate as a string. If absent the tool uses a built-in default",
 	}
+	lookupCertFile = U.LookupStringFlagOpt(flagCertFile.Name)
 
 	// flagMode is the operation mode
 	flagMode = &cli.StringFlag{
@@ -112,9 +138,24 @@ var (
 		},
 		Action:   validateMode,
 		Required: false,
-		Value:    ModeDefault,
+		Value:    ModeAuto,
 		Usage:    fmt.Sprintf("Operational mode, valid values are %s", validModes),
 	}
+	lookupMode = U.LookupStringFlag(flagMode.Name)
+
+	// modeToEncrypt is the mapping from encryption module identifier to
+	modeToEncrypt = map[string]IO.IO[Encrypt.Encryption]{
+		ModeCrypto:  Encrypt.CryptoEncryption,
+		ModeOpenSSL: Encrypt.OpenSSLEncryption,
+		ModeAuto:    Encrypt.DefaultEncryption,
+	}
+
+	// getEncryption returns the configured encryption module
+	getEncryption = F.Flow3(
+		RR.Lookup[IO.IO[Encrypt.Encryption], string],
+		I.Ap[O.Option[IO.IO[Encrypt.Encryption]]](modeToEncrypt),
+		O.GetOrElse(F.Constant(Encrypt.DefaultEncryption)),
+	)
 )
 
 func validateInput(ctx *cli.Context, value string) error {
@@ -156,5 +197,74 @@ func validateMode(ctx *cli.Context, value string) error {
 		A.Filter(S.Equals(value)),
 		A.Head[string],
 		O.Fold(errors.OnNone("value [%s] is not valid, valid values are %s", value, validModes), F.Constant1[string, error](nil)),
+	)
+}
+
+// getKeyFromConfig returns key content, either from direct input, a file or as a fallback transiently
+func getKeyFromConfig(cfg KeyConfig) func(Encrypt.Key) Encrypt.Key {
+	return getKey(cfg.FromDirect, cfg.FromFile)
+}
+
+// EncryptAndSignConfigFromContext decodes an [EncryptAndSignConfig] from a [cli.Context]
+func EncryptAndSignConfigFromContext(ctx *cli.Context) *EncryptAndSignConfig {
+	return &EncryptAndSignConfig{
+		Mode: lookupMode(ctx),
+		PrivKey: KeyConfig{
+			lookupPrivKey(ctx),
+			lookupPrivKeyFile(ctx),
+		},
+		PubCert: KeyConfig{
+			lookupCert(ctx),
+			lookupCertFile(ctx),
+		},
+	}
+}
+
+// ContractEncrypterFromConfig constructs a [SVIOE.ContractEncrypter] based on a config object
+func ContractEncrypterFromConfig(cfg *EncryptAndSignConfig) IOE.IOEither[error, SVIOE.ContractEncrypter] {
+	// encryption module
+	encryption := F.Pipe2(
+		cfg.Mode,
+		getEncryption,
+		IO.Memoize[Encrypt.Encryption],
+	)
+	// signing key
+	privKey := F.Pipe3(
+		encryption,
+		IO.Map(Encrypt.Encryption.GetPrivKey),
+		IOE.FromIO[error, Encrypt.Key],
+		IOE.Chain(getKeyFromConfig(cfg.PrivKey)),
+	)
+
+	// public encryption key or certificate
+	pubCert := F.Pipe1(
+		defaultCertificate,
+		getKeyFromConfig(cfg.PubCert),
+	)
+
+	// encryption function
+	enc := F.Pipe3(
+		encryption,
+		IO.Map(Encrypt.Encryption.GetEncryptBasic),
+		IOE.FromIO[error, Encrypt.EncryptBasicFunc],
+		IOE.Ap[func([]byte) IOE.IOEither[error, string]](pubCert),
+	)
+	// signing function
+	signer := F.Pipe2(
+		encryption,
+		IO.Map(Encrypt.Encryption.GetSignDigest),
+		IOE.FromIO[error, Encrypt.SignDigestFunc],
+	)
+	// public key extractor
+	pubkey := F.Pipe2(
+		encryption,
+		IO.Map(Encrypt.Encryption.GetPubKey),
+		IOE.FromIO[error, Encrypt.PubKeyFunc],
+	)
+
+	return F.Pipe2(
+		IOE.SequenceTuple3(T.MakeTuple3(enc, signer, pubkey)),
+		IOE.Map[error](T.Tupled3(SVIOE.EncryptAndSignContract)),
+		IOE.Ap[SVIOE.ContractEncrypter](privKey),
 	)
 }
