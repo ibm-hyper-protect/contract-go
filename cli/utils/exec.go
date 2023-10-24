@@ -16,23 +16,12 @@
 package utils
 
 import (
-	F "github.com/IBM/fp-go/function"
-	O "github.com/IBM/fp-go/option"
-	P "github.com/IBM/fp-go/predicate"
-	S "github.com/IBM/fp-go/string"
+	E "github.com/IBM/fp-go/either"
+	IOE "github.com/IBM/fp-go/ioeither"
 )
 
-const (
-	// StdInOutIdentifier is the CLI identifier for stdin or stdout
-	StdInOutIdentifier = "-"
-)
-
-var (
-	// IsNotStdinNorStdout tests if a stream identifier does not match stdin or stdout
-	IsNotStdinNorStdout = F.Pipe3(
-		StdInOutIdentifier,
-		S.Equals,
-		P.Not[string],
-		O.FromPredicate[string],
-	)
-)
+// RunIOEither executes an [IOE.IOEither], ignores the return value and only dispatches the error
+func RunIOEither[T any](cmd IOE.IOEither[error, T]) error {
+	_, err := E.Unwrap(cmd())
+	return err
+}

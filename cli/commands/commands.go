@@ -21,6 +21,6 @@ import (
 
 func Commands() []*cli.Command {
 	return []*cli.Command{
-		EncryptCommand(),
+		EncryptAndSignCommand(),
 	}
 }

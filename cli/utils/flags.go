@@ -18,21 +18,27 @@ package utils
 import (
 	F "github.com/IBM/fp-go/function"
 	O "github.com/IBM/fp-go/option"
-	P "github.com/IBM/fp-go/predicate"
 	S "github.com/IBM/fp-go/string"
-)
-
-const (
-	// StdInOutIdentifier is the CLI identifier for stdin or stdout
-	StdInOutIdentifier = "-"
+	"github.com/urfave/cli/v2"
 )
 
 var (
-	// IsNotStdinNorStdout tests if a stream identifier does not match stdin or stdout
-	IsNotStdinNorStdout = F.Pipe3(
-		StdInOutIdentifier,
-		S.Equals,
-		P.Not[string],
-		O.FromPredicate[string],
-	)
+	// fromNonEmptyString converts a non empty string to an [O.Option]
+	fromNonEmptyString = O.FromPredicate(S.IsNonEmpty)
 )
+
+// LookupStringFlag returns a string flag from the [cli.Context] as a string
+func LookupStringFlag(name string) func(ctx *cli.Context) string {
+	return F.Bind2nd((*cli.Context).String, name)
+}
+
+// LookupStringFlagOpt returns a string flag from the [cli.Context] as an [O.Option[string]]
+func LookupStringFlagOpt(name string) func(ctx *cli.Context) O.Option[string] {
+	return func(ctx *cli.Context) O.Option[string] {
+		return F.Pipe2(
+			name,
+			ctx.String,
+			fromNonEmptyString,
+		)
+	}
+}

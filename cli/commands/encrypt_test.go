@@ -33,7 +33,7 @@ func TestEncryptCommand(t *testing.T) {
 	inName := "../samples/simple.yaml"
 	outName := "../../build/TestEncryptCommand.yaml"
 
-	cmd := EncryptCommand()
+	cmd := EncryptAndSignCommand()
 
 	app := &cli.App{
 		Name:     "contract-cli",
