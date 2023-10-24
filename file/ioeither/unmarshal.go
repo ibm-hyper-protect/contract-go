@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package utils
+package ioeither
 
 import (
 	"os"
@@ -22,15 +22,16 @@ import (
 	IOE "github.com/IBM/fp-go/ioeither"
 	IOEF "github.com/IBM/fp-go/ioeither/file"
 	O "github.com/IBM/fp-go/option"
+	U "github.com/ibm-hyper-protect/contract-go/file"
 )
 
-// WriteToStdOut writes the data blob to stdout
-func WriteToStdOut(data []byte) IOE.IOEither[error, []byte] {
-	return IOEF.WriteAll[*os.File](data)(IOE.Of[error](os.Stdout))
-}
+var (
+	// ReadFromStdIn reads the data blob from stdin
+	ReadFromStdIn = IOEF.ReadAll(IOE.Of[error](os.Stdin))
 
-// WriteToOutput stores a file list either to a regular file or stdout (using "-" as the stdout identifier)
-var WriteToOutput = F.Flow2(
-	IsNotStdinNorStdout,
-	O.Fold(F.Constant(WriteToStdOut), F.Bind2nd(IOEF.WriteFile, os.ModePerm)),
+	// ReadFromInput reads a byte array either from a file or from stdin (using "-" as the stdout identifier)
+	ReadFromInput = F.Flow2(
+		U.IsNotStdinNorStdout,
+		O.Fold(F.Constant(ReadFromStdIn), IOEF.ReadFile),
+	)
 )

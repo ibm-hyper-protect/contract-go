@@ -22,14 +22,14 @@ import (
 	L "github.com/IBM/fp-go/lazy"
 	O "github.com/IBM/fp-go/option"
 	S "github.com/IBM/fp-go/string"
-	U "github.com/ibm-hyper-protect/contract-go/cli/utils"
 	D "github.com/ibm-hyper-protect/contract-go/data"
 	Encrypt "github.com/ibm-hyper-protect/contract-go/encrypt/ioeither"
+	CF "github.com/ibm-hyper-protect/contract-go/file/ioeither"
 )
 
 var (
 	// keyFromFile reads key data from a file or stdin
-	keyFromFile = U.ReadFromInput
+	keyFromFile = CF.ReadFromInput
 
 	// keyDirect is the key if provided directly as text
 	keyDirect = F.Flow2(
