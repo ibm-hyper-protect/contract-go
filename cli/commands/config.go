@@ -33,6 +33,8 @@ import (
 	T "github.com/IBM/fp-go/tuple"
 	U "github.com/ibm-hyper-protect/contract-go/cli/utils"
 	Encrypt "github.com/ibm-hyper-protect/contract-go/encrypt/ioeither"
+	CF "github.com/ibm-hyper-protect/contract-go/file"
+	CFIOE "github.com/ibm-hyper-protect/contract-go/file/ioeither"
 	SC "github.com/ibm-hyper-protect/contract-go/service/common"
 	SVIOE "github.com/ibm-hyper-protect/contract-go/service/ioeither"
 	"github.com/ibm-hyper-protect/contract-go/types"
@@ -70,8 +72,8 @@ var (
 		},
 		Action:    validateInput,
 		TakesFile: true,
-		Value:     U.StdInOutIdentifier,
-		Usage:     fmt.Sprintf("Name of the input file or '%s' for stdin", U.StdInOutIdentifier),
+		Value:     CF.StdInOutIdentifier,
+		Usage:     fmt.Sprintf("Name of the input file or '%s' for stdin", CF.StdInOutIdentifier),
 	}
 	lookupInput = U.LookupStringFlag(flagInput.Name)
 
@@ -83,8 +85,8 @@ var (
 		},
 		Action:    validateOutput,
 		TakesFile: true,
-		Value:     U.StdInOutIdentifier,
-		Usage:     fmt.Sprintf("Name of the output file or '%s' for stdout", U.StdInOutIdentifier),
+		Value:     CF.StdInOutIdentifier,
+		Usage:     fmt.Sprintf("Name of the output file or '%s' for stdout", CF.StdInOutIdentifier),
 	}
 	lookupOutput = U.LookupStringFlag(flagOutput.Name)
 
@@ -170,7 +172,7 @@ var (
 	// ValidatedContractFromContext returns a [types.Contract] from a [cli.Context] and validates it against the schema
 	ValidatedContractFromContext = F.Flow3(
 		lookupInput,
-		U.ReadFromInput,
+		CFIOE.ReadFromInput,
 		IOE.ChainEitherK(F.Flow2(
 			Y.Parse[types.AnyMap],
 			E.Chain(types.ValidateContract),
@@ -180,7 +182,7 @@ var (
 	// writeFromContext writes binary data to a location specified by the [cli.Context]
 	writeFromContext = F.Flow2(
 		lookupOutput,
-		U.WriteToOutput,
+		CFIOE.WriteToOutput,
 	)
 
 	WriteContractFromContext = F.Flow2(
@@ -211,7 +213,7 @@ var (
 )
 
 func validateInput(ctx *cli.Context, value string) error {
-	if value == U.StdInOutIdentifier {
+	if value == CF.StdInOutIdentifier {
 		return nil
 	}
 	status, err := os.Stat(value)
@@ -225,7 +227,7 @@ func validateInput(ctx *cli.Context, value string) error {
 }
 
 func validateOutput(ctx *cli.Context, value string) error {
-	if value == U.StdInOutIdentifier {
+	if value == CF.StdInOutIdentifier {
 		return nil
 	}
 	parent := filepath.Dir(value)
