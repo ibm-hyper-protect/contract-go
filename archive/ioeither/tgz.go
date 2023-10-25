@@ -24,6 +24,7 @@ import (
 	E "github.com/IBM/fp-go/either"
 	F "github.com/IBM/fp-go/function"
 	IOE "github.com/IBM/fp-go/ioeither"
+	IOEF "github.com/IBM/fp-go/ioeither/file"
 	T "github.com/IBM/fp-go/tuple"
 	Archive "github.com/ibm-hyper-protect/contract-go/archive"
 )
@@ -31,21 +32,14 @@ import (
 var (
 	fileInfoHeaderE    = E.Eitherize2(tar.FileInfoHeader)
 	relE               = F.Curry2(E.Eitherize2(filepath.Rel))
-	openIOE            = IOE.Eitherize1(os.Open)
 	copyIOE            = F.Curry2(IOE.Eitherize2(io.Copy))
 	skipDirIOE         = IOE.Of[error, int64](-1)
 	CreateBase64Writer = IOE.FromIO[error](Archive.CreateBase64Writer)
-	onOpenFile         = F.Flow2(filepath.Clean, openIOE)
+	onOpenFile         = F.Flow2(filepath.Clean, IOEF.Open)
 )
 
 func toReader[A io.Reader](a A) io.Reader {
 	return a
-}
-
-func onClose[A io.Closer](a A) IOE.IOEither[error, any] {
-	return IOE.TryCatchError(func() (any, error) {
-		return nil, a.Close()
-	})
 }
 
 // constructs a function that copies the content of a file into the writer
@@ -64,7 +58,7 @@ func copyFile(w io.Writer) func(string, os.FileInfo) IOE.IOEither[error, int64] 
 				toReader[*os.File],
 				copyTo,
 			),
-			IOE.WithResource[int64](onOpenFile(file), onClose[*os.File]),
+			IOE.WithResource[int64](onOpenFile(file), IOEF.Close[*os.File]),
 		)
 	}
 }
@@ -134,12 +128,12 @@ func onCloseStreams[W io.Writer](streams T.Tuple3[*gzip.Writer, *tar.Writer, W])
 	tar := F.Pipe2(
 		streams,
 		tarStream[W],
-		onClose[*tar.Writer],
+		IOEF.Close[*tar.Writer],
 	)
 	gz := F.Pipe2(
 		streams,
 		gzipStream[W],
-		onClose[*gzip.Writer],
+		IOEF.Close[*gzip.Writer],
 	)
 	return F.Pipe1(
 		tar,
