@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	github.com/IBM/fp-go v1.0.52
+	github.com/Masterminds/semver v1.5.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/joho/godotenv v1.5.1
 	github.com/qri-io/jsonschema v0.2.1
@@ -14,7 +15,6 @@ require (
 )
 
 require (
-	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

@@ -32,6 +32,11 @@ func LookupStringFlag(name string) func(ctx *cli.Context) string {
 	return F.Bind2nd((*cli.Context).String, name)
 }
 
+// LookupStringSliceFlag returns a string flag from the [cli.Context] as a []string
+func LookupStringSliceFlag(name string) func(ctx *cli.Context) []string {
+	return F.Bind2nd((*cli.Context).StringSlice, name)
+}
+
 // LookupStringFlagOpt returns a string flag from the [cli.Context] as an [O.Option[string]]
 func LookupStringFlagOpt(name string) func(ctx *cli.Context) O.Option[string] {
 	return func(ctx *cli.Context) O.Option[string] {

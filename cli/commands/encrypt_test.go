@@ -45,3 +45,23 @@ func TestEncryptCommand(t *testing.T) {
 
 	// TODO validate output here
 }
+
+func TestEncryptCommandJson(t *testing.T) {
+
+	require.NoError(t, os.MkdirAll("../../build", os.ModePerm))
+
+	inName := "../samples/simple.yaml"
+	outName := "../../build/TestEncryptCommand.json"
+
+	cmd := EncryptAndSignCommand()
+
+	app := &cli.App{
+		Name:     "contract-cli",
+		Commands: A.Of(cmd),
+	}
+
+	args := A.From(os.Args[0], cmd.Name, fmt.Sprintf("--%s", flagInput.Name), inName, fmt.Sprintf("--%s", flagOutput.Name), outName, fmt.Sprintf("--%s", flagFormat.Name), FormatJson)
+	assert.NoError(t, app.Run(args))
+
+	// TODO validate output here
+}

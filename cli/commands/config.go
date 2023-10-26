@@ -17,6 +17,7 @@ package commands
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 
@@ -27,10 +28,16 @@ import (
 	I "github.com/IBM/fp-go/identity"
 	IO "github.com/IBM/fp-go/io"
 	IOE "github.com/IBM/fp-go/ioeither"
+	IOEH "github.com/IBM/fp-go/ioeither/http"
+	J "github.com/IBM/fp-go/json"
 	O "github.com/IBM/fp-go/option"
 	RR "github.com/IBM/fp-go/record"
 	S "github.com/IBM/fp-go/string"
 	T "github.com/IBM/fp-go/tuple"
+	"github.com/Masterminds/semver"
+	C "github.com/ibm-hyper-protect/contract-go/certificates"
+	CE "github.com/ibm-hyper-protect/contract-go/certificates/either"
+	CIOE "github.com/ibm-hyper-protect/contract-go/certificates/ioeither"
 	U "github.com/ibm-hyper-protect/contract-go/cli/utils"
 	Encrypt "github.com/ibm-hyper-protect/contract-go/encrypt/ioeither"
 	CF "github.com/ibm-hyper-protect/contract-go/file"
@@ -43,9 +50,14 @@ import (
 )
 
 const (
+	// execution modes
 	ModeOpenSSL = "openssl"
 	ModeCrypto  = "crypto"
 	ModeAuto    = "auto"
+
+	// serialization formats
+	FormatJson = "json"
+	FormatYaml = "yaml"
 )
 
 type (
@@ -54,16 +66,32 @@ type (
 		FromFile   O.Option[string] // filename to a PEM encoded key
 	}
 
+	// OutputConfig specifies aspects of the output
+	OutputConfig struct {
+		Format string // output format
+		Output string // target of the output
+	}
+
 	EncryptAndSignConfig struct {
 		Mode    string    // one of the mode flags
 		PrivKey KeyConfig // private key used for signing
 		PubCert KeyConfig // public key used for encryption
 	}
+
+	DownloadCertificatesConfig struct {
+		Versions    []string // possible versions to download
+		UrlTemplate string   // the URL template for the download URL
+	}
 )
 
 var (
 	// valid modes
-	validModes = A.From(ModeOpenSSL, ModeCrypto, ModeAuto)
+	validModes   = A.From(ModeOpenSSL, ModeCrypto, ModeAuto)
+	validateMode = validateOneOfMany(validModes)
+	// valid formats
+	validFormats   = A.From(FormatJson, FormatYaml)
+	validateFormat = validateOneOfMany(validFormats)
+
 	// flagInput defines the CLI flag for the main input
 	flagInput = &cli.StringFlag{
 		Name: "in",
@@ -109,7 +137,7 @@ var (
 		},
 		Action:    validateInput,
 		TakesFile: true,
-		Usage:     "Content of the private signing key as a filepath. If absent the tool creates a transient key",
+		Usage:     "Private signing key as a filepath. If absent the tool creates a transient key",
 	}
 	lookupPrivKeyFile = U.LookupStringFlagOpt(flagPrivKeyFile.Name)
 
@@ -132,7 +160,7 @@ var (
 		},
 		Action:    validateInput,
 		TakesFile: true,
-		Usage:     "Content of the encryption certificate as a string. If absent the tool uses a built-in default",
+		Usage:     "Encryption certificate as a filepath. If absent the tool uses a built-in default",
 	}
 	lookupCertFile = U.LookupStringFlagOpt(flagCertFile.Name)
 
@@ -148,6 +176,44 @@ var (
 		Usage:    fmt.Sprintf("Operational mode, valid values are %s", validModes),
 	}
 	lookupMode = U.LookupStringFlag(flagMode.Name)
+
+	// flagVersions depicts a range of potential versions
+	flagVersions = &cli.StringSliceFlag{
+		Name:     "versions",
+		Action:   validateVersions,
+		Required: false,
+		Usage:    "List of possible versions",
+	}
+	lookupVersions = U.LookupStringSliceFlag(flagVersions.Name)
+
+	// flagSpec is a semantic version range specifier
+	flagSpec = &cli.StringFlag{
+		Name:     "spec",
+		Action:   validateSpec,
+		Required: false,
+		Value:    "*",
+		Usage:    "Semantic version range specifier",
+	}
+	lookupSpec = U.LookupStringFlag(flagSpec.Name)
+
+	// flagFormat is a format specifier for the output format
+	flagFormat = &cli.StringFlag{
+		Name:     "format",
+		Action:   validateFormat,
+		Required: false,
+		Value:    FormatYaml,
+		Usage:    fmt.Sprintf("Format specififiers, valid values are %s", validFormats),
+	}
+	lookupFormat = U.LookupStringFlag(flagFormat.Name)
+
+	// flagUrlTemplate specifies an URL template used to download certificates
+	flagUrlTemplate = &cli.StringFlag{
+		Name:     "urltemplate",
+		Required: false,
+		Value:    CE.DefaultTemplate,
+		Usage:    "The default URL template for downloading certificates",
+	}
+	lookupUrlTemplate = U.LookupStringFlag(flagUrlTemplate.Name)
 
 	// modeToEncrypt is the mapping from encryption module identifier to
 	modeToEncrypt = map[string]IO.IO[Encrypt.Encryption]{
@@ -179,22 +245,8 @@ var (
 		)),
 	)
 
-	// writeFromContext writes binary data to a location specified by the [cli.Context]
-	writeFromContext = F.Flow2(
-		lookupOutput,
-		CFIOE.WriteToOutput,
-	)
-
-	WriteContractFromContext = F.Flow2(
-		writeFromContext,
-		func(fct func(data []byte) IOE.IOEither[error, []byte]) func(c SC.EncryptedContract) IOE.IOEither[error, []byte] {
-			return F.Flow3(
-				Y.Stringify[SC.EncryptedContract],
-				IOE.FromEither[error, []byte],
-				IOE.Chain(fct),
-			)
-		},
-	)
+	// getWriter gets a writer method to the specified output
+	getWriter = CFIOE.WriteToOutput
 
 	// EncryptAndSignFromContext returns an [SC.EncryptedContract] from information on the [cli.Context]
 	EncryptAndSignFromContext = F.Flow4(
@@ -207,10 +259,66 @@ var (
 	// EncryptSignAndWriteFromContext transforms an unencrypted contract into an encrypted and signed contract from information on the [cli.Context]
 	EncryptSignAndWriteFromContext = F.Flow3(
 		T.Replicate2[*cli.Context],
-		T.Map2(EncryptAndSignFromContext, WriteContractFromContext),
+		T.Map2(EncryptAndSignFromContext, writeFromContext[SC.EncryptedContract]),
 		T.Tupled2(IOE.MonadChain[error, SC.EncryptedContract, []byte]),
 	)
+
+	DownloadCertificatesFromContext = F.Flow2(
+		DownloadCertificatesConfigFromContext,
+		DownloadCertificatesFromConfig,
+	)
+
+	DownloadCertificatesAndWriteFromContext = F.Flow3(
+		T.Replicate2[*cli.Context],
+		T.Map2(DownloadCertificatesFromContext, writeFromContext[map[string]string]),
+		T.Tupled2(IOE.MonadChain[error, map[string]string, []byte]),
+	)
 )
+
+// writeFromOutputConfig creates a writer based on an output config
+func writeFromOutputConfig[T any](config *OutputConfig) func(T) IOE.IOEither[error, []byte] {
+	return F.Flow2(
+		getSerializer[T](config.Format),
+		E.Fold(IOE.Left[[]byte, error], getWriter(config.Output)),
+	)
+}
+
+// writeFromContext serializes a data structure and persists it to a location specified by the [cli.Context]
+func writeFromContext[T any](ctx *cli.Context) func(T) IOE.IOEither[error, []byte] {
+	return F.Pipe2(
+		ctx,
+		OutputConfigFromContext,
+		writeFromOutputConfig[T],
+	)
+}
+
+// getSerializer returns a serializer for the format string
+func getSerializer[T any](format string) func(T) E.Either[error, []byte] {
+	switch format {
+	case FormatJson:
+		return J.Marshal[T]
+	case FormatYaml:
+		return Y.Stringify[T]
+	default:
+		return J.Marshal[T]
+	}
+}
+
+func validateSpec(ctx *cli.Context, value string) error {
+	return F.Pipe2(
+		value,
+		CE.ParseConstraint,
+		E.ToError[*semver.Constraints],
+	)
+}
+
+func validateVersions(ctx *cli.Context, values []string) error {
+	return F.Pipe2(
+		values,
+		E.TraverseArray(CE.ParseVersion),
+		E.ToError[[]C.Version],
+	)
+}
 
 func validateInput(ctx *cli.Context, value string) error {
 	if value == CF.StdInOutIdentifier {
@@ -245,18 +353,27 @@ func validateOutput(ctx *cli.Context, value string) error {
 	return nil
 }
 
-func validateMode(ctx *cli.Context, value string) error {
-	return F.Pipe3(
-		validModes,
-		A.Filter(S.Equals(value)),
-		A.Head[string],
-		O.Fold(errors.OnNone("value [%s] is not valid, valid values are %s", value, validModes), F.Constant1[string, error](nil)),
-	)
+func validateOneOfMany(validValues []string) func(ctx *cli.Context, value string) error {
+	return func(ctx *cli.Context, value string) error {
+		return F.Pipe3(
+			validValues,
+			A.Filter(S.Equals(value)),
+			A.Head[string],
+			O.Fold(errors.OnNone("value [%s] is not valid, valid values are %s", value, validValues), F.Constant1[string, error](nil)),
+		)
+	}
 }
 
 // getKeyFromConfig returns key content, either from direct input, a file or as a fallback transiently
 func getKeyFromConfig(cfg KeyConfig) func(Encrypt.Key) Encrypt.Key {
 	return getKey(cfg.FromDirect, cfg.FromFile)
+}
+
+func OutputConfigFromContext(ctx *cli.Context) *OutputConfig {
+	return &OutputConfig{
+		Format: lookupFormat(ctx),
+		Output: lookupOutput(ctx),
+	}
 }
 
 // EncryptAndSignConfigFromContext decodes an [EncryptAndSignConfig] from a [cli.Context]
@@ -271,6 +388,14 @@ func EncryptAndSignConfigFromContext(ctx *cli.Context) *EncryptAndSignConfig {
 			lookupCert(ctx),
 			lookupCertFile(ctx),
 		},
+	}
+}
+
+// DownloadCertificatesConfigFromContext decodes the [DownloadCertificatesConfig] from a [cli.Context]
+func DownloadCertificatesConfigFromContext(ctx *cli.Context) *DownloadCertificatesConfig {
+	return &DownloadCertificatesConfig{
+		Versions:    lookupVersions(ctx),
+		UrlTemplate: lookupUrlTemplate(ctx),
 	}
 }
 
@@ -320,5 +445,21 @@ func ContractEncrypterFromConfig(cfg *EncryptAndSignConfig) IOE.IOEither[error, 
 		IOE.SequenceTuple3(T.MakeTuple3(enc, signer, pubkey)),
 		IOE.Map[error](T.Tupled3(SVIOE.EncryptAndSignContract)),
 		IOE.Ap[SVIOE.ContractEncrypter](privKey),
+	)
+}
+
+// DownloadCertificatesFromConfig dowloads certificates based on some config
+func DownloadCertificatesFromConfig(cfg *DownloadCertificatesConfig) IOE.IOEither[error, map[string]string] {
+	download := CIOE.DownloadCertificates(IOEH.MakeClient(http.DefaultClient))
+	resolver := CE.ParseResolver(cfg.UrlTemplate)
+
+	return F.Pipe3(
+		cfg.Versions,
+		E.TraverseArray(CE.ParseVersion),
+		E.Fold(IOE.Left[[]C.VersionCert, error], download(resolver)),
+		IOE.Map[error](F.Flow2(
+			A.Map(T.Map2(C.Version.String, F.Identity[string])),
+			RR.FromEntries[string, string],
+		)),
 	)
 }

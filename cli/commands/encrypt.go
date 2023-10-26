@@ -30,6 +30,7 @@ func EncryptAndSignCommand() *cli.Command {
 		Flags: []cli.Flag{
 			flagInput,
 			flagOutput,
+			flagFormat,
 			flagMode,
 			flagPrivKey,
 			flagPrivKeyFile,

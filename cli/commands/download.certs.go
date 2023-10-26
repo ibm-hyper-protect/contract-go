@@ -16,12 +16,26 @@
 package commands
 
 import (
+	F "github.com/IBM/fp-go/function"
+	U "github.com/ibm-hyper-protect/contract-go/cli/utils"
 	"github.com/urfave/cli/v2"
 )
 
-func Commands() []*cli.Command {
-	return []*cli.Command{
-		EncryptAndSignCommand(),
-		DownloadCertificatesCommand(),
+// EncryptAndSignCommand returns a command that encrypts and signs a contract
+func DownloadCertificatesCommand() *cli.Command {
+	return &cli.Command{
+		Name:        "download-certificates",
+		Usage:       "Downloads certificates",
+		Description: "Downloads certificates that match the given version specifications",
+		Flags: []cli.Flag{
+			flagOutput,
+			flagFormat,
+			flagVersions,
+			flagUrlTemplate,
+		},
+		Action: F.Flow2(
+			DownloadCertificatesAndWriteFromContext,
+			U.RunIOEither[[]byte],
+		),
 	}
 }
