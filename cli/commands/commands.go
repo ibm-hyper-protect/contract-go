@@ -19,6 +19,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+// Commands returns the array of supported commands
 func Commands() []*cli.Command {
 	return []*cli.Command{
 		EncryptAndSignCommand(),

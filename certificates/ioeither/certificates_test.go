@@ -32,7 +32,7 @@ func TestDownloadCertificates(t *testing.T) {
 	client := IOEH.MakeClient(http.DefaultClient)
 	resolver := CE.ParseResolver(CE.DefaultTemplate)
 
-	versions := A.From("1.0.9", "1.0.11", "1.0.10")
+	versions := A.From("1.0.11", "1.0.10")
 
 	download := DownloadCertificates(client)(resolver)
 

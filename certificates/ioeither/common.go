@@ -26,5 +26,5 @@ var (
 	makeRequest = F.Bind13of3(IOE.Eitherize3(http.NewRequest))
 
 	// specialize
-	makeGetRequest = makeRequest("GET", nil)
+	makeGetRequest = makeRequest(http.MethodGet, nil)
 )

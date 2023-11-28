@@ -68,8 +68,8 @@ type (
 
 	// OutputConfig specifies aspects of the output
 	OutputConfig struct {
-		Format string // output format
-		Output string // target of the output
+		Format string // output format (e.g. json, or yaml)
+		Output string // target of the output (e.g. a filename, or stdout)
 	}
 
 	EncryptAndSignConfig struct {
@@ -369,6 +369,7 @@ func getKeyFromConfig(cfg KeyConfig) func(Encrypt.Key) Encrypt.Key {
 	return getKey(cfg.FromDirect, cfg.FromFile)
 }
 
+// OutputConfigFromContext returns an [OutputConfig] based on the [cli.Context]
 func OutputConfigFromContext(ctx *cli.Context) *OutputConfig {
 	return &OutputConfig{
 		Format: lookupFormat(ctx),

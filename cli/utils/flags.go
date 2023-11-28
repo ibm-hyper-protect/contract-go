@@ -22,9 +22,42 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+func Reflow2[T0, T1, R any](f func(T1) R) func(func(T0) T1) func(T0) R {
+	return F.Pipe1(
+		f,
+		F.Flip(F.Curry2(F.Flow2[func(T0) T1, func(T1) R])),
+	)
+}
+
+func Reflow[T0, T1, R any](f func(T1) R) func(func(T0) T1) func(T0) R {
+	return F.Pipe1(
+		f,
+		F.Flip(F.Curry2(F.Flow2[func(T0) T1, func(T1) R])),
+	)
+}
+
+func Reflow1[T0, T1, R any](f1 func(T1) R) func(func(T0) T1) func(T0) R {
+	return func(f0 func(T0) T1) func(T0) R {
+		return F.Flow2(
+			f0,
+			f1,
+		)
+	}
+}
+
 var (
 	// fromNonEmptyString converts a non empty string to an [O.Option]
 	fromNonEmptyString = O.FromPredicate(S.IsNonEmpty)
+
+	getGetString = func(ctx *cli.Context) func(string) string {
+		return ctx.String
+	}
+
+	// LookupStringFlagOpt returns a string flag from the [cli.Context] as an [O.Option[string]]
+	LookupStringFlagOpt = F.Flip(F.Flow2(
+		getGetString,
+		Reflow1[string](fromNonEmptyString),
+	))
 )
 
 // LookupStringFlag returns a string flag from the [cli.Context] as a string
@@ -35,15 +68,4 @@ func LookupStringFlag(name string) func(ctx *cli.Context) string {
 // LookupStringSliceFlag returns a string flag from the [cli.Context] as a []string
 func LookupStringSliceFlag(name string) func(ctx *cli.Context) []string {
 	return F.Bind2nd((*cli.Context).StringSlice, name)
-}
-
-// LookupStringFlagOpt returns a string flag from the [cli.Context] as an [O.Option[string]]
-func LookupStringFlagOpt(name string) func(ctx *cli.Context) O.Option[string] {
-	return func(ctx *cli.Context) O.Option[string] {
-		return F.Pipe2(
-			name,
-			ctx.String,
-			fromNonEmptyString,
-		)
-	}
 }

@@ -28,7 +28,7 @@ import (
 func downloadTextFromUrl(client IOEH.Client) func(url string) IOE.IOEither[error, string] {
 	return F.Flow2(
 		makeGetRequest,
-		IOE.Chain(IOEH.ReadText(client)),
+		IOEH.ReadText(client),
 	)
 }
 
