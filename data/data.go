@@ -21,5 +21,5 @@ import (
 //go:embed ibm-hyper-protect-container-runtime-1-0-s390x-12-encrypt.crt
 var DefaultCertificate string
 
-//go:embed hpse-contract-schema-1.0.49.json
+//go:embed hpse-contract-schema-1.0.51.json
 var ContractSchema string

@@ -1,0 +1,88 @@
+name: contract-go CI
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+
+  workflow_dispatch:
+    inputs:
+      dryRun:
+        description: 'Dry-Run'
+        default: 'true'
+        required: false
+
+env:
+  # Currently no way to detect automatically
+  DEFAULT_BRANCH: main
+  GO_VERSION: 1.20.6 # renovate: datasource=golang-version depName=golang
+  NODE_VERSION: 18
+  DRY_RUN: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [ '1.20.x', '1.21.x' ]
+    steps:
+      # full checkout for semantic-release
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0
+      - name: Set up go ${{ matrix.go-version }}
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
+      -
+        name: Tests
+        run: |
+          go mod tidy
+          go test -v ./...
+
+  release:
+    needs: [build]
+    if: github.repository == 'ibm-hyper-protect/contract-go' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      # full checkout for semantic-release
+      - name: Full checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@8f152de45cc393bb48ce5d89d36b731f54556e65 # v4.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Set up go ${{env.GO_VERSION}}
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{env.GO_VERSION}}
+
+      # The dry-run evaluation is only made for non PR events. Manual trigger w/dryRun true, main branch and any tagged branches will set DRY run to false
+      - name: Check dry run
+        run: |
+          if [[ "${{github.event_name}}" == "workflow_dispatch" && "${{ github.event.inputs.dryRun }}" != "true"  ]]; then
+              echo "DRY_RUN=false" >> $GITHUB_ENV
+          elif [[ "${{github.ref}}" == "refs/heads/${{env.DEFAULT_BRANCH}}" ]]; then
+            echo "DRY_RUN=false" >> $GITHUB_ENV
+          elif [[ "${{github.ref}}" =~ ^refs/heads/v[0-9]+(\.[0-9]+)?$ ]]; then
+            echo "DRY_RUN=false" >> $GITHUB_ENV
+          fi
+
+      - name: Semantic Release
+        run: |
+          npx -p conventional-changelog-conventionalcommits -p semantic-release semantic-release --dry-run ${{env.DRY_RUN}}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
