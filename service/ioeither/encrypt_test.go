@@ -89,7 +89,7 @@ func TestEncryptFromStruct(t *testing.T) {
 
 func TestEncryptFromStructAndKeyFromFile(t *testing.T) {
 	// filename
-	filename := "../../build/mavenResolver/hpse-pipeline-dev-gen2-enclaved.crt"
+	filename := "../../samples/data/sample.crt"
 	require.FileExists(t, filename)
 
 	// read the key from file

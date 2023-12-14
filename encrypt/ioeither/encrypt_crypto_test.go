@@ -30,9 +30,9 @@ func TestPubOrCertToRsaKey(t *testing.T) {
 	// convert a batch of test files
 	res := F.Pipe2(
 		RA.From(
-			"../../build/mavenResolver/se-encrypt-basic.pub",
-			"../../build/mavenResolver/se-encrypt-basic.crt",
-			"../../build/mavenResolver/hpse-pipeline-dev-gen2-enclaved.crt",
+			"../../samples/data/encrypt-basic.pub",
+			"../../samples/data/encrypt-basic.crt",
+			"../../samples/data/sample.crt",
 		),
 		RA.Map(F.Flow2(
 			FIOE.ReadFile,

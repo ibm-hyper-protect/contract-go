@@ -35,7 +35,7 @@ import (
 
 var (
 	// loads the basic certificate
-	encryptBasicCertificate = file.ReadFile("../../build/mavenResolver/se-encrypt-basic.crt")
+	encryptBasicCertificate = file.ReadFile("../../samples/data/encrypt-basic.crt")
 )
 
 func TestOpenSSLPublicKeyFromCertificate(t *testing.T) {
