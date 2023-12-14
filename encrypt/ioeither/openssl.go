@@ -62,18 +62,18 @@ var (
 	// OpenSSLSignDigest signs the sha256 digest using a private key
 	OpenSSLSignDigest = handle(signDigest)
 
-	// AsymmetricEncryptPubOrCert implements asymmetric encryption based on a public key or certificate based on the input
-	AsymmetricEncryptPubOrCert = handle(asymmetricEncryptPubOrCert)
+	// OpenSSLAsymmetricEncryptPubOrCert implements asymmetric encryption based on a public key or certificate based on the input
+	OpenSSLAsymmetricEncryptPubOrCert = handle(asymmetricEncryptPubOrCert)
 
-	// AsymmetricEncryptPub implements asymmetric encryption based on a public key
-	AsymmetricEncryptPub = handle(asymmetricEncryptPub)
+	// OpenSSLAsymmetricEncryptPub implements asymmetric encryption based on a public key
+	OpenSSLAsymmetricEncryptPub = handle(asymmetricEncryptPub)
 
-	// AsymmetricEncryptCert implements asymmetric encryption based on a certificate
-	AsymmetricEncryptCert = handle(asymmetricEncryptCert)
+	// OpenSSLAsymmetricEncryptCert implements asymmetric encryption based on a certificate
+	OpenSSLAsymmetricEncryptCert = handle(asymmetricEncryptCert)
 
-	AsymmerticDecrypt = handle(asymmetricDecrypt)
+	OpenSSLAsymmetricDecrypt = handle(asymmetricDecrypt)
 
-	SymmetricEncrypt = handle(symmetricEncrypt)
+	OpenSSLSymmetricEncrypt = handle(symmetricEncrypt)
 
 	// openSSLPublicKeyFromPrivateKey gets the public key from a private key
 	openSSLPublicKeyFromPrivateKey = F.Flow2(
@@ -307,7 +307,7 @@ func symmetricDecrypt(dataFile string) func([]byte) IOE.IOEither[error, []byte] 
 	)
 }
 
-func SymmetricDecrypt(token string) func([]byte) IOE.IOEither[error, []byte] {
+func OpenSSLSymmetricDecrypt(token string) func([]byte) IOE.IOEither[error, []byte] {
 	// decode the token and produce the decryption function
 	dec := F.Pipe3(
 		token,
@@ -327,11 +327,7 @@ func SymmetricDecrypt(token string) func([]byte) IOE.IOEither[error, []byte] {
 // OpenSSLVerifyDigest verifies the signature of the input data against a signature
 func OpenSSLVerifyDigest(pubKey []byte) func(data []byte) func(signature []byte) IOO.IOOption[error] {
 	// shortcut for the fold operation
-	foldIOE := GIOE.Fold[IOE.IOEither[error, EX.CommandOutput]](func(err error) IOO.IOOption[error] {
-		return IOO.Of(err)
-	}, func(a EX.CommandOutput) IOO.IOOption[error] {
-		return IOO.None[error]()
-	})
+	foldIOE := GIOE.Fold[IOE.IOEither[error, EX.CommandOutput]](IOO.Of[error], F.Ignore1of1[EX.CommandOutput](IOO.None[error]))
 	// callback functions
 	return func(data []byte) func([]byte) IOO.IOOption[error] {
 		return func(signature []byte) IOO.IOOption[error] {

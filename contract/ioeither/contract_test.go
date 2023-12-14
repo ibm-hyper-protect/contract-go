@@ -51,13 +51,13 @@ var (
 		pubKeyE,
 		IOE.FromEither[error, []byte],
 		IOE.Map[error](func(pubKey []byte) func([]byte) IOE.IOEither[error, string] {
-			return Encrypt.EncryptBasic(Encrypt.OpenSSLRandomPassword(32), Encrypt.AsymmetricEncryptPub(pubKey), Encrypt.SymmetricEncrypt)
+			return Encrypt.EncryptBasic(Encrypt.OpenSSLRandomPassword(32), Encrypt.OpenSSLAsymmetricEncryptPub(pubKey), Encrypt.OpenSSLSymmetricEncrypt)
 		}),
 	)
 )
 
 func openSSLEncryptAndSignContract(pubKey []byte) func([]byte) func(Contract.RawMap) IOE.IOEither[error, Contract.RawMap] {
-	return EncryptAndSignContract(Encrypt.EncryptBasic(Encrypt.OpenSSLRandomPassword(32), Encrypt.AsymmetricEncryptPub(pubKey), Encrypt.SymmetricEncrypt), Encrypt.OpenSSLSignDigest, Encrypt.OpenSSLPublicKey)
+	return EncryptAndSignContract(Encrypt.EncryptBasic(Encrypt.OpenSSLRandomPassword(32), Encrypt.OpenSSLAsymmetricEncryptPub(pubKey), Encrypt.OpenSSLSymmetricEncrypt), Encrypt.OpenSSLSignDigest, Encrypt.OpenSSLPublicKey)
 }
 
 func TestAddSigningKey(t *testing.T) {
