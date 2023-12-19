@@ -1,5 +1,7 @@
 github.com/IBM/fp-go v1.0.81 h1:n5mcUvuEnVyx+CmtRZ2mPD1G1vFfMDH5X9Pmdsh2yI8=
 github.com/IBM/fp-go v1.0.81/go.mod h1:xWixRkBAKQJpZpZXJDHkQccoURnROHydNVG7BloyF4Y=
+github.com/IBM/fp-go v1.0.82 h1:TjPh0zbO4U7L3doerB8CmUTPHe+bqobME2dF49/6xk0=
+github.com/IBM/fp-go v1.0.82/go.mod h1:xWixRkBAKQJpZpZXJDHkQccoURnROHydNVG7BloyF4Y=
 github.com/Masterminds/semver v1.5.0 h1:H65muMkzWKEuNDnfl9d70GUjFniHKHRbFPGBuZ3QEww=
 github.com/Masterminds/semver v1.5.0/go.mod h1:MB6lktGJrhw8PrUyiEoblNEGEQ+RzHPF078ddwwvV3Y=
 github.com/cpuguy83/go-md2man/v2 v2.0.3 h1:qMCsGGgs+MAzDFyp9LpAe1Lqy/fY/qCovCm0qnXZOBM=
