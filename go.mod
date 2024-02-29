@@ -3,7 +3,7 @@ module github.com/ibm-hyper-protect/contract-go
 go 1.20
 
 require (
-	github.com/IBM/fp-go v1.0.139
+	github.com/IBM/fp-go v1.0.140
 	github.com/Masterminds/semver v1.5.0
 	github.com/iancoleman/strcase v0.3.0
 	github.com/joho/godotenv v1.5.1
