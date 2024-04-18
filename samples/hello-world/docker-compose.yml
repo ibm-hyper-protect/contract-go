@@ -13,4 +13,4 @@
 # limitations under the License.package datasource
 services:
   hello-world:
-    image: docker.io/library/hello-world@sha256:03b30c6a3c320ff172b52bd68eddffde6ded08ce47e650fe52de861c5e9df46d
+    image: docker.io/library/hello-world@sha256:91bc16c380fe750bcab6a4fd29c55940a7967379663693ec9f4749d3878cd939
