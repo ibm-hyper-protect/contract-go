@@ -10,7 +10,7 @@ require (
 	github.com/qri-io/jsonschema v0.2.1
 	github.com/stretchr/testify v1.9.0
 	github.com/urfave/cli/v2 v2.27.2
-	golang.org/x/crypto v0.23.0
+	golang.org/x/crypto v0.24.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
