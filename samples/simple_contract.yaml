@@ -1,0 +1,10 @@
+env:
+  type: env
+  logging:
+    logDNA:
+      hostname: syslog-a.eu-de.logging.cloud.ibm.com
+      ingestionKey: ab00e3c09p1d4ff7fff9f04c12183413
+workload:
+  type: workload
+  compose:
+    archive: kdsbfoijdfojsnbo
