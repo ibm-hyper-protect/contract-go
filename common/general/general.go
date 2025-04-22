@@ -281,6 +281,10 @@ func GetDataFromLatestVersion(jsonData, version string) (string, string, error) 
 
 // FetchEncryptionCertificate - function to get encryption certificate
 func FetchEncryptionCertificate(version, encryptionCertificate string) string {
+	if version == "" {
+		version = HyperProtectOsUbuntu
+	}
+
 	if encryptionCertificate != "" {
 		return encryptionCertificate
 	} else {
