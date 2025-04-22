@@ -1,7 +1,5 @@
 github.com/Masterminds/semver/v3 v3.3.1 h1:QtNSWtVZ3nBfk8mAOu/B6v7FMJ+NHTIgUPi7rj+4nv4=
 github.com/Masterminds/semver/v3 v3.3.1/go.mod h1:4V+yj/TJE1HU9XfppCwVMZq3I84lprf4nC11bSS5beM=
-github.com/Sashwat-K/hpcr-contract-schema v1.0.4 h1:dFWZCTN0qS5l+wZn6J2OSwSQ1xc1XIMFDTyePopEtC4=
-github.com/Sashwat-K/hpcr-contract-schema v1.0.4/go.mod h1:tVKJn55K/mwcrIuWDD8aWY83ZqjuW5JVcAGmv1aXPOs=
 github.com/Sashwat-K/hpcr-encryption-certificate v1.0.7 h1:8ejGUex8F17aosoH4dcy4JEOetH+7l+s/MIzOQ5PW6s=
 github.com/Sashwat-K/hpcr-encryption-certificate v1.0.7/go.mod h1:RPviKVe8z+ICoF/OkdNksBbJhNfMHwqQS3QcI8sYH+M=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
