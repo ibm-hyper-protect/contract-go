@@ -40,6 +40,8 @@ const (
 	sampleCeCaKeyPath        = "../samples/contract-expiry/personal_ca.pem"
 	sampleCeCsrPath          = "../samples/contract-expiry/csr.pem"
 	sampleContractExpiryDays = 365
+
+	sampleHyperProtectOsVersion = "ubuntu"
 )
 
 var (
@@ -122,7 +124,7 @@ func TestHpcrJson(t *testing.T) {
 
 // Testcase to check if TestHpcrTextEncrypted() is able to encrypt text and generate SHA256
 func TestHpcrTextEncrypted(t *testing.T) {
-	result, inputSha256, _, err := HpcrTextEncrypted(sampleStringData, "")
+	result, inputSha256, _, err := HpcrTextEncrypted(sampleStringData, sampleHyperProtectOsVersion, "")
 	if err != nil {
 		t.Errorf("failed to generate HPCR encrypted text - %v", err)
 	}
@@ -133,7 +135,7 @@ func TestHpcrTextEncrypted(t *testing.T) {
 
 // Testcase to check if TestHpcrJsonEncrypted() is able to encrypt JSON and generate SHA256
 func TestHpcrJsonEncrypted(t *testing.T) {
-	result, inputSha256, _, err := HpcrJsonEncrypted(sampleStringJson, "")
+	result, inputSha256, _, err := HpcrJsonEncrypted(sampleStringJson, sampleHyperProtectOsVersion, "")
 	if err != nil {
 		t.Errorf("failed to generate HPCR encrypted JSON - %v", err)
 	}
@@ -154,7 +156,7 @@ func TestHpcrTgz(t *testing.T) {
 }
 
 func TestHpcrTgzEncrypted(t *testing.T) {
-	result, inputSha256, _, err := HpcrTgzEncrypted(sampleComposeFolderPath, "")
+	result, inputSha256, _, err := HpcrTgzEncrypted(sampleComposeFolderPath, sampleHyperProtectOsVersion, "")
 	if err != nil {
 		t.Errorf("failed to generated HPCR encrypted TGZ - %v", err)
 	}
@@ -171,7 +173,7 @@ func TestHpcrContractSignedEncrypted(t *testing.T) {
 		t.Errorf("failed to get contract and private key - %v", err)
 	}
 
-	result, inputSha256, _, err := HpcrContractSignedEncrypted(contract, "", privateKey)
+	result, inputSha256, _, err := HpcrContractSignedEncrypted(contract, sampleHyperProtectOsVersion, "", privateKey)
 	if err != nil {
 		t.Errorf("failed to generate signed and encrypted contract - %v", err)
 	}
@@ -192,7 +194,7 @@ func TestHpcrContractSignedEncryptedContractExpiryCsrParams(t *testing.T) {
 		t.Errorf("failed to unmarshal CSR parameters - %v", err)
 	}
 
-	result, inputSha256, _, err := HpcrContractSignedEncryptedContractExpiry(contract, "", privateKey, caCert, caKey, string(csrParams), "", sampleContractExpiryDays)
+	result, inputSha256, _, err := HpcrContractSignedEncryptedContractExpiry(contract, sampleHyperProtectOsVersion, "", privateKey, caCert, caKey, string(csrParams), "", sampleContractExpiryDays)
 	if err != nil {
 		t.Errorf("failed to generate signed and encrypted contract with contract expiry - %v", err)
 	}
@@ -213,7 +215,7 @@ func TestHpcrContractSignedEncryptedContractExpiryCsrPem(t *testing.T) {
 		t.Errorf("failed to read CSR file - %v", err)
 	}
 
-	result, inputSha256, _, err := HpcrContractSignedEncryptedContractExpiry(contract, "", privateKey, caCert, caKey, "", csr, sampleContractExpiryDays)
+	result, inputSha256, _, err := HpcrContractSignedEncryptedContractExpiry(contract, sampleHyperProtectOsVersion, "", privateKey, caCert, caKey, "", csr, sampleContractExpiryDays)
 	if err != nil {
 		t.Errorf("failed to generate signed and encrypted contract with contract expiry - %v", err)
 	}
@@ -229,7 +231,7 @@ func TestEncryptWrapper(t *testing.T) {
 		t.Errorf("failed to get contract, private key and public key - %v", err)
 	}
 
-	result, err := EncryptWrapper(contract, "", privateKey, publicKey)
+	result, err := EncryptWrapper(contract, sampleHyperProtectOsVersion, "", privateKey, publicKey)
 	if err != nil {
 		t.Errorf("failed to sign and encrypt contract - %v", err)
 	}
@@ -239,7 +241,7 @@ func TestEncryptWrapper(t *testing.T) {
 
 // Testcase to check if Encrypter() is able to encrypt and generate SHA256 from string
 func TestEncrypter(t *testing.T) {
-	result, err := Encrypter(sampleStringJson, "")
+	result, err := Encrypter(sampleStringJson, sampleHyperProtectOsVersion, "")
 	if err != nil {
 		t.Errorf("failed to encrypt contract - %v", err)
 	}
