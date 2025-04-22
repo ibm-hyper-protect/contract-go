@@ -21,8 +21,8 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v3"
 
-	sch "github.com/Sashwat-K/hpcr-contract-schema"
 	cert "github.com/Sashwat-K/hpcr-encryption-certificate"
+	sch "github.com/ibm-hyper-protect/contract-go/schema"
 )
 
 // CheckIfEmpty - function to check if given arguments are not empty
