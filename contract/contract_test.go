@@ -30,7 +30,7 @@ const (
 	sampleComposeFolderChecksum = "3e4a006b9422a3fbf8c58d4f1dbac4494b34f800ddbb6e048c31709bb0cde599"
 
 	simpleContractPath          = "../samples/simple_contract.yaml"
-	simpleContractInputChecksum = "072cd6d89d9d253a0426eadea7217aedfe86197bfb8a5b4873386fcaa72ddfda"
+	simpleContractInputChecksum = "c845c74534b224944601edf1f949fc88b377da11b77b9d5666b86b89fb2127e3"
 
 	samplePrivateKeyPath = "../samples/encrypt/private.pem"
 	samplePublicKeyPath  = "../samples/encrypt/public.pem"
