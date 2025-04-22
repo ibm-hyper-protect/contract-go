@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 
-	cert "github.com/Sashwat-K/hpcr-encryption-certificate"
+	cert "github.com/ibm-hyper-protect/contract-go/encryption"
 )
 
 const (
@@ -31,6 +31,8 @@ const (
 	}`
 
 	sampleComposeFolder = "../../samples/tgz"
+
+	hyperProtectOs = "ubuntu"
 )
 
 // Testcase to check if CheckIfEmpty() is able to identify empty variables
@@ -238,9 +240,9 @@ func TestGetDataFromLatestVersion(t *testing.T) {
 
 // Testcase to check if FetchEncryptionCertificate() fetches encryption certificate
 func TestFetchEncryptionCertificate(t *testing.T) {
-	result := FetchEncryptionCertificate("")
+	result := FetchEncryptionCertificate(hyperProtectOs, "")
 
-	assert.Equal(t, result, cert.EncryptionCertificate)
+	assert.Equal(t, result, cert.EncryptionCertificateUbuntu)
 }
 
 // Testcase to check if TestGenerateTgzBase64() is able generate base64 of compose tgz

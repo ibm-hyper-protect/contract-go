@@ -21,8 +21,13 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 	"gopkg.in/yaml.v3"
 
-	cert "github.com/Sashwat-K/hpcr-encryption-certificate"
+	cert "github.com/ibm-hyper-protect/contract-go/encryption"
 	sch "github.com/ibm-hyper-protect/contract-go/schema"
+)
+
+const (
+	TempFolderNamePrefix = "hpvs-"
+	HyperProtectOsUbuntu = "ubuntu"
 )
 
 // CheckIfEmpty - function to check if given arguments are not empty
@@ -89,7 +94,7 @@ func ReadDataFromFile(filePath string) (string, error) {
 // CreateTempFile - function to create temp file
 func CreateTempFile(data string) (string, error) {
 	trimmedData := strings.TrimSpace(data)
-	tmpFile, err := os.CreateTemp("", "hpvs-")
+	tmpFile, err := os.CreateTemp("", TempFolderNamePrefix)
 	if err != nil {
 		return "", err
 	}
@@ -275,11 +280,15 @@ func GetDataFromLatestVersion(jsonData, version string) (string, string, error) 
 }
 
 // FetchEncryptionCertificate - function to get encryption certificate
-func FetchEncryptionCertificate(encryptionCertificate string) string {
+func FetchEncryptionCertificate(version, encryptionCertificate string) string {
 	if encryptionCertificate != "" {
 		return encryptionCertificate
 	} else {
-		return cert.EncryptionCertificate
+		if version == HyperProtectOsUbuntu {
+			return cert.EncryptionCertificateUbuntu
+		} else {
+			return cert.EncryptionCertificateRhel
+		}
 	}
 }
 
