@@ -13,6 +13,9 @@ For more details regarding HPVS, refer [Confidential computing with LinuxONE](ht
 
 Refer [Docs](docs/index.md)
 
+
 ## References
 
-- [contract-schema](https://github.com/ibm-hyper-protect/contract-schema) - JSON schema for the contract
+- [contract-cli](https://github.com/ibm-hyper-protect/contract-cli) - CLI tool for generating Hyper Protect contracts
+- [terraform-provider-hpcr](https://github.com/ibm-hyper-protect/terraform-provider-hpcr) - Terraform Provider for generating Hyper Protect contracts
+- [k8s-operator-hpcr](https://github.com/ibm-hyper-protect/k8s-operator-hpcr) - Kubernetes operator for generating Hyper Protect contracts
