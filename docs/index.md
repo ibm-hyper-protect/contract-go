@@ -27,6 +27,7 @@ func main() {
 
 #### Output(s)
 1. Decrypted attestation records
+2. Error (If any)
 
 
 ### HpcrDownloadEncryptionCertificates()
@@ -37,15 +38,17 @@ This function downloads HPCR encryption certificates from IBM Cloud.
 import "github.com/ibm-hyper-protect/contract-go/certificate"
 
 func main() {
-    certs, err := HpcrDownloadEncryptionCertificates(sampleEncryptionCertVersionsList)
+    certs, err := HpcrDownloadEncryptionCertificates(sampleEncryptionCertVersionsList, certDownloadUrlTemplate)
 }
 ```
 
 #### Input(s)
 1. List of versions to download (eg: ["1.1.14", "1.1.15"])
+2. Encryption certificate URL Template (default to https://hpvsvpcubuntu.s3.us.cloud-object-storage.appdomain.cloud/s390x-{{.Patch}}/ibm-hyper-protect-container-runtime-{{.Major}}-{{.Minor}}-s390x-{{.Patch}}-encrypt.crt)
 
 #### Output(s)
 1. Certificates and versions as JSON string
+2. Error (If any)
 
 
 ### HpcrGetEncryptionCertificateFromJson()
@@ -67,6 +70,7 @@ func main() {
 #### Output(s)
 1. Version name
 2. Encryption Certificate
+3. Error (If any)
 
 
 ### HpcrText()
@@ -88,6 +92,7 @@ func main() {
 1. Base64 of input
 2. Checksum of input
 3. Checksum of output
+4. Error (If any)
 
 
 ### HpcrTextEncrypted()
@@ -111,6 +116,7 @@ func main() {
 1. Encrypted text
 2. Checksum of input
 3. Checksum of output
+4. Error (If any)
 
 
 ### HpcrJson()
@@ -132,6 +138,7 @@ func main() {
 1. Base64 of input
 2. Checksum of input
 3. Checksum of output
+4. Error (If any)
 
 
 ### HpcrJsonEncrypted()
@@ -155,6 +162,7 @@ func main() {
 1. Encrypted text
 2. Checksum of input
 3. Checksum of output
+4. Error (If any)
 
 
 ### HpcrTgz()
@@ -176,6 +184,7 @@ func main() {
 1. Base64 of TGZ where TGZ is contents of given folder
 2. Checksum of imput
 3. Checksum of output
+4. Error (If any)
 
 
 ### HpcrTgzEncrypted()
@@ -199,6 +208,7 @@ func main() {
 1. encrypted base64 of TGZ where TGZ is contents of given folder
 2. Checksum of input
 3. Checksum of output
+4. Error (If any)
 
 
 ### HpcrContractSignedEncrypted()
@@ -223,6 +233,7 @@ func main() {
 1. Signed and encrypted contract
 2. Checksum of input
 3. Checksum of output
+4. Error (If any)
 
 
 ### HpcrContractSignedEncryptedContractExpiry()
@@ -280,6 +291,7 @@ The CSR parameters should be of the format:-
 1. Signed and encrypted contract
 2. Checksum of input
 3. Checksum of output
+4. Error (If any)
 
 
 ### HpcrSelectImage()
@@ -303,3 +315,4 @@ func main() {
 2. Image name
 3. Image checksum
 4. Image version
+5. Error (If any)

@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	defaultEncCertUrlTemplate    = "https://cloud.ibm.com/media/docs/downloads/hyper-protect-container-runtime/ibm-hyper-protect-container-runtime-{{.Major}}-{{.Minor}}-s390x-{{.Patch}}-encrypt.crt"
+	defaultEncCertUrlTemplate    = "https://hpvsvpcubuntu.s3.us.cloud-object-storage.appdomain.cloud/s390x-{{.Patch}}/ibm-hyper-protect-container-runtime-{{.Major}}-{{.Minor}}-s390x-{{.Patch}}-encrypt.crt"
 	missingParameterErrStatement = "required parameter is missing"
 )
 
@@ -30,7 +30,11 @@ func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version str
 }
 
 // HpcrDownloadEncryptionCertificates - function to download encryption certificates for specified versions
-func HpcrDownloadEncryptionCertificates(versionList []string) (string, error) {
+func HpcrDownloadEncryptionCertificates(versionList []string, certDownloadUrlTemplate string) (string, error) {
+	if certDownloadUrlTemplate == "" {
+		certDownloadUrlTemplate = defaultEncCertUrlTemplate
+	}
+
 	if gen.CheckIfEmpty(versionList) {
 		return "", fmt.Errorf(missingParameterErrStatement)
 	}
@@ -41,7 +45,7 @@ func HpcrDownloadEncryptionCertificates(versionList []string) (string, error) {
 		verSpec := strings.Split(version, ".")
 
 		urlTemplate := template.New("url")
-		urlTemplate, err := urlTemplate.Parse(defaultEncCertUrlTemplate)
+		urlTemplate, err := urlTemplate.Parse(certDownloadUrlTemplate)
 		if err != nil {
 			return "", fmt.Errorf("failed to create url template - %v", err)
 		}
