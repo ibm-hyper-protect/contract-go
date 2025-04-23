@@ -14,7 +14,8 @@ var (
 		"3.5.10": "data4",
 		"4.0.0": "data5"
 	}`
-	sampleEncryptionCertVersions = []string{"1.0.13", "1.0.14", "1.0.15"}
+	sampleEncryptionCertVersions = []string{"1.0.20", "1.0.21", "1.0.22"}
+	sampleCertDownloadTemplate   = "https://hpvsvpcubuntu.s3.us.cloud-object-storage.appdomain.cloud/s390x-{{.Patch}}/ibm-hyper-protect-container-runtime-{{.Major}}-{{.Minor}}-s390x-{{.Patch}}-encrypt.crt"
 )
 
 // Testcase to check if GetEncryptionCertificateFromJson() gets encryption certificate as per version constraint
@@ -32,27 +33,27 @@ func TestGetEncryptionCertificateFromJson(t *testing.T) {
 
 // Testcase to check if DownloadEncryptionCertificates() is able to download encryption certificates as per constraint
 func TestDownloadEncryptionCertificates(t *testing.T) {
-	certs, err := HpcrDownloadEncryptionCertificates(sampleEncryptionCertVersions)
+	certs, err := HpcrDownloadEncryptionCertificates(sampleEncryptionCertVersions, "")
 	if err != nil {
 		t.Errorf("failed to download HPCR encryption certificates - %v", err)
 	}
 
-	assert.Contains(t, certs, "1.0.13")
+	assert.Contains(t, certs, "1.0.22")
 }
 
 // Testcase to check both DownloadEncryptionCertificates() and GetEncryptionCertificateFromJson() together
 func TestCombined(t *testing.T) {
-	certs, err := HpcrDownloadEncryptionCertificates(sampleEncryptionCertVersions)
+	certs, err := HpcrDownloadEncryptionCertificates(sampleEncryptionCertVersions, sampleCertDownloadTemplate)
 	if err != nil {
 		t.Errorf("failed to download HPCR encryption certificates - %v", err)
 	}
 
-	version := "> 1.0.14"
+	version := "> 1.0.20"
 
 	key, _, err := HpcrGetEncryptionCertificateFromJson(certs, version)
 	if err != nil {
 		t.Errorf("failed to get encryption certificate from JSON - %v", err)
 	}
 
-	assert.Equal(t, key, "1.0.15")
+	assert.Equal(t, key, "1.0.22")
 }
