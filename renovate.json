@@ -1,21 +1,21 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:base",
+    "config:recommended",
     ":dependencyDashboard"
   ],
   "rangeStrategy": "bump",
   "packageRules": [
-        {
-            "matchManagers": [
-                "gomod"
-            ],
-            "matchDepTypes": [
-                "golang"
-            ],
-            "enabled": false
-        },
-        {
+    {
+      "matchManagers": [
+        "gomod"
+      ],
+      "matchDepTypes": [
+        "golang"
+      ],
+      "enabled": false
+    },
+    {
       "matchUpdateTypes": [
         "major",
         "minor",
