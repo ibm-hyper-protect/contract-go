@@ -1,0 +1,10 @@
+env:
+  type: env
+  logging:
+    logRouter:
+      hostname: 5c2d6b69-c7f0-41bd-b69b-240695369d6e.ingress.us-south.logs.cloud.ibm.com
+      iamApiKey: ab00e3c09p1d4ff7fff9f04c12183413
+workload:
+  type: workload
+  compose:
+    archive: kdsbfoijdfojsnbo
