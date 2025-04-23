@@ -44,7 +44,7 @@ func main() {
 
 #### Input(s)
 1. List of versions to download (eg: ["1.1.14", "1.1.15"])
-2. Encryption certificate URL Template (default to https://hpvsvpcubuntu.s3.us.cloud-object-storage.appdomain.cloud/s390x-{{.Patch}}/ibm-hyper-protect-container-runtime-{{.Major}}-{{.Minor}}-s390x-{{.Patch}}-encrypt.crt)
+2. Encryption certificate URL Template (default to `https://hpvsvpcubuntu.s3.us.cloud-object-storage.appdomain.cloud/s390x-{{.Patch}}/ibm-hyper-protect-container-runtime-{{.Major}}-{{.Minor}}-s390x-{{.Patch}}-encrypt.crt`)
 
 #### Output(s)
 1. Certificates and versions as JSON string
