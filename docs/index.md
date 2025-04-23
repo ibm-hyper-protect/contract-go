@@ -2,9 +2,7 @@
 
 ## Introduction
 
-The library has been developed to simply the process for provisioning Hyper Protect Virtual Servers for VPC and Hyper Protect Container Runtime.
-
-For more details on Hyper Protect Virtual Servers for VPC and Hyper Protect Container Runtime, refer [Confidential computing with LinuxONE](https://cloud.ibm.com/docs/vpc?topic=vpc-about-se) and [IBM Hyper Protect Virtual Servers](https://www.ibm.com/docs/en/hpvs/2.2.x).
+The library has been developed to automate the process for provisioning Hyper Protect Virtual Servers for VPC and Hyper Protect Container Runtime.
 
 
 ## Usage
