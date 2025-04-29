@@ -1,7 +1,8 @@
 # Contract Go
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/ibm-hyper-protect/contract-go.svg)](https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go)
 [![contract-go CI](https://github.com/ibm-hyper-protect/contract-go/actions/workflows/build.yml/badge.svg)](https://github.com/ibm-hyper-protect/contract-go/actions/workflows/build.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/ibm-hyper-protect/contract-go.svg)](https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ibm-hyper-protect/contract-go)](https://goreportcard.com/report/ibm-hyper-protect/contract-go)
 
 
 ## Introduction
@@ -18,6 +19,7 @@ For more details on Hyper Protect Virtual Servers for VPC and Hyper Protect Cont
 4. Generate IBM Hyper Protect encrypted string.
 5. Generate IBM Hyper Protect signed and encrypted contract (With and without contract expiry).
 6. Generate Base64 tar of `docker-compose.yaml` or `pods.yaml`.
+7. Get latest HPCR Image from IBM Cloud Image JSON data.
 
 ## Usage
 
