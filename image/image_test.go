@@ -26,6 +26,8 @@ import (
 
 const (
 	ibmCloudImageListPathTerraform = "../samples/image/terraform_image.json"
+	ibmCloudImageListPathCli       = "../samples/image/cli_image.json"
+	ibmCloudImageListPathApi       = "../samples/image/api_image.json"
 	sampleVersion                  = "1.0.22"
 
 	sampleArchitecture = "s390x"
@@ -38,8 +40,42 @@ const (
 )
 
 // Testcase to check SelectImage() is able to fetch the latest hyper protect image
-func TestSelectImage(t *testing.T) {
+func TestSelectImageTerraform(t *testing.T) {
 	imageJsonList, err := gen.ReadDataFromFile(ibmCloudImageListPathTerraform)
+	if err != nil {
+		t.Errorf("failed to read data from file - %v", err)
+	}
+
+	imageId, imageName, imageChecksum, ImageVersion, err := HpcrSelectImage(imageJsonList, sampleVersion)
+	if err != nil {
+		t.Errorf("failed to select HPCR image - %v", err)
+	}
+
+	assert.Equal(t, imageId, sampleId)
+	assert.Equal(t, imageName, sampleName)
+	assert.Equal(t, imageChecksum, sampleChecksum)
+	assert.Equal(t, ImageVersion, sampleVersion)
+}
+
+func TestSelectImageCli(t *testing.T) {
+	imageJsonList, err := gen.ReadDataFromFile(ibmCloudImageListPathCli)
+	if err != nil {
+		t.Errorf("failed to read data from file - %v", err)
+	}
+
+	imageId, imageName, imageChecksum, ImageVersion, err := HpcrSelectImage(imageJsonList, sampleVersion)
+	if err != nil {
+		t.Errorf("failed to select HPCR image - %v", err)
+	}
+
+	assert.Equal(t, imageId, sampleId)
+	assert.Equal(t, imageName, sampleName)
+	assert.Equal(t, imageChecksum, sampleChecksum)
+	assert.Equal(t, ImageVersion, sampleVersion)
+}
+
+func TestSelectImageApi(t *testing.T) {
+	imageJsonList, err := gen.ReadDataFromFile(ibmCloudImageListPathApi)
 	if err != nil {
 		t.Errorf("failed to read data from file - %v", err)
 	}
@@ -61,7 +97,7 @@ func TestIsCandidateImage(t *testing.T) {
 		Architecture: sampleArchitecture,
 		ID:           sampleId,
 		Name:         sampleName,
-		OS:           sampleOs,
+		Os:           sampleOs,
 		Status:       sampleStatus,
 		Visibility:   sampleVisibility,
 		Checksum:     sampleChecksum,
