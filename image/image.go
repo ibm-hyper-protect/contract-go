@@ -28,13 +28,28 @@ import (
 
 type (
 	Image struct {
-		Architecture string `json:"architecture"`
-		ID           string `json:"id"`
+		ID           string      `json:"id"`
+		Name         string      `json:"name"`
+		Status       string      `json:"status"`
+		Visibility   string      `json:"visibility"`
+		Architecture string      `json:"architecture"`
+		Os           string      `json:"os"`
+		File         *File       `json:"file,omitempty"`
+		Checksum     string      `json:"checksum"`
+		OSRaw        interface{} `json:"operating_system"`
+	}
+
+	File struct {
+		Checksums Checksums `json:"checksums"`
+	}
+
+	Checksums struct {
+		Sha256 string `json:"sha256"`
+	}
+
+	OperatingSystem struct {
 		Name         string `json:"name"`
-		OS           string `json:"os"`
-		Status       string `json:"status"`
-		Visibility   string `json:"visibility"`
-		Checksum     string `json:"checksum"`
+		Architecture string `json:"architecture"`
 	}
 
 	ImageVersion struct {
@@ -73,6 +88,36 @@ func HpcrSelectImage(imageJsonData, versionSpec string) (string, string, string,
 	}
 
 	for _, image := range images {
+		switch data := image.OSRaw.(type) {
+		case map[string]interface{}:
+			osJson, _ := json.Marshal(data)
+			var os OperatingSystem
+			_ = json.Unmarshal(osJson, &os)
+
+			if image.Architecture == "" {
+				image.Architecture = os.Architecture
+			}
+			if image.Os == "" {
+				image.Os = os.Name
+			}
+		case []interface{}:
+			if len(data) > 0 {
+				osJson, _ := json.Marshal(data[0])
+				var os OperatingSystem
+				_ = json.Unmarshal(osJson, &os)
+				if image.Architecture == "" {
+					image.Architecture = os.Architecture
+				}
+				if image.Os == "" {
+					image.Os = os.Name
+				}
+			}
+		}
+
+		if image.Checksum == "" && image.File != nil {
+			image.Checksum = image.File.Checksums.Sha256
+		}
+
 		if IsCandidateImage(image) {
 			versionRegex := reHyperProtectName.FindStringSubmatch(image.Name)
 			hyperProtectImages = append(hyperProtectImages, ImageVersion{
@@ -89,7 +134,7 @@ func HpcrSelectImage(imageJsonData, versionSpec string) (string, string, string,
 
 // IsCandidateImage - function to check if image JSON data belong to Hyper Protect Image
 func IsCandidateImage(img Image) bool {
-	return img.Architecture == "s390x" && img.Status == "available" && img.Visibility == "public" && reHyperProtectOS.MatchString(img.OS) && reHyperProtectName.MatchString(img.Name)
+	return img.Architecture == "s390x" && img.Status == "available" && img.Visibility == "public" && reHyperProtectOS.MatchString(img.Os) && reHyperProtectName.MatchString(img.Name)
 }
 
 // PickLatestImage - function to pick the latest Hyper Protect Image
