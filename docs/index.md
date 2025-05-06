@@ -71,6 +71,36 @@ func main() {
 3. Error (If any)
 
 
+### HpcrSelectImage()
+This function selects the latest HPCR image details from image list out from IBM Cloud images API.
+
+### Example
+```go
+import "github.com/ibm-hyper-protect/contract-go/image"
+
+func main() {
+    imageId, imageName, imageChecksum, ImageVersion, err := HpcrSelectImage(imageJsonList, version)
+}
+```
+
+#### Input(s)
+1. Image JSON from IBM Cloud images from Terraform, API or CLI. The input can be as follows:-
+    1. Terraform `ibmcloud is images`: The input should be output of `data.ibm_is_images.hyper_protect_images.images`.
+    2. IBM Cloud API: The result of following command should be input:
+        ```bash
+        curl -X GET "https://<region>.cloud.ibm.com/v1/images?version=2022-09-13&generation=2"  -H "Authorization: Bearer <token>" -H "Content-Type: application/json" | jq .images
+        ```
+    3. IBM CLI output: The input should be output of `ibmcloud is images --json`.
+2. version to select (optional)
+
+#### Output(s)
+1. Image ID
+2. Image name
+3. Image checksum
+4. Image version
+5. Error (If any)
+
+
 ### HpcrText()
 This function generates Base64 for given string.
 
@@ -290,27 +320,3 @@ The CSR parameters should be of the format:-
 2. Checksum of input
 3. Checksum of output
 4. Error (If any)
-
-
-### HpcrSelectImage()
-This function selects the latest HPCR image details from image list out from IBM Cloud images API.
-
-### Example
-```go
-import "github.com/ibm-hyper-protect/contract-go/image"
-
-func main() {
-    imageId, imageName, imageChecksum, ImageVersion, err := HpcrSelectImage(imageJsonList, version)
-}
-```
-
-#### Input(s)
-1. Image JSON from IBM Cloud images API
-2. version to select (optional)
-
-#### Output(s)
-1. Image ID
-2. Image name
-3. Image checksum
-4. Image version
-5. Error (If any)

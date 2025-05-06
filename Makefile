@@ -9,3 +9,6 @@ test-cover:
 
 update-packages:
 	go get -u all
+
+tidy:
+	go mod tidy
