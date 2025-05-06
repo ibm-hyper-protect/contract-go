@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	certificateUrl       = "https://cloud.ibm.com/media/docs/downloads/hyper-protect-container-runtime/ibm-hyper-protect-container-runtime-1-0-s390x-15-encrypt.crt"
+	certificateUrl       = "https://hpvsvpcubuntu.s3.us.cloud-object-storage.appdomain.cloud/s390x-22/ibm-hyper-protect-container-runtime-1-0-s390x-22-encrypt.crt"
 	simpleContractPath   = "../../samples/simple_contract.yaml"
 	samplePrivateKeyPath = "../../samples/contract-expiry/private.pem"
 	sampleCaCertPath     = "../../samples/contract-expiry/personal_ca.crt"
