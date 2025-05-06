@@ -25,21 +25,21 @@ import (
 )
 
 const (
-	ibmCloudImageListPath = "../samples/image.json"
-	sampleVersion         = "1.0.8"
+	ibmCloudImageListPathTerraform = "../samples/image/terraform_image.json"
+	sampleVersion                  = "1.0.22"
 
 	sampleArchitecture = "s390x"
-	sampleId           = "r042-45544dce-eff3-42dc-b149-6a33c2764e2d"
-	sampleName         = "ibm-hyper-protect-container-runtime-1-0-s390x-8"
+	sampleId           = "r006-2b8ba093-c8a3-4ed9-9b73-f6f0bb18d6f9"
+	sampleName         = "ibm-hyper-protect-container-runtime-1-0-s390x-22"
 	sampleOs           = "hyper-protect-1-0-s390x-hpcr"
 	sampleStatus       = "available"
 	sampleVisibility   = "public"
-	sampleChecksum     = "8c14f9676e727f21b31e6b0131d561b85b694cec050a7461d57e8fe8d94a70b8"
+	sampleChecksum     = "489a0c4b84a7bd1aa3f06cd1280717bd1eb91fccbf85e77b0b7c6a8374bab2c7"
 )
 
 // Testcase to check SelectImage() is able to fetch the latest hyper protect image
 func TestSelectImage(t *testing.T) {
-	imageJsonList, err := gen.ReadDataFromFile(ibmCloudImageListPath)
+	imageJsonList, err := gen.ReadDataFromFile(ibmCloudImageListPathTerraform)
 	if err != nil {
 		t.Errorf("failed to read data from file - %v", err)
 	}
