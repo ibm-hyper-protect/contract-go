@@ -22,11 +22,15 @@ import (
 	"text/template"
 
 	gen "github.com/ibm-hyper-protect/contract-go/common/general"
+	"gopkg.in/yaml.v3"
 )
 
 const (
 	defaultEncCertUrlTemplate    = "https://hpvsvpcubuntu.s3.us.cloud-object-storage.appdomain.cloud/s390x-{{.Patch}}/ibm-hyper-protect-container-runtime-{{.Major}}-{{.Minor}}-s390x-{{.Patch}}-encrypt.crt"
 	missingParameterErrStatement = "required parameter is missing"
+	formatJson                   = "json"
+	formatYaml                   = "yaml"
+	defaultFormat                = formatJson
 )
 
 type CertSpec struct {
@@ -45,9 +49,13 @@ func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version str
 }
 
 // HpcrDownloadEncryptionCertificates - function to download encryption certificates for specified versions
-func HpcrDownloadEncryptionCertificates(versionList []string, certDownloadUrlTemplate string) (string, error) {
+func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDownloadUrlTemplate string) (string, error) {
 	if certDownloadUrlTemplate == "" {
 		certDownloadUrlTemplate = defaultEncCertUrlTemplate
+	}
+
+	if formatType == "" {
+		formatType = defaultFormat
 	}
 
 	if gen.CheckIfEmpty(versionList) {
@@ -88,10 +96,20 @@ func HpcrDownloadEncryptionCertificates(versionList []string, certDownloadUrlTem
 		verCertMap[version] = cert
 	}
 
-	jsonBytes, err := json.Marshal(verCertMap)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal JSON - %v", err)
-	}
+	if formatType == formatJson {
+		jsonBytes, err := json.Marshal(verCertMap)
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal JSON - %v", err)
+		}
 
-	return string(jsonBytes), nil
+		return string(jsonBytes), nil
+	} else if formatType == formatYaml {
+		yamlBytes, err := yaml.Marshal(verCertMap)
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal YAML - %v", err)
+		}
+		return string(yamlBytes), nil
+	} else {
+		return "", fmt.Errorf("invalid output format")
+	}
 }
