@@ -84,4 +84,21 @@ jobs:
           npx -p conventional-changelog-conventionalcommits -p semantic-release semantic-release --dry-run ${{env.DRY_RUN}}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
+      
+      # Install cyclonedx for SBOM
+      - name: Install cyclonedx-gomod
+        run: |
+          go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@latest
+          echo "$HOME/go/bin" >> $GITHUB_PATH
+      
+      - name: Generate SBOM
+        run: |
+          cyclonedx-gomod mod -licenses -json -output contract-go.sbom.json
+      
+      - name: Check for GitHub Release and upload SBOM
+        if: env.DRY_RUN != 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: contract-go.sbom.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
