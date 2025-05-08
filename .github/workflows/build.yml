@@ -115,7 +115,7 @@ jobs:
           name: contract-go.sbom
 
       - name: Upload SBOM to GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: contract-go.sbom.json
         env:
