@@ -48,7 +48,7 @@ func TestGetEncryptionCertificateFromJson(t *testing.T) {
 
 // Testcase to check if DownloadEncryptionCertificates() is able to download encryption certificates as per constraint
 func TestDownloadEncryptionCertificates(t *testing.T) {
-	certs, err := HpcrDownloadEncryptionCertificates(sampleEncryptionCertVersions, "")
+	certs, err := HpcrDownloadEncryptionCertificates(sampleEncryptionCertVersions, "", "")
 	if err != nil {
 		t.Errorf("failed to download HPCR encryption certificates - %v", err)
 	}
@@ -58,7 +58,7 @@ func TestDownloadEncryptionCertificates(t *testing.T) {
 
 // Testcase to check both DownloadEncryptionCertificates() and GetEncryptionCertificateFromJson() together
 func TestCombined(t *testing.T) {
-	certs, err := HpcrDownloadEncryptionCertificates(sampleEncryptionCertVersions, sampleCertDownloadTemplate)
+	certs, err := HpcrDownloadEncryptionCertificates(sampleEncryptionCertVersions, "", sampleCertDownloadTemplate)
 	if err != nil {
 		t.Errorf("failed to download HPCR encryption certificates - %v", err)
 	}
