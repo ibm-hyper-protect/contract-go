@@ -96,10 +96,19 @@ jobs:
         run: |
           cyclonedx-gomod mod -licenses -json -output contract-go.sbom.json
 
+      # Get the latest Git tag (created by semantic-release)
+      - name: Get latest Git tag
+        id: get_tag
+        run: |
+          tag=$(git describe --tags --abbrev=0)
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+
+      # Upload SBOM to GitHub Release
       - name: Upload SBOM to GitHub Release
         if: env.DRY_RUN != 'true'
         uses: softprops/action-gh-release@v1
         with:
           files: contract-go.sbom.json
+          tag_name: ${{ steps.get_tag.outputs.tag }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
