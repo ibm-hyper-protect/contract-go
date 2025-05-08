@@ -74,16 +74,6 @@ jobs:
           go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@latest
           echo "$HOME/go/bin" >> $GITHUB_PATH
 
-      - name: Generate SBOM
-        run: |
-          cyclonedx-gomod mod -licenses -json -output contract-go.sbom.json
-
-      - name: Upload SBOM artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: contract-go.sbom
-          path: contract-go.sbom.json
-
       # The dry-run evaluation is only made for non PR events. Manual trigger w/dryRun true, main branch and any tagged branches will set DRY run to false
       - name: Check dry run
         run: |
@@ -101,21 +91,14 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  upload-sbom:
-    needs: release
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Download SBOM artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: contract-go.sbom
+      - name: Generate SBOM
+        if: env.DRY_RUN != 'true'
+        run: |
+          cyclonedx-gomod mod -licenses -json -output contract-go.sbom.json
 
       - name: Upload SBOM to GitHub Release
-        uses: softprops/action-gh-release@v2
+        if: env.DRY_RUN != 'true'
+        uses: softprops/action-gh-release@v1
         with:
           files: contract-go.sbom.json
         env:
