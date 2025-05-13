@@ -106,7 +106,7 @@ jobs:
       # Upload SBOM to GitHub Release
       - name: Upload SBOM to GitHub Release
         if: env.DRY_RUN != 'true'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: contract-go.sbom.json
           tag_name: ${{ steps.get_tag.outputs.tag }}
