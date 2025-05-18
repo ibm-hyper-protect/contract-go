@@ -20,4 +20,7 @@ import (
 )
 
 //go:embed hpse-contract-schema.json
-var ContractSchema string
+var ContractSchemaHpvs string
+
+//go:embed hpse-contract-schema.json
+var ContractSchemaHpcrRhvs string
