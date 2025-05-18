@@ -42,7 +42,9 @@ import (
 
 const (
 	TempFolderNamePrefix = "hpvs-"
-	HyperProtectOsUbuntu = "ubuntu"
+
+	HyperProtectOsHpvs     = "hpvs"
+	HyperProtectOsHpcrRhvs = "hpcr-rhvs"
 )
 
 // CheckIfEmpty - function to check if given arguments are not empty
@@ -295,18 +297,20 @@ func GetDataFromLatestVersion(jsonData, version string) (string, string, error) 
 }
 
 // FetchEncryptionCertificate - function to get encryption certificate
-func FetchEncryptionCertificate(version, encryptionCertificate string) string {
+func FetchEncryptionCertificate(version, encryptionCertificate string) (string, error) {
 	if version == "" {
-		version = HyperProtectOsUbuntu
+		version = HyperProtectOsHpvs
 	}
 
 	if encryptionCertificate != "" {
-		return encryptionCertificate
+		return encryptionCertificate, nil
 	} else {
-		if version == HyperProtectOsUbuntu {
-			return cert.EncryptionCertificateUbuntu
+		if version == HyperProtectOsHpvs {
+			return cert.EncryptionCertificateHpvs, nil
+		} else if version == HyperProtectOsHpcrRhvs {
+			return cert.EncryptionCertificateHpcrRhvs, nil
 		} else {
-			return cert.EncryptionCertificateRhel
+			return "", fmt.Errorf("invalid Hyper Protect version")
 		}
 	}
 }
@@ -369,13 +373,18 @@ func GenerateTgzBase64(folderFilesPath []string) (string, error) {
 }
 
 // VerifyContractWithSchema - function to verify if contract matches schema
-func VerifyContractWithSchema(contract string) error {
+func VerifyContractWithSchema(contract, version string) error {
 	jsonData, err := YamlToJson(contract)
 	if err != nil {
 		return fmt.Errorf("error converting YAML to JSON - %v", err)
 	}
 
-	schema, err := gojsonschema.NewSchema(gojsonschema.NewBytesLoader([]byte(sch.ContractSchema)))
+	contractSchema, err := fetchContractSchema(version)
+	if err != nil {
+		return fmt.Errorf("error fetching contract schema")
+	}
+
+	schema, err := gojsonschema.NewSchema(gojsonschema.NewBytesLoader([]byte(contractSchema)))
 	if err != nil {
 		return fmt.Errorf("failed to parse schema - %v", err)
 	}
@@ -399,5 +408,16 @@ func VerifyContractWithSchema(contract string) error {
 		}
 
 		return fmt.Errorf("validation failed - %s", consolidatedErrors.String())
+	}
+}
+
+// fetchContractSchema - function that returns contract schema according to hyper protect version
+func fetchContractSchema(version string) (string, error) {
+	if version == HyperProtectOsHpvs || version == "" {
+		return sch.ContractSchemaHpvs, nil
+	} else if version == HyperProtectOsHpcrRhvs {
+		return sch.ContractSchemaHpcrRhvs, nil
+	} else {
+		return "", fmt.Errorf("invalid Hyper Protect version")
 	}
 }
