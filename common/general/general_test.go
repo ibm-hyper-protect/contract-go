@@ -47,7 +47,7 @@ const (
 
 	sampleComposeFolder = "../../samples/tgz"
 
-	hyperProtectOs = "ubuntu"
+	hyperProtectOs = "hpvs"
 )
 
 // Testcase to check if CheckIfEmpty() is able to identify empty variables
@@ -255,9 +255,12 @@ func TestGetDataFromLatestVersion(t *testing.T) {
 
 // Testcase to check if FetchEncryptionCertificate() fetches encryption certificate
 func TestFetchEncryptionCertificate(t *testing.T) {
-	result := FetchEncryptionCertificate(hyperProtectOs, "")
+	result, err := FetchEncryptionCertificate(hyperProtectOs, "")
+	if err != nil {
+		t.Errorf("failed to fetch encryption certificate - %v", err)
+	}
 
-	assert.Equal(t, result, cert.EncryptionCertificateUbuntu)
+	assert.Equal(t, result, cert.EncryptionCertificateHpvs)
 }
 
 // Testcase to check if TestGenerateTgzBase64() is able generate base64 of compose tgz
@@ -281,8 +284,17 @@ func TestVerifyContractWithSchema(t *testing.T) {
 		t.Errorf("failed to read contract - %v", err)
 	}
 
-	err = VerifyContractWithSchema(contract)
+	err = VerifyContractWithSchema(contract, "")
 	if err != nil {
 		t.Errorf("schema verification failed - %v", err)
 	}
+}
+
+func TestFetchContractSchema(t *testing.T) {
+	result, err := fetchContractSchema("")
+	if err != nil {
+		t.Errorf("failed to fetch contract schema - %v", err)
+	}
+
+	assert.NotEmpty(t, result)
 }

@@ -56,7 +56,7 @@ const (
 	sampleCeCsrPath          = "../samples/contract-expiry/csr.pem"
 	sampleContractExpiryDays = 365
 
-	sampleHyperProtectOsVersion = "ubuntu"
+	sampleHyperProtectOsVersion = "hpvs"
 )
 
 var (
@@ -83,7 +83,9 @@ func common(testType string) (string, string, string, string, string, error) {
 		return "", "", "", "", "", err
 	}
 
-	if testType == "TestHpcrContractSignedEncrypted" {
+	if testType == "TestHpcrVerifyContract" {
+		return contract, "", "", "", "", nil
+	} else if testType == "TestHpcrContractSignedEncrypted" {
 		return contract, privateKey, "", "", "", nil
 	} else if testType == "TestEncryptWrapper" {
 		publicKey, err := gen.ReadDataFromFile(samplePublicKeyPath)
@@ -170,6 +172,7 @@ func TestHpcrTgz(t *testing.T) {
 	assert.Equal(t, inputSha256, sampleComposeFolderChecksum)
 }
 
+// Testcase to check if HpcrTgzEncrypted() is able to generate encrypted base64 of tar.tgz
 func TestHpcrTgzEncrypted(t *testing.T) {
 	result, inputSha256, _, err := HpcrTgzEncrypted(sampleComposeFolderPath, sampleHyperProtectOsVersion, "")
 	if err != nil {
@@ -178,6 +181,19 @@ func TestHpcrTgzEncrypted(t *testing.T) {
 
 	assert.Contains(t, result, hpcrEncryptPrefix)
 	assert.Equal(t, inputSha256, sampleComposeFolderChecksum)
+}
+
+// Testcase to check if HpcrVerifyContract() is able to verify contract
+func TestHpcrVerifyContract(t *testing.T) {
+	contract, _, _, _, _, err := common(t.Name())
+	if err != nil {
+		t.Errorf("failed to get contract - %v", err)
+	}
+
+	err = HpcrVerifyContract(contract, "")
+	if err != nil {
+		t.Errorf("failed to verify contract schema - %v", err)
+	}
 }
 
 // Testcase to check if HpcrContractSignedEncrypted() is able to generate
@@ -239,14 +255,14 @@ func TestHpcrContractSignedEncryptedContractExpiryCsrPem(t *testing.T) {
 	assert.Equal(t, inputSha256, simpleContractInputChecksum)
 }
 
-// Testcase to check if EncryptWrapper() is able to sign and encrypt a contract
+// Testcase to check if encryptWrapper() is able to sign and encrypt a contract
 func TestEncryptWrapper(t *testing.T) {
 	contract, privateKey, publicKey, _, _, err := common("TestEncryptWrapper")
 	if err != nil {
 		t.Errorf("failed to get contract, private key and public key - %v", err)
 	}
 
-	result, err := EncryptWrapper(contract, sampleHyperProtectOsVersion, "", privateKey, publicKey)
+	result, err := encryptWrapper(contract, sampleHyperProtectOsVersion, "", privateKey, publicKey)
 	if err != nil {
 		t.Errorf("failed to sign and encrypt contract - %v", err)
 	}
@@ -254,9 +270,9 @@ func TestEncryptWrapper(t *testing.T) {
 	assert.NotEmpty(t, result)
 }
 
-// Testcase to check if Encrypter() is able to encrypt and generate SHA256 from string
+// Testcase to check if encrypter() is able to encrypt and generate SHA256 from string
 func TestEncrypter(t *testing.T) {
-	result, err := Encrypter(sampleStringJson, sampleHyperProtectOsVersion, "")
+	result, err := encrypter(sampleStringJson, sampleHyperProtectOsVersion, "")
 	if err != nil {
 		t.Errorf("failed to encrypt contract - %v", err)
 	}

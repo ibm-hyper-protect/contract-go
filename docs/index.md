@@ -138,7 +138,7 @@ func main() {
 
 #### Input(s)
 1. Text to encrypt
-2. Hyper Protect OS (ubuntu or rhel) (optional)
+2. Hyper Protect OS (hpvs or hpcr-rhvs) (optional)
 3. Encryption certificate (optional)
 
 #### Output(s)
@@ -184,7 +184,7 @@ func main() {
 
 #### Input(s)
 1. JSON text to encrypt
-2. Hyper Protect OS (ubuntu or rhel) (optional)
+2. Hyper Protect OS (hpvs or hpcr-rhvs) (optional)
 3. Encryption certificate (optional)
 
 #### Output(s)
@@ -230,7 +230,7 @@ func main() {
 
 #### Input(s)
 1. Path of folder
-2. Hyper Protect OS (ubuntu or rhel) (optional)
+2. Hyper Protect OS (hpvs or hpcr-rhvs) (optional)
 3. Encryption certificate (optional)
 
 #### Output(s)
@@ -254,7 +254,7 @@ func main() {
 
 #### Input(s)
 1. Contract
-2. Hyper Protect OS (ubuntu or rhel) (optional)
+2. Hyper Protect OS (hpvs or hpcr-rhvs) (optional)
 3. Encryption certificate (optional)
 4. Private Key for signing
 
@@ -263,6 +263,26 @@ func main() {
 2. Checksum of input
 3. Checksum of output
 4. Error (If any)
+
+
+### HpcrVerifyContract()
+This function verifies if the parsed encrypted contract is schematically valid. The validation is successful, if error is nil.
+
+### Example
+```go
+import "github.com/ibm-hyper-protect/contract-go/contract"
+
+func main() {
+    err := HpcrVerifyContract(contract, HyperProtectOsType)
+}
+```
+
+#### Input(s)
+1. Contract
+2. Hyper Protect OS (hpvs or hpcr-rhvs) (optional)
+
+#### Output(s)
+1. Error (if any)
 
 
 ### HpcrContractSignedEncryptedContractExpiry()
@@ -293,7 +313,7 @@ func usingCsrPem() {
 
 #### Input(s)
 1. Contract
-2. Hyper Protect OS (ubuntu or rhel) (optional)
+2. Hyper Protect OS (hpvs or hpcr-rhvs) (optional)
 3. Encryption certificate (optional)
 4. Private Key for signing
 5. CA Certificate
