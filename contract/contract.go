@@ -56,7 +56,7 @@ func HpcrTextEncrypted(plainText, hyperProtectOs, encryptionCertificate string) 
 		return "", "", "", fmt.Errorf(emptyParameterErrStatement)
 	}
 
-	hpcrTextEncryptedStr, err := Encrypter(plainText, hyperProtectOs, encryptionCertificate)
+	hpcrTextEncryptedStr, err := encrypter(plainText, hyperProtectOs, encryptionCertificate)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to generate encrypted string - %v", err)
 	}
@@ -70,7 +70,7 @@ func HpcrJsonEncrypted(plainJson, hyperProtectOs, encryptionCertificate string) 
 		return "", "", "", fmt.Errorf("contract is not a JSON data")
 	}
 
-	hpcrJsonEncrypted, err := Encrypter(plainJson, hyperProtectOs, encryptionCertificate)
+	hpcrJsonEncrypted, err := encrypter(plainJson, hyperProtectOs, encryptionCertificate)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to generate encrypted JSON - %v", err)
 	}
@@ -112,7 +112,7 @@ func HpcrTgzEncrypted(folderPath, hyperProtectOs, encryptionCertificate string) 
 		return "", "", "", err
 	}
 
-	hpcrTgzEncryptedStr, err := Encrypter(tgzBase64, hyperProtectOs, encryptionCertificate)
+	hpcrTgzEncryptedStr, err := encrypter(tgzBase64, hyperProtectOs, encryptionCertificate)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to generate encrypted tgz - %v", err)
 	}
@@ -120,9 +120,14 @@ func HpcrTgzEncrypted(folderPath, hyperProtectOs, encryptionCertificate string) 
 	return hpcrTgzEncryptedStr, gen.GenerateSha256(folderPath), gen.GenerateSha256(hpcrTgzEncryptedStr), nil
 }
 
+// HpcrVerifyContract - function to verify contract schema
+func HpcrVerifyContract(contract, version string) error {
+	return gen.VerifyContractWithSchema(contract, version)
+}
+
 // HpcrContractSignedEncrypted - function to generate Signed and Encrypted contract
 func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate, privateKey string) (string, string, string, error) {
-	err := gen.VerifyContractWithSchema(contract)
+	err := HpcrVerifyContract(contract, hyperProtectOs)
 	if err != nil {
 		return "", "", "", fmt.Errorf("schema verification failed - %v", err)
 	}
@@ -131,14 +136,17 @@ func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate
 		return "", "", "", fmt.Errorf(emptyParameterErrStatement)
 	}
 
-	encryptCertificate := gen.FetchEncryptionCertificate(hyperProtectOs, encryptionCertificate)
+	encryptCertificate, err := gen.FetchEncryptionCertificate(hyperProtectOs, encryptionCertificate)
+	if err != nil {
+		return "", "", "", fmt.Errorf("failed to fetch encryption certificate - %v", err)
+	}
 
 	publicKey, err := enc.GeneratePublicKey(privateKey)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to generate public key - %v", err)
 	}
 
-	signedEncryptContract, err := EncryptWrapper(contract, hyperProtectOs, encryptCertificate, privateKey, publicKey)
+	signedEncryptContract, err := encryptWrapper(contract, hyperProtectOs, encryptCertificate, privateKey, publicKey)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to sign and encrypt contract - %v", err)
 	}
@@ -148,7 +156,7 @@ func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate
 
 // HpcrContractSignedEncryptedContractExpiry - function to generate sign with contract expiry enabled and encrypt contract (with CSR parameters and CSR file)
 func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encryptionCertificate, privateKey, cacert, caKey, csrDataStr, csrPemData string, expiryDays int) (string, string, string, error) {
-	err := gen.VerifyContractWithSchema(contract)
+	err := HpcrVerifyContract(contract, hyperProtectOs)
 	if err != nil {
 		return "", "", "", fmt.Errorf("schema verification failed - %v", err)
 	}
@@ -166,7 +174,7 @@ func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encrypt
 		return "", "", "", fmt.Errorf("failed to generate signing certificate - %v", err)
 	}
 
-	finalContract, err := EncryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey, signingCert)
+	finalContract, err := encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey, signingCert)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to generate signed and encrypted contract - %v", err)
 	}
@@ -174,17 +182,20 @@ func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encrypt
 	return finalContract, gen.GenerateSha256(contract), gen.GenerateSha256(finalContract), nil
 }
 
-// EncryptWrapper - wrapper function to sign (with and without contract expiry) and encrypt contract
-func EncryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey, publicKey string) (string, error) {
+// encryptWrapper - wrapper function to sign (with and without contract expiry) and encrypt contract
+func encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey, publicKey string) (string, error) {
 	if gen.CheckIfEmpty(contract, privateKey, publicKey) {
 		return "", fmt.Errorf(emptyParameterErrStatement)
 	}
 
 	var contractMap map[string]interface{}
 
-	encryptCertificate := gen.FetchEncryptionCertificate(hyperProtectOs, encryptionCertificate)
+	encryptCertificate, err := gen.FetchEncryptionCertificate(hyperProtectOs, encryptionCertificate)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch encryption certificate - %v", err)
+	}
 
-	err := yaml.Unmarshal([]byte(contract), &contractMap)
+	err = yaml.Unmarshal([]byte(contract), &contractMap)
 	if err != nil {
 		return "", fmt.Errorf("failed to unmarshal YAML - %v", err)
 	}
@@ -194,7 +205,7 @@ func EncryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey,
 		return "", fmt.Errorf("failed to convert MAP to YAML - %v", err)
 	}
 
-	encryptedWorkload, err := Encrypter(workloadData, hyperProtectOs, encryptCertificate)
+	encryptedWorkload, err := encrypter(workloadData, hyperProtectOs, encryptCertificate)
 	if err != nil {
 		return "", fmt.Errorf("failed to encrypt workload - %v", err)
 	}
@@ -204,7 +215,7 @@ func EncryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey,
 		return "", fmt.Errorf("failed to inject signingKey to env - %v", err)
 	}
 
-	encryptedEnv, err := Encrypter(updatedEnv, hyperProtectOs, encryptCertificate)
+	encryptedEnv, err := encrypter(updatedEnv, hyperProtectOs, encryptCertificate)
 	if err != nil {
 		return "", fmt.Errorf("failed to encrypt env - %v", err)
 	}
@@ -222,13 +233,16 @@ func EncryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey,
 	return finalContract, nil
 }
 
-// Encrypter - function to generate encrypted hyper protect data from plain string
-func Encrypter(stringText, hyperProtectOs, encryptionCertificate string) (string, error) {
+// encrypter - function to generate encrypted hyper protect data from plain string
+func encrypter(stringText, hyperProtectOs, encryptionCertificate string) (string, error) {
 	if gen.CheckIfEmpty(stringText) {
 		return "", fmt.Errorf(emptyParameterErrStatement)
 	}
 
-	encCert := gen.FetchEncryptionCertificate(hyperProtectOs, encryptionCertificate)
+	encCert, err := gen.FetchEncryptionCertificate(hyperProtectOs, encryptionCertificate)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch encryption certificate - %v", err)
+	}
 
 	password, err := enc.RandomPasswordGenerator()
 	if err != nil {
