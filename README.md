@@ -23,7 +23,7 @@ For more details on Hyper Protect Virtual Servers for VPC and Hyper Protect Cont
 
 ## Usage
 
-Refer [Docs](docs/index.md) for more details on how to leverage this library for your usecases.
+Refer [Docs](docs/README.md) for more details on how to leverage this library for your usecases.
 
 
 ## References
