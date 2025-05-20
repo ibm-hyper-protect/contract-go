@@ -216,6 +216,26 @@ func main() {
 4. Error (If any)
 
 
+### HpcrVerifyContract()
+This function verifies if the parsed encrypted contract is schematically valid. The validation is successful, if error is nil.
+
+### Example
+```go
+import "github.com/ibm-hyper-protect/contract-go/contract"
+
+func main() {
+    err := HpcrVerifyContract(contract, HyperProtectOsType)
+}
+```
+
+#### Input(s)
+1. Contract
+2. Hyper Protect OS (hpvs or hpcr-rhvs) (optional)
+
+#### Output(s)
+1. Error (if any)
+
+
 ### HpcrTgzEncrypted()
 This function first generates base64 of TGZ that contains files under the given folder and then encrypts the data as per `hyper-protect-basic.<encoded-encrypted-password>.<encoded-encrypted-data>`.
 
@@ -263,26 +283,6 @@ func main() {
 2. Checksum of input
 3. Checksum of output
 4. Error (If any)
-
-
-### HpcrVerifyContract()
-This function verifies if the parsed encrypted contract is schematically valid. The validation is successful, if error is nil.
-
-### Example
-```go
-import "github.com/ibm-hyper-protect/contract-go/contract"
-
-func main() {
-    err := HpcrVerifyContract(contract, HyperProtectOsType)
-}
-```
-
-#### Input(s)
-1. Contract
-2. Hyper Protect OS (hpvs or hpcr-rhvs) (optional)
-
-#### Output(s)
-1. Error (if any)
 
 
 ### HpcrContractSignedEncryptedContractExpiry()
