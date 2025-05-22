@@ -12,3 +12,5 @@ update-packages:
 
 tidy:
 	go mod tidy
+
+.PHONY: default test test-cover update-packages tidy

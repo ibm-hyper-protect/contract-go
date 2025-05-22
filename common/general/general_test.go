@@ -30,7 +30,9 @@ const (
 	simpleSampleText     = "Testing"
 	simpleSampleTextPath = "../../samples/simple_file.txt"
 
-	simpleContractPath     = "../../samples/simple_contract.yaml"
+	simpleContractPath        = "../../samples/simple_contract.yaml"
+	simpleInvalidContractPath = "../../samples/simple_contract_invalid.yaml"
+
 	certificateDownloadUrl = "https://cloud.ibm.com/media/docs/downloads/hyper-protect-container-runtime/ibm-hyper-protect-container-runtime-1-0-s390x-15-encrypt.crt"
 
 	sampleStringData   = "sashwatk"
@@ -46,8 +48,6 @@ const (
 	}`
 
 	sampleComposeFolder = "../../samples/tgz"
-
-	hyperProtectOs = "hpvs"
 )
 
 // Testcase to check if CheckIfEmpty() is able to identify empty variables
@@ -255,12 +255,19 @@ func TestGetDataFromLatestVersion(t *testing.T) {
 
 // Testcase to check if FetchEncryptionCertificate() fetches encryption certificate
 func TestFetchEncryptionCertificate(t *testing.T) {
-	result, err := FetchEncryptionCertificate(hyperProtectOs, "")
+	result, err := FetchEncryptionCertificate(HyperProtectOsHpvs, "")
 	if err != nil {
 		t.Errorf("failed to fetch encryption certificate - %v", err)
 	}
 
 	assert.Equal(t, result, cert.EncryptionCertificateHpvs)
+}
+
+func TestFetchEncryptionCertificateRhvs(t *testing.T) {
+	_, err := FetchEncryptionCertificate(HyperProtectOsHpcrRhvs, "")
+	if err != nil {
+		t.Errorf("failed to fetch encryption certificate - %v", err)
+	}
 }
 
 // Testcase to check if TestGenerateTgzBase64() is able generate base64 of compose tgz
@@ -290,8 +297,28 @@ func TestVerifyContractWithSchema(t *testing.T) {
 	}
 }
 
+func TestVerifyContractWithSchemaInvalid(t *testing.T) {
+	contract, err := ReadDataFromFile(simpleInvalidContractPath)
+	if err != nil {
+		t.Errorf("failed to read contract - %v", err)
+	}
+
+	err = VerifyContractWithSchema(contract, "")
+
+	assert.Error(t, err)
+}
+
 func TestFetchContractSchema(t *testing.T) {
 	result, err := fetchContractSchema("")
+	if err != nil {
+		t.Errorf("failed to fetch contract schema - %v", err)
+	}
+
+	assert.NotEmpty(t, result)
+}
+
+func TestFetchContractSchemaRhvs(t *testing.T) {
+	result, err := fetchContractSchema(HyperProtectOsHpcrRhvs)
 	if err != nil {
 		t.Errorf("failed to fetch contract schema - %v", err)
 	}
