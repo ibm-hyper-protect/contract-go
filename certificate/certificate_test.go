@@ -56,6 +56,14 @@ func TestDownloadEncryptionCertificates(t *testing.T) {
 	assert.Contains(t, certs, "1.0.22")
 }
 
+// Testcase to check if DownloadEncryptionCertificates() is able to download encryption certificates in YAML
+func TestDownloadEncryptionCertificatesYaml(t *testing.T) {
+	_, err := HpcrDownloadEncryptionCertificates(sampleEncryptionCertVersions, "yaml", "")
+	if err != nil {
+		t.Errorf("failed to download HPCR encryption certificates - %v", err)
+	}
+}
+
 // Testcase to check both DownloadEncryptionCertificates() and GetEncryptionCertificateFromJson() together
 func TestCombined(t *testing.T) {
 	certs, err := HpcrDownloadEncryptionCertificates(sampleEncryptionCertVersions, "", sampleCertDownloadTemplate)
