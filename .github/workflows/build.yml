@@ -38,9 +38,8 @@ jobs:
           go-version: ${{ matrix.go-version }}
       - name: Tests
         run: |
-          go mod tidy
-          go test -v ./...
-
+          make tidy
+          make test
   release:
     needs: [build]
     if: github.repository == 'ibm-hyper-protect/contract-go' && github.event_name != 'pull_request'
