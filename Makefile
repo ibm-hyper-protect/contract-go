@@ -1,7 +1,7 @@
 default: test
 
 test: 
-	go test ./...
+	go test ./... -v
 
 test-cover:
 	go test -coverprofile build/cover.out ./...
@@ -12,3 +12,8 @@ update-packages:
 
 tidy:
 	go mod tidy
+
+clean:
+	find ./build ! -name '.gitkeep' -type f -delete
+
+.PHONY: default test test-cover update-packages tidy clean
