@@ -1,7 +1,7 @@
 default: test
 
 test: 
-	go test ./...
+	go test ./... -v
 
 test-cover:
 	go test -coverprofile build/cover.out ./...
