@@ -64,6 +64,7 @@ func TestSelectImageTerraform(t *testing.T) {
 	assert.Equal(t, ImageVersion, sampleVersion)
 }
 
+// Testcase to check if HpcrSelectImage() is able to fetch latest HPCR image details from terraform output
 func TestSelectImageTerraformNoVersion(t *testing.T) {
 	imageJsonList, err := gen.ReadDataFromFile(ibmCloudImageListPathTerraform)
 	if err != nil {
@@ -81,6 +82,7 @@ func TestSelectImageTerraformNoVersion(t *testing.T) {
 	assert.Equal(t, ImageVersion, sampleLatestVersion)
 }
 
+// Testcase to check if HpcrSelectImage() is able to fetch latest HPCR image details from CLI output
 func TestSelectImageCli(t *testing.T) {
 	imageJsonList, err := gen.ReadDataFromFile(ibmCloudImageListPathCli)
 	if err != nil {
@@ -98,6 +100,7 @@ func TestSelectImageCli(t *testing.T) {
 	assert.Equal(t, ImageVersion, sampleVersion)
 }
 
+// Testcase to check if HpcrSelectImage() is able to fetch latest HPCR image details from API output
 func TestSelectImageApi(t *testing.T) {
 	imageJsonList, err := gen.ReadDataFromFile(ibmCloudImageListPathApi)
 	if err != nil {
@@ -154,6 +157,7 @@ func TestPickLatestImageWithVersion(t *testing.T) {
 	assert.Equal(t, imageVersion, sampleVersion)
 }
 
+// Testcase to check if PickLatestImage() is able to pick HPCR image details of specific version
 func TestPickLatestImageWithoutVersion(t *testing.T) {
 	version, err := semver.NewVersion(sampleVersion)
 	if err != nil {

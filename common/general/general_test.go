@@ -232,6 +232,7 @@ func TestGetEncryptPassWorkload(t *testing.T) {
 	assert.Equal(t, b, "k")
 }
 
+// Testcase to check if CheckUrlExists() is able to validate URL
 func TestCheckUrlExists(t *testing.T) {
 	result, err := CheckUrlExists(certificateDownloadUrl)
 	if err != nil {
@@ -241,6 +242,7 @@ func TestCheckUrlExists(t *testing.T) {
 	assert.Equal(t, result, true)
 }
 
+// Testcase to check if GetDataFromLatestVersion() is able to fetch latest version of encryption certificate
 func TestGetDataFromLatestVersion(t *testing.T) {
 	versionConstraints := ">= 1.0.0, <= 3.5.10"
 
@@ -263,6 +265,7 @@ func TestFetchEncryptionCertificate(t *testing.T) {
 	assert.Equal(t, result, cert.EncryptionCertificateHpvs)
 }
 
+// Testcase to check if FetchEncryptionCertificate() is able to fetch encryption certificate
 func TestFetchEncryptionCertificateRhvs(t *testing.T) {
 	_, err := FetchEncryptionCertificate(HyperProtectOsHpcrRhvs, "")
 	if err != nil {
@@ -285,6 +288,7 @@ func TestGenerateTgzBase64(t *testing.T) {
 	assert.NotEmpty(t, result)
 }
 
+// Testcase to check if VerifyContractWithSchema() is able to verify schema of contract
 func TestVerifyContractWithSchema(t *testing.T) {
 	contract, err := ReadDataFromFile(simpleContractPath)
 	if err != nil {
@@ -297,6 +301,7 @@ func TestVerifyContractWithSchema(t *testing.T) {
 	}
 }
 
+// Testcase to check if VerifyContractWithSchema() is able to throw error for invalid contract
 func TestVerifyContractWithSchemaInvalid(t *testing.T) {
 	contract, err := ReadDataFromFile(simpleInvalidContractPath)
 	if err != nil {
@@ -308,6 +313,7 @@ func TestVerifyContractWithSchemaInvalid(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// Testcase to check if fetchContractSchema() is able to fetch contract schema
 func TestFetchContractSchema(t *testing.T) {
 	result, err := fetchContractSchema("")
 	if err != nil {
@@ -317,6 +323,7 @@ func TestFetchContractSchema(t *testing.T) {
 	assert.NotEmpty(t, result)
 }
 
+// Testcase to check if fetchContractSchema() is able to fetch hpcr-rhvs contract schema
 func TestFetchContractSchemaRhvs(t *testing.T) {
 	result, err := fetchContractSchema(HyperProtectOsHpcrRhvs)
 	if err != nil {

@@ -13,4 +13,7 @@ update-packages:
 tidy:
 	go mod tidy
 
-.PHONY: default test test-cover update-packages tidy
+clean:
+	find ./build ! -name '.gitkeep' -type f -delete
+
+.PHONY: default test test-cover update-packages tidy clean

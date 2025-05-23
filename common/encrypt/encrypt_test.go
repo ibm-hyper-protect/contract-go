@@ -56,6 +56,7 @@ func TestOpensslCheck(t *testing.T) {
 	}
 }
 
+// Testcase to check if GeneratePublicKey() is able to generate public key
 func TestGeneratePublicKey(t *testing.T) {
 	privateKey, err := gen.ReadDataFromFile(simplePrivateKeyPath)
 	if err != nil {
