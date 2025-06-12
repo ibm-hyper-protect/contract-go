@@ -180,8 +180,8 @@ func YamlToJson(str string) (string, error) {
 }
 
 // EncodeToBase64 - function to encode string as base64
-func EncodeToBase64(input string) string {
-	return base64.StdEncoding.EncodeToString([]byte(input))
+func EncodeToBase64(input []byte) string {
+	return base64.StdEncoding.EncodeToString(input)
 }
 
 // DecodeBase64String - function to decode base64 string
@@ -320,10 +320,7 @@ func GenerateTgzBase64(folderFilesPath []string) (string, error) {
 	var buf bytes.Buffer
 
 	gw := gzip.NewWriter(&buf)
-	defer gw.Close()
-
 	tw := tar.NewWriter(gw)
-	defer tw.Close()
 
 	for _, path := range folderFilesPath {
 		err := filepath.Walk(path, func(filePath string, info os.FileInfo, err error) error {
@@ -331,7 +328,7 @@ func GenerateTgzBase64(folderFilesPath []string) (string, error) {
 				return err
 			}
 
-			relPath, err := filepath.Rel(path, filePath)
+			relPath, err := filepath.Rel(filepath.Dir(path), filePath)
 			if err != nil {
 				return err
 			}
@@ -340,6 +337,7 @@ func GenerateTgzBase64(folderFilesPath []string) (string, error) {
 			if err != nil {
 				return err
 			}
+			header.Name = relPath
 
 			if err := tw.WriteHeader(header); err != nil {
 				return err
@@ -356,7 +354,6 @@ func GenerateTgzBase64(folderFilesPath []string) (string, error) {
 					return err
 				}
 			}
-
 			return nil
 		})
 
@@ -365,11 +362,10 @@ func GenerateTgzBase64(folderFilesPath []string) (string, error) {
 		}
 	}
 
-	if err := gw.Flush(); err != nil {
-		return "", err
-	}
+	tw.Close()
+	gw.Close()
 
-	return EncodeToBase64(buf.String()), nil
+	return EncodeToBase64(buf.Bytes()), nil
 }
 
 // VerifyContractWithSchema - function to verify if contract matches schema
