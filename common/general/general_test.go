@@ -146,7 +146,7 @@ func TestIsJson(t *testing.T) {
 
 // Testcase to check if EncodeToBase64() can encode string to base64
 func TestEncodeToBase64(t *testing.T) {
-	result := EncodeToBase64(sampleStringData)
+	result := EncodeToBase64([]byte(sampleStringData))
 
 	assert.Equal(t, result, sampleBase64Data)
 }
