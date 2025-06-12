@@ -94,7 +94,7 @@ func EncryptPassword(password, cert string) (string, error) {
 		return "", fmt.Errorf("failed to remove file - %v", err)
 	}
 
-	return gen.EncodeToBase64(result), nil
+	return gen.EncodeToBase64([]byte(result)), nil
 }
 
 // EncryptContract - function to encrypt contract
@@ -129,7 +129,7 @@ func EncryptString(password, section string) (string, error) {
 		return "", fmt.Errorf("failed to remove temp file - %v", err)
 	}
 
-	return gen.EncodeToBase64(result), nil
+	return gen.EncodeToBase64([]byte(result)), nil
 }
 
 // EncryptFinalStr - function to get final encrypted section
@@ -199,7 +199,7 @@ func CreateSigningCert(privateKey, cacert, cakey, csrData, csrPemData string, ex
 		}
 	}
 
-	return gen.EncodeToBase64(signingCert), nil
+	return gen.EncodeToBase64([]byte(signingCert)), nil
 }
 
 // CreateCert - function to create signing certificate
@@ -236,7 +236,7 @@ func SignContract(encryptedWorkload, encryptedEnv, privateKey string) (string, e
 		return "", fmt.Errorf("failed to remove temp file - %v", err)
 	}
 
-	return gen.EncodeToBase64(workloadEnvSignature), nil
+	return gen.EncodeToBase64([]byte(workloadEnvSignature)), nil
 }
 
 // GenFinalSignedContract - function to generate the final contract
