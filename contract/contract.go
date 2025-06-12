@@ -34,7 +34,7 @@ func HpcrText(plainText string) (string, string, string, error) {
 		return "", "", "", fmt.Errorf(emptyParameterErrStatement)
 	}
 
-	hpcrTextStr := gen.EncodeToBase64(plainText)
+	hpcrTextStr := gen.EncodeToBase64([]byte(plainText))
 
 	return hpcrTextStr, gen.GenerateSha256(plainText), gen.GenerateSha256(hpcrTextStr), nil
 }
@@ -45,7 +45,7 @@ func HpcrJson(plainJson string) (string, string, string, error) {
 		return "", "", "", fmt.Errorf("not a JSON data")
 	}
 
-	hpcrJsonStr := gen.EncodeToBase64(plainJson)
+	hpcrJsonStr := gen.EncodeToBase64([]byte(plainJson))
 
 	return hpcrJsonStr, gen.GenerateSha256(plainJson), gen.GenerateSha256(hpcrJsonStr), nil
 }
@@ -210,7 +210,7 @@ func encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey,
 		return "", fmt.Errorf("failed to encrypt workload - %v", err)
 	}
 
-	updatedEnv, err := gen.KeyValueInjector(contractMap["env"].(map[string]interface{}), "signingKey", gen.EncodeToBase64(publicKey))
+	updatedEnv, err := gen.KeyValueInjector(contractMap["env"].(map[string]interface{}), "signingKey", gen.EncodeToBase64([]byte(publicKey)))
 	if err != nil {
 		return "", fmt.Errorf("failed to inject signingKey to env - %v", err)
 	}
