@@ -9,7 +9,7 @@ The library has been developed to automate the process for provisioning Hyper Pr
 
 ### HpcrGetAttestationRecords()
 This function decrypts encrypted attestation records.
- 
+
 ### Example
 ```go
 import "github.com/ibm-hyper-protect/contract-go/attestation"
