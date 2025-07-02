@@ -19,7 +19,6 @@ env:
   DEFAULT_BRANCH: main
   GO_VERSION: 1.22.4 # renovate: datasource=golang-version depName=golang
   NODE_VERSION: 20
-  DRY_RUN: true
 
 jobs:
   build:
@@ -32,16 +31,29 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Set up Go ${{ matrix.go-version }}
+
+      - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go-version }}
-      - name: Tests
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Run Tests
         run: |
           make tidy
           make test
+
   release:
-    needs: [build]
+    needs: build
     if: github.repository == 'ibm-hyper-protect/contract-go' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -51,8 +63,7 @@ jobs:
       pull-requests: write
 
     steps:
-      # full checkout for semantic-release
-      - name: Full checkout
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -67,44 +78,57 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
-      # Install cyclonedx for SBOM
+      - name: Cache Node modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: Install cyclonedx-gomod
         run: |
           go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@latest
           echo "$HOME/go/bin" >> $GITHUB_PATH
 
-      # The dry-run evaluation is only made for non PR events. Manual trigger w/dryRun true, main branch and any tagged branches will set DRY run to false
-      - name: Check dry run
+      - name: Determine dry run mode
+        id: dry_run
         run: |
-          if [[ "${{github.event_name}}" == "workflow_dispatch" && "${{ github.event.inputs.dryRun }}" != "true"  ]]; then
-              echo "DRY_RUN=false" >> $GITHUB_ENV
-          elif [[ "${{github.ref}}" == "refs/heads/${{env.DEFAULT_BRANCH}}" ]]; then
-            echo "DRY_RUN=false" >> $GITHUB_ENV
-          elif [[ "${{github.ref}}" =~ ^refs/heads/v[0-9]+(\.[0-9]+)?$ ]]; then
-            echo "DRY_RUN=false" >> $GITHUB_ENV
+          dry_run=true
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.dryRun }}" != "true" ]]; then
+            dry_run=false
+          elif [[ "${{ github.ref }}" == "refs/heads/${{ env.DEFAULT_BRANCH }}" ]]; then
+            dry_run=false
+          elif [[ "${{ github.ref }}" =~ ^refs/heads/v[0-9]+(\.[0-9]+)?$ ]]; then
+            dry_run=false
           fi
+          echo "dry_run=$dry_run" >> $GITHUB_OUTPUT
 
       - name: Semantic Release
         run: |
-          npx -p conventional-changelog-conventionalcommits -p semantic-release semantic-release --dry-run ${{env.DRY_RUN}}
+          npx -p @semantic-release/changelog \
+              -p @semantic-release/git \
+              -p @semantic-release/github \
+              -p conventional-changelog-conventionalcommits \
+              -p semantic-release \
+              semantic-release --dry-run ${{ steps.dry_run.outputs.dry_run }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate SBOM
-        if: env.DRY_RUN != 'true'
+        if: steps.dry_run.outputs.dry_run == 'false'
         run: |
           cyclonedx-gomod mod -licenses -json -output contract-go.sbom.json
 
-      # Get the latest Git tag (created by semantic-release)
       - name: Get latest Git tag
         id: get_tag
+        if: steps.dry_run.outputs.dry_run == 'false'
         run: |
           tag=$(git describe --tags --abbrev=0)
           echo "tag=$tag" >> $GITHUB_OUTPUT
 
-      # Upload SBOM to GitHub Release
       - name: Upload SBOM to GitHub Release
-        if: env.DRY_RUN != 'true'
+        if: steps.dry_run.outputs.dry_run == 'false'
         uses: softprops/action-gh-release@v2
         with:
           files: contract-go.sbom.json
