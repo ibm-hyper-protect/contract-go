@@ -8,5 +8,3 @@
 * add pull request template ([935eddc](https://github.com/ibm-hyper-protect/contract-go/commit/935eddc5c6c9e7851159509e49e2019686dbe611))
 * add security policy ([9e9c848](https://github.com/ibm-hyper-protect/contract-go/commit/9e9c848fbb66b10aeafb90ca3b44a1a866720044))
 * add support for CHANGELOG ([6619fb0](https://github.com/ibm-hyper-protect/contract-go/commit/6619fb0d38cc6a855c38400f5e3dae53dcdb66b1))
-
-# Changelog
