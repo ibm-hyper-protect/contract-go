@@ -115,11 +115,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate SBOM
-        if: steps.dry_run.outputs.dry_run == 'false'
-        run: |
-          cyclonedx-gomod mod -licenses -json -output contract-go.sbom.json
-
       - name: Get latest Git tag
         id: get_tag
         if: steps.dry_run.outputs.dry_run == 'false'
@@ -127,11 +122,19 @@ jobs:
           tag=$(git describe --tags --abbrev=0)
           echo "tag=$tag" >> $GITHUB_OUTPUT
 
+      - name: Generate SBOM
+        id: generate_sbom
+        if: steps.dry_run.outputs.dry_run == 'false'
+        run: |
+          sbom_file="contract-go-${{ steps.get_tag.outputs.tag }}.sbom.json"
+          cyclonedx-gomod mod -licenses -json -output "$sbom_file"
+          echo "sbom_file=$sbom_file" >> $GITHUB_OUTPUT
+
       - name: Upload SBOM to GitHub Release
         if: steps.dry_run.outputs.dry_run == 'false'
         uses: softprops/action-gh-release@v2
         with:
-          files: contract-go.sbom.json
+          files: ${{ steps.generate_sbom.outputs.sbom_file }}
           tag_name: ${{ steps.get_tag.outputs.tag }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
