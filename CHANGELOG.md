@@ -1,3 +1,15 @@
+## [1.11.0](https://github.com/ibm-hyper-protect/contract-go/compare/v1.10.0...v1.11.0) (2025-07-02)
+
+### Features
+
+* add release number is sbom file name ([540c482](https://github.com/ibm-hyper-protect/contract-go/commit/540c4829781798db4c31c83b040df146c5c5f82a))
+
+### Miscellaneous Chores
+
+* **deps:** update actions/cache action to v4 ([e381f2c](https://github.com/ibm-hyper-protect/contract-go/commit/e381f2c088359c41b55e2dd42963b597b933e63c))
+* remove title ([da90592](https://github.com/ibm-hyper-protect/contract-go/commit/da90592bdbef67b557386a1d286941720549aee8))
+* update content of pull request template ([4b0fa27](https://github.com/ibm-hyper-protect/contract-go/commit/4b0fa271ea363c5b8c3876119a96a44fd4a55b06))
+
 ## [1.10.0](https://github.com/ibm-hyper-protect/contract-go/compare/v1.9.1...v1.10.0) (2025-07-02)
 
 ### Features
