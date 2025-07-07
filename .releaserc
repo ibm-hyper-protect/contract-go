@@ -7,6 +7,14 @@
       {
         "releasedLabels": false
       }
+    ],
+    "@semantic-release/changelog",
+    [
+      "@semantic-release/git",
+      {
+        "assets": ["CHANGELOG.md"],
+        "message": "chore: ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+      }
     ]
   ],
   "analyzeCommits": {
@@ -20,48 +28,19 @@
   "preset": "conventionalcommits",
   "presetConfig": {
     "types": [
-      {
-        "type": "feat",
-        "section": "Features"
-      },
-      {
-        "type": "fix",
-        "section": "Bug Fixes"
-      },
-      {
-        "type": "perf",
-        "section": "Performance Improvements"
-      },
-      {
-        "type": "revert",
-        "section": "Reverts"
-      },
-      {
-        "type": "docs",
-        "section": "Documentation"
-      },
-      {
-        "type": "chore",
-        "section": "Miscellaneous Chores"
-      },
-      {
-        "type": "refactor",
-        "section": "Code Refactoring"
-      },
-      {
-        "type": "test",
-        "section": "Tests"
-      },
-      {
-        "type": "build",
-        "section": "Build System"
-      }
+      { "type": "feat", "section": "Features" },
+      { "type": "fix", "section": "Bug Fixes" },
+      { "type": "perf", "section": "Performance Improvements" },
+      { "type": "revert", "section": "Reverts" },
+      { "type": "docs", "section": "Documentation" },
+      { "type": "chore", "section": "Miscellaneous Chores" },
+      { "type": "refactor", "section": "Code Refactoring" },
+      { "type": "test", "section": "Tests" },
+      { "type": "build", "section": "Build System" }
     ]
   },
   "tagFormat": "v${version}",
   "branches": [
-    {
-      "name": "main"
-    }
+    { "name": "main" }
   ]
 }
