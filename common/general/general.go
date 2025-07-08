@@ -60,9 +60,16 @@ func CheckIfEmpty(values ...interface{}) bool {
 	return empty
 }
 
+func getOpenSSLPath() string {
+	if envPath := os.Getenv("OPENSSL_BIN"); envPath != "" {
+		return envPath
+	}
+	return "openssl"
+}
+
 // ExecCommand - function to run os commands
-func ExecCommand(name string, stdinInput string, args ...string) (string, error) {
-	cmd := exec.Command(name, args...)
+func ExecCommand(stdinInput string, args ...string) (string, error) {
+	cmd := exec.Command(getOpenSSLPath(), args...)
 
 	// Check for standard input
 	if stdinInput != "" {
