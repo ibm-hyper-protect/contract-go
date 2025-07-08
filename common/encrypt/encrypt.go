@@ -28,7 +28,7 @@ const (
 
 // OpensslCheck - function to check if openssl exists
 func OpensslCheck() error {
-	_, err := gen.ExecCommand("openssl", "", "version")
+	_, err := gen.ExecCommand("", "version")
 
 	if err != nil {
 		return err
@@ -49,7 +49,7 @@ func GeneratePublicKey(privateKey string) (string, error) {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
 
-	publicKey, err := gen.ExecCommand("openssl", "", "rsa", "-in", privateKeyPath, "-pubout")
+	publicKey, err := gen.ExecCommand("", "rsa", "-in", privateKeyPath, "-pubout")
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
 	}
@@ -64,7 +64,7 @@ func RandomPasswordGenerator() (string, error) {
 		return "", fmt.Errorf("openssl not found - %v", err)
 	}
 
-	randomPassword, err := gen.ExecCommand("openssl", "", "rand", fmt.Sprint(keylen))
+	randomPassword, err := gen.ExecCommand("", "rand", fmt.Sprint(keylen))
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
 	}
@@ -84,7 +84,7 @@ func EncryptPassword(password, cert string) (string, error) {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
 
-	result, err := gen.ExecCommand("openssl", password, "rsautl", "-encrypt", "-inkey", encryptCertPath, "-certin")
+	result, err := gen.ExecCommand(password, "rsautl", "-encrypt", "-inkey", encryptCertPath, "-certin")
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
 	}
@@ -119,7 +119,7 @@ func EncryptString(password, section string) (string, error) {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
 
-	result, err := gen.ExecCommand("openssl", password, "enc", "-aes-256-cbc", "-pbkdf2", "-pass", "stdin", "-in", contractPath)
+	result, err := gen.ExecCommand(password, "enc", "-aes-256-cbc", "-pbkdf2", "-pass", "stdin", "-in", contractPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
 	}
@@ -159,7 +159,7 @@ func CreateSigningCert(privateKey, cacert, cakey, csrData, csrPemData string, ex
 
 		csrParam := fmt.Sprintf("/C=%s/ST=%s/L=%s/O=%s/OU=%s/CN=%sC/emailAddress=%s", csrDataMap["country"], csrDataMap["state"], csrDataMap["location"], csrDataMap["org"], csrDataMap["unit"], csrDataMap["domain"], csrDataMap["mail"])
 
-		csr, err = gen.ExecCommand("openssl", "", "req", "-new", "-key", privateKeyPath, "-subj", csrParam)
+		csr, err = gen.ExecCommand("", "req", "-new", "-key", privateKeyPath, "-subj", csrParam)
 		if err != nil {
 			return "", fmt.Errorf("failed to execute openssl command - %v", err)
 		}
@@ -204,7 +204,7 @@ func CreateSigningCert(privateKey, cacert, cakey, csrData, csrPemData string, ex
 
 // CreateCert - function to create signing certificate
 func CreateCert(csrPath, caCertPath, caKeyPath string, expiryDays int) (string, error) {
-	signingCert, err := gen.ExecCommand("openssl", "", "x509", "-req", "-in", csrPath, "-CA", caCertPath, "-CAkey", caKeyPath, "-CAcreateserial", "-days", fmt.Sprintf("%d", expiryDays))
+	signingCert, err := gen.ExecCommand("", "x509", "-req", "-in", csrPath, "-CA", caCertPath, "-CAkey", caKeyPath, "-CAcreateserial", "-days", fmt.Sprintf("%d", expiryDays))
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
 	}
@@ -226,7 +226,7 @@ func SignContract(encryptedWorkload, encryptedEnv, privateKey string) (string, e
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
 
-	workloadEnvSignature, err := gen.ExecCommand("openssl", combinedContract, "dgst", "-sha256", "-sign", privateKeyPath)
+	workloadEnvSignature, err := gen.ExecCommand(combinedContract, "dgst", "-sha256", "-sign", privateKeyPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
 	}
