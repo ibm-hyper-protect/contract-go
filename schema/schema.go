@@ -24,6 +24,3 @@ var ContractSchemaHpvs string
 
 //go:embed hpse-contract-schema.json
 var ContractSchemaHpcrRhvs string
-
-//go:embed se-network.onprem.schema.json
-var NetworkConfigSchema string

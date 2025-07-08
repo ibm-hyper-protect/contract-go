@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	sch "github.com/ibm-hyper-protect/contract-go/schema"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"gopkg.in/yaml.v3"
 )
@@ -18,7 +17,7 @@ func ProcessNetworkSchema(network_config_file string) error {
 	if data, err = yamlParse(network_config_file); err != nil {
 		return fmt.Errorf("error unmarshelling the network-config file")
 	}
-	if err := validateFile(data, sch.NetworkConfigSchema); err != nil {
+	if err := validateFile(data, NetworkConfigSchema); err != nil {
 		return fmt.Errorf("schema validation failed: %v", err)
 	}
 	return nil
