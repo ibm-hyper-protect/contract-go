@@ -17,6 +17,7 @@ package general
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -331,4 +332,33 @@ func TestFetchContractSchemaRhvs(t *testing.T) {
 	}
 
 	assert.NotEmpty(t, result)
+}
+
+// TestGetOpenSSLPath_WithEnvVarSet tests the case when the OPENSSL_BIN environment variable is set.
+// It should return the value of the environment variable instead of the default "openssl".
+func TestGetOpenSSLPath_WithEnvVarSet(t *testing.T) {
+	expectedPath := "/usr/bin/openssl"
+
+	// Set the environment variable
+	os.Setenv("OPENSSL_BIN", expectedPath)
+	defer os.Unsetenv("OPENSSL_BIN")
+
+	result := GetOpenSSLPath()
+	if result != expectedPath {
+		t.Errorf("expected %s, got %s", expectedPath, result)
+	}
+}
+
+// TestGetOpenSSLPath_WithoutEnvVarSet tests the fallback case when OPENSSL_BIN is not set.
+// It should return the default command name "openssl".
+func TestGetOpenSSLPath_WithoutEnvVarSet(t *testing.T) {
+	// Ensure env variable is not set
+	os.Unsetenv("OPENSSL_BIN")
+
+	result := GetOpenSSLPath()
+	expected := "openssl"
+
+	if result != expected {
+		t.Errorf("expected %s, got %s", expected, result)
+	}
 }
