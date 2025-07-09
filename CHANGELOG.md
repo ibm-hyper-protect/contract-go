@@ -1,3 +1,9 @@
+## [1.12.0](https://github.com/ibm-hyper-protect/contract-go/compare/v1.11.0...v1.12.0) (2025-07-09)
+
+### Features
+
+* add support for custom openssl path ([0fc632a](https://github.com/ibm-hyper-protect/contract-go/commit/0fc632adeb30ec2d48e90d2a7a1bb13c6f67e936))
+
 ## [1.11.0](https://github.com/ibm-hyper-protect/contract-go/compare/v1.10.0...v1.11.0) (2025-07-02)
 
 ### Features
