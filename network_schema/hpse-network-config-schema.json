@@ -1,0 +1,122 @@
+{
+    "title": "Hyper Protect Container Runtime Network Config File",
+    "description": "Schema for the HPCR JSON Network File",
+    "type": "object",
+    "properties": {
+        "network": {
+            "$ref": "#/defs/network"
+        }
+    },
+    "required": ["network"],
+    "defs": {
+        "network": {
+            "type": "object",
+            "properties": {
+                "version": {
+                    "type": "integer"
+                },
+                "ethernets": {
+                    "$ref": "#/defs/ethernet"
+                }
+            },
+            "required": ["ethernets"]
+        },
+        "ethernet": {
+            "type": "object",
+            "patternProperties": {
+                "^enc[0-9]+$": {
+                    "type": "object",
+                    "properties": {
+                        "dhcp4": {
+                            "type": "boolean"
+                        },
+                        "mtu": {
+                            "type": "integer"
+                        },
+                        "addresses": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "pattern": "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/([0-9]|[12][0-9]|3[0-2])$"
+                            }
+                        },
+                        "gateway4": {
+                            "type": "string",
+                            "format": "ipv4"
+                        },
+                        "routes": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "to": {
+                                        "type": "string",
+                                        "format": "^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)/([0-9]|[12][0-9]|3[0-2])$"
+                                    },
+                                    "via": {
+                                        "type": "string",
+                                        "format": "ipv4"
+                                    }
+                                }
+                            }
+                        },
+                        "nameservers": {
+                            "type": "object",
+                            "properties": {
+                                "addresses": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string",
+                                        "format": "ipv4"
+                                    }
+                                },
+                                "search": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "required": ["addresses"]
+                        }
+                    },
+                    "required": ["dhcp4"],
+                    "if": {
+                        "properties": {
+                            "dhcp4": {
+                                "const": true
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "addresses": {
+                                "not": {} 
+                            },
+                            "gateway4": {
+                                "not": {}
+                            },
+                            "routes": {
+                                "not": {}
+                            },
+                            "nameservers": {
+                                "not": {}
+                            }
+                        }
+                    },
+                    "else": {
+                        "properties": {
+                            "addresses": {
+                                "type": "array",
+                                "minItems": 1
+                            }
+                        },
+                        "required": ["addresses"]
+                    }
+                }
+            },
+            "additionalProperties": false,
+            "minProperties": 1
+        }
+    }
+}

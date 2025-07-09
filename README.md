@@ -24,6 +24,7 @@ For more details on Hyper Protect Virtual Servers for VPC and Hyper Protect Cont
 7. Generate IBM Hyper Protect signed and encrypted contract (With and without contract expiry).
 8. Generate Base64 tar of `docker-compose.yaml` or `pods.yaml`.
 9. Get latest HPCR Image from IBM Cloud Image JSON data.
+10. Validate schema of network-config
 
 ## Usage
 
