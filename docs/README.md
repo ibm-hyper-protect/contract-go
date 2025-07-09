@@ -5,6 +5,28 @@
 The library has been developed to automate the process for provisioning Hyper Protect Virtual Servers for VPC and Hyper Protect Container Runtime.
 
 
+## Configuration
+
+##### `OPENSSL_BIN` (optional)
+
+You can configure the path to the `openssl` binary using the `OPENSSL_BIN` environment variable.
+
+This is useful especially on systems where `openssl` is not available in the system `PATH` (e.g., on Windows).
+
+#### Usage:
+
+Set the `OPENSSL_BIN` environment variable to the full path of your `openssl` executable.
+
+##### On Linux/macOS:
+
+```bash
+export OPENSSL_BIN=/usr/bin/openssl
+```
+On Windows (PowerShell):
+```bash
+$env:OPENSSL_BIN="C:\Program Files\OpenSSL-Win64\bin\openssl.exe"
+```
+
 ## Usage
 
 ### HpcrGetAttestationRecords()
