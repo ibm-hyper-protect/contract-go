@@ -60,7 +60,7 @@ func TestCheckIfEmpty(t *testing.T) {
 
 // Testcase to check ExecCommand() works
 func TestExecCommand(t *testing.T) {
-	_, err := ExecCommand("", "version")
+	_, err := ExecCommand("openssl", "", "version")
 	if err != nil {
 		t.Errorf("failed to execute command - %v", err)
 	}
@@ -68,7 +68,7 @@ func TestExecCommand(t *testing.T) {
 
 // Testcase to check ExecCommand() when user input is given
 func TestExecCommandUserInput(t *testing.T) {
-	_, err := ExecCommand("hello", "version")
+	_, err := ExecCommand("openssl", "hello", "version")
 	if err != nil {
 		t.Errorf("failed to execute command - %v", err)
 	}
@@ -343,7 +343,7 @@ func TestGetOpenSSLPath_WithEnvVarSet(t *testing.T) {
 	os.Setenv("OPENSSL_BIN", expectedPath)
 	defer os.Unsetenv("OPENSSL_BIN")
 
-	result := getOpenSSLPath()
+	result := GetOpenSSLPath()
 	if result != expectedPath {
 		t.Errorf("expected %s, got %s", expectedPath, result)
 	}
@@ -355,7 +355,7 @@ func TestGetOpenSSLPath_WithoutEnvVarSet(t *testing.T) {
 	// Ensure env variable is not set
 	os.Unsetenv("OPENSSL_BIN")
 
-	result := getOpenSSLPath()
+	result := GetOpenSSLPath()
 	expected := "openssl"
 
 	if result != expected {

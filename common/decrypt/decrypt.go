@@ -44,7 +44,7 @@ func DecryptPassword(base64EncryptedData, privateKey string) (string, error) {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
 
-	result, err := gen.ExecCommand("", "pkeyutl", "-decrypt", "-inkey", privateKeyPath, "-in", encryptedDataPath)
+	result, err := gen.ExecCommand(gen.GetOpenSSLPath(), "", "pkeyutl", "-decrypt", "-inkey", privateKeyPath, "-in", encryptedDataPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
 	}
@@ -76,7 +76,7 @@ func DecryptWorkload(password, encryptedWorkload string) (string, error) {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
 
-	result, err := gen.ExecCommand(password, "aes-256-cbc", "-d", "-pbkdf2", "-in", encryptedDataPath, "-pass", "stdin")
+	result, err := gen.ExecCommand(gen.GetOpenSSLPath(), password, "aes-256-cbc", "-d", "-pbkdf2", "-in", encryptedDataPath, "-pass", "stdin")
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
 	}
