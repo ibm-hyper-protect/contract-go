@@ -8,7 +8,7 @@
 
 ## Introduction
 
-The library has been developed to automate the process of provisioning HPVS on both IBM Cloud and On Prem.
+The library has been developed to automate the process of provisioning Hyper Protect Virtual Servers (HPVS) and Hyper Protect Container Runtime for RedHat Virtualization solutions (HPCR RHVS).
 
 For more details on Hyper Protect Virtual Servers for VPC and Hyper Protect Container Runtime, refer [Confidential computing with LinuxONE](https://cloud.ibm.com/docs/vpc?topic=vpc-about-se) and [IBM Hyper Protect Virtual Servers](https://www.ibm.com/docs/en/hpvs/2.2.x).
 
@@ -35,6 +35,9 @@ Refer [Docs](docs/README.md) for more details on how to leverage this library fo
 - [contract-cli](https://github.com/ibm-hyper-protect/contract-cli) - CLI tool for generating Hyper Protect contracts (leverages contract-go)
 - [terraform-provider-hpcr](https://github.com/ibm-hyper-protect/terraform-provider-hpcr) - Terraform Provider for generating Hyper Protect contracts
 - [k8s-operator-hpcr](https://github.com/ibm-hyper-protect/k8s-operator-hpcr) - Kubernetes operator for generating Hyper Protect contracts
+- [linuxone-vsi-automation-samples - hpvs](https://github.com/ibm-hyper-protect/linuxone-vsi-automation-samples/tree/master/terraform-hpvs) - Terraform examples to provision HPVS
+- [linuxone-vsi-automation-samples - hpcr-rhvs](https://github.com/ibm-hyper-protect/linuxone-vsi-automation-samples/tree/master/terraform-hpcr-rhvs) - Terraform examples to provision HPCR RHVS
+- [hyper-protect-virtual-server-samples](https://github.com/ibm-hyper-protect/hyper-protect-virtual-server-samples) - HPVS scripts for different features
 
 
 ## Contributors
