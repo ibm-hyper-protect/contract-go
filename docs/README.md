@@ -7,6 +7,8 @@ The library has been developed to automate the process for provisioning Hyper Pr
 
 ## Configuration
 
+#### Prerequisites
+
 ##### `OPENSSL_BIN` (optional)
 
 You can configure the path to the `openssl` binary using the `OPENSSL_BIN` environment variable.
@@ -22,8 +24,9 @@ Set the `OPENSSL_BIN` environment variable to the full path of your `openssl` ex
 ```bash
 export OPENSSL_BIN=/usr/bin/openssl
 ```
+
 On Windows (PowerShell):
-```bash
+```powershell
 $env:OPENSSL_BIN="C:\Program Files\OpenSSL-Win64\bin\openssl.exe"
 ```
 

@@ -83,7 +83,6 @@ func HpcrSelectImage(imageJsonData, versionSpec string) (string, string, string,
 
 	err := json.Unmarshal([]byte(imageJsonData), &images)
 	if err != nil {
-		fmt.Println("Error:", err)
 		return "", "", "", "", fmt.Errorf("failed to unmarshal JSON - %v", err)
 	}
 
