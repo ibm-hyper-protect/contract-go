@@ -1,3 +1,9 @@
+## [1.12.2](https://github.com/ibm-hyper-protect/contract-go/compare/v1.12.1...v1.12.2) (2025-07-10)
+
+### Bug Fixes
+
+* signing error ([d9c0644](https://github.com/ibm-hyper-protect/contract-go/commit/d9c064459252381e2b2bb7226046e6c16f5fa989))
+
 ## [1.12.1](https://github.com/ibm-hyper-protect/contract-go/compare/v1.12.0...v1.12.1) (2025-07-10)
 
 ### Bug Fixes
