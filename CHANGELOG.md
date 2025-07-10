@@ -1,3 +1,13 @@
+## [1.13.1](https://github.com/ibm-hyper-protect/contract-go/compare/v1.13.0...v1.13.1) (2025-07-10)
+
+### Bug Fixes
+
+* **deps:** update module github.com/santhosh-tekuri/jsonschema/v5 to v6 ([684c819](https://github.com/ibm-hyper-protect/contract-go/commit/684c81939a1dd48754902ca6ec1b2d57f8525719))
+
+### Miscellaneous Chores
+
+* **deps:** update docker.io/library/hello-world docker digest to ec15384 ([7dbaf5a](https://github.com/ibm-hyper-protect/contract-go/commit/7dbaf5a447ceef83d2e57a1b4c9fb8f25ca185b4))
+
 ## [1.13.0](https://github.com/ibm-hyper-protect/contract-go/compare/v1.12.2...v1.13.0) (2025-07-10)
 
 ### Features
