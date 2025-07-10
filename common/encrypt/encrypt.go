@@ -98,13 +98,8 @@ func EncryptPassword(password, cert string) (string, error) {
 }
 
 // EncryptContract - function to encrypt contract
-func EncryptContract(password string, section map[string]interface{}) (string, error) {
-	contract, err := gen.MapToYaml(section)
-	if err != nil {
-		return "", fmt.Errorf("failed to convert Map to YAML - %v", err)
-	}
-
-	return EncryptString(password, contract)
+func EncryptContract(password, section string) (string, error) {
+	return EncryptString(password, section)
 }
 
 // EncryptString - function to encrypt string
