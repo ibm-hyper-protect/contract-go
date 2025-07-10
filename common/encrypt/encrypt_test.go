@@ -125,7 +125,7 @@ func TestEncryptContract(t *testing.T) {
 		t.Errorf("failed to generate random password - %v", err)
 	}
 
-	result, err := EncryptContract(password, contractMap["workload"].(map[string]interface{}))
+	result, err := EncryptContract(password, contractMap["workload"].(string))
 	if err != nil {
 		t.Errorf("failed to encrypt contract - %v", err)
 	}
@@ -182,7 +182,7 @@ func TestEncryptFinalStr(t *testing.T) {
 		t.Errorf("failed to encrypt password - %v", err)
 	}
 
-	encryptedWorkload, err := EncryptContract(password, contractMap["workload"].(map[string]interface{}))
+	encryptedWorkload, err := EncryptContract(password, contractMap["workload"].(string))
 	if err != nil {
 		t.Errorf("failed to encrypt workload - %v", err)
 	}
@@ -296,13 +296,13 @@ func TestSignContract(t *testing.T) {
 		t.Errorf("failed to encrypt password - %v", err)
 	}
 
-	encryptedWorkload, err := EncryptContract(password, contractMap["workload"].(map[string]interface{}))
+	encryptedWorkload, err := EncryptContract(password, contractMap["workload"].(string))
 	if err != nil {
 		t.Errorf("failed to encrypt workload - %v", err)
 	}
 	finalWorkload := EncryptFinalStr(encryptedPassword, encryptedWorkload)
 
-	encryptedEnv, err := EncryptContract(password, contractMap["env"].(map[string]interface{}))
+	encryptedEnv, err := EncryptContract(password, contractMap["env"].(string))
 	if err != nil {
 		t.Errorf("failed to encrypt env - %v", err)
 	}
