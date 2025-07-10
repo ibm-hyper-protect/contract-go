@@ -231,10 +231,15 @@ func MapToYaml(m map[string]interface{}) (string, error) {
 }
 
 // KeyValueInjector - function to inject key value pair in YAML
-func KeyValueInjector(contract map[string]interface{}, key, value string) (string, error) {
-	contract[key] = value
+func KeyValueInjector(contract, key, value string) (string, error) {
+	yamlData := make(map[string]interface{})
+	if err := yaml.Unmarshal([]byte(contract), &yamlData); err != nil {
+		return "", fmt.Errorf("failed to parse contract - %v", err)
+	}
 
-	modifiedYAMLBytes, err := yaml.Marshal(contract)
+	yamlData[key] = value
+
+	modifiedYAMLBytes, err := yaml.Marshal(yamlData)
 	if err != nil {
 		return "", err
 	}
