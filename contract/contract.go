@@ -200,22 +200,12 @@ func encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey,
 		return "", fmt.Errorf("failed to unmarshal YAML - %v", err)
 	}
 
-	workloadData, err := gen.MapToYaml(contractMap["workload"].(map[string]interface{}))
-	if err != nil {
-		return "", fmt.Errorf("failed to convert MAP to YAML - %v", err)
-	}
-
-	encryptedWorkload, err := encrypter(workloadData, hyperProtectOs, encryptCertificate)
+	encryptedWorkload, err := encrypter(contractMap["workload"].(string), hyperProtectOs, encryptCertificate)
 	if err != nil {
 		return "", fmt.Errorf("failed to encrypt workload - %v", err)
 	}
 
-	updatedEnv, err := gen.KeyValueInjector(contractMap["env"].(map[string]interface{}), "signingKey", gen.EncodeToBase64([]byte(publicKey)))
-	if err != nil {
-		return "", fmt.Errorf("failed to inject signingKey to env - %v", err)
-	}
-
-	encryptedEnv, err := encrypter(updatedEnv, hyperProtectOs, encryptCertificate)
+	encryptedEnv, err := encrypter(contractMap["env"].(string), hyperProtectOs, encryptCertificate)
 	if err != nil {
 		return "", fmt.Errorf("failed to encrypt env - %v", err)
 	}

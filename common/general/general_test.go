@@ -33,6 +33,8 @@ const (
 	simpleContractPath        = "../../samples/simple_contract.yaml"
 	simpleInvalidContractPath = "../../samples/simple_contract_invalid.yaml"
 
+	simpleWorkloadPath = "../../samples/workload.yaml"
+
 	certificateDownloadUrl = "https://cloud.ibm.com/media/docs/downloads/hyper-protect-container-runtime/ibm-hyper-protect-container-runtime-1-0-s390x-15-encrypt.crt"
 
 	sampleStringData   = "sashwatk"
@@ -170,19 +172,19 @@ func TestGenerateSha256(t *testing.T) {
 
 // Testcase to check if MapToYaml() can convert Map to YAML string
 func TestMapToYaml(t *testing.T) {
-	var contractMap map[string]interface{}
+	var workloadMap map[string]interface{}
 
-	contract, err := ReadDataFromFile(simpleContractPath)
+	workload, err := ReadDataFromFile(simpleWorkloadPath)
 	if err != nil {
 		t.Errorf("failed to read contract - %v", err)
 	}
 
-	err = yaml.Unmarshal([]byte(contract), &contractMap)
+	err = yaml.Unmarshal([]byte(workload), &workloadMap)
 	if err != nil {
 		t.Errorf("failed to unmarshal YAML - %v", err)
 	}
 
-	_, err = MapToYaml(contractMap["env"].(map[string]interface{}))
+	_, err = MapToYaml(workloadMap["compose"].(map[string]interface{}))
 	if err != nil {
 		t.Errorf("failed to convert MAP to YAML - %v", err)
 	}
