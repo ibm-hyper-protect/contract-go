@@ -205,7 +205,14 @@ func encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey,
 		return "", fmt.Errorf("failed to encrypt workload - %v", err)
 	}
 
-	encryptedEnv, err := encrypter(contractMap["env"].(string), hyperProtectOs, encryptCertificate)
+	updatedEnv, err := gen.KeyValueInjector(contractMap["env"].(string), "signingKey", gen.EncodeToBase64([]byte(publicKey)))
+	if err != nil {
+		return "", fmt.Errorf("failed to inject signingKey to env - %v", err)
+	}
+
+	fmt.Println(updatedEnv)
+
+	encryptedEnv, err := encrypter(updatedEnv, hyperProtectOs, encryptCertificate)
 	if err != nil {
 		return "", fmt.Errorf("failed to encrypt env - %v", err)
 	}
