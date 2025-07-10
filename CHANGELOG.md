@@ -1,3 +1,18 @@
+## [1.13.0](https://github.com/ibm-hyper-protect/contract-go/compare/v1.12.2...v1.13.0) (2025-07-10)
+
+### Features
+
+* add more links ([c10411e](https://github.com/ibm-hyper-protect/contract-go/commit/c10411e54da225ebc96413a146e7b69a5a4d4560))
+* update documentation ([962874a](https://github.com/ibm-hyper-protect/contract-go/commit/962874a0b6297ed0fddae86574555356564d6199))
+
+### Bug Fixes
+
+* user documentation ([9f3df61](https://github.com/ibm-hyper-protect/contract-go/commit/9f3df61312756f6265c9298642e6ab5014cc7be2))
+
+### Miscellaneous Chores
+
+* remove debug statements ([36a9f7f](https://github.com/ibm-hyper-protect/contract-go/commit/36a9f7fbbf281c53500f37d7d4a9a627a2fb00ad))
+
 ## [1.12.2](https://github.com/ibm-hyper-protect/contract-go/compare/v1.12.1...v1.12.2) (2025-07-10)
 
 ### Bug Fixes
