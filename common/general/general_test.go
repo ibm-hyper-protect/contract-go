@@ -193,7 +193,6 @@ func TestMapToYaml(t *testing.T) {
 
 // Testcase to check if KeyValueInjector() can add key value to existing map
 func TestKeyValueInjector(t *testing.T) {
-	var contractMap map[string]interface{}
 	key := "envWorkloadSignature"
 	value := "testing123"
 
@@ -202,12 +201,7 @@ func TestKeyValueInjector(t *testing.T) {
 		t.Errorf("failed to read contract - %v", err)
 	}
 
-	err = yaml.Unmarshal([]byte(contract), &contractMap)
-	if err != nil {
-		t.Errorf("failed to unmarshal contract - %v", err)
-	}
-
-	finalContract, err := KeyValueInjector(contractMap, key, value)
+	finalContract, err := KeyValueInjector(contract, key, value)
 	if err != nil {
 		t.Errorf("failed to inject envWorkloadSignature - %v", err)
 	}
