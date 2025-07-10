@@ -33,11 +33,11 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/xeipuuv/gojsonschema"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"gopkg.in/yaml.v3"
 
 	cert "github.com/ibm-hyper-protect/contract-go/encryption"
-	sch "github.com/ibm-hyper-protect/contract-go/schema"
+	sch "github.com/ibm-hyper-protect/contract-go/schema/contract"
 )
 
 const (
@@ -46,6 +46,12 @@ const (
 	HyperProtectOsHpvs     = "hpvs"
 	HyperProtectOsHpcrRhvs = "hpcr-rhvs"
 )
+
+type Contract struct {
+	Env               string `yaml:"env"`
+	Workload          string `yaml:"workload"`
+	WorkloadSignature string `yaml:"envWorkloadSignature"`
+}
 
 // CheckIfEmpty - function to check if given arguments are not empty
 func CheckIfEmpty(values ...interface{}) bool {
@@ -380,41 +386,72 @@ func GenerateTgzBase64(folderFilesPath []string) (string, error) {
 
 // VerifyContractWithSchema - function to verify if contract matches schema
 func VerifyContractWithSchema(contract, version string) error {
-	jsonData, err := YamlToJson(contract)
+	contractMap, err := stringToMap(contract)
 	if err != nil {
-		return fmt.Errorf("error converting YAML to JSON - %v", err)
+		return fmt.Errorf("failed to convert to map %v", err)
 	}
+	contractStringMap := convertToStringkeys(contractMap)
 
 	contractSchema, err := fetchContractSchema(version)
 	if err != nil {
 		return fmt.Errorf("error fetching contract schema")
 	}
 
-	schema, err := gojsonschema.NewSchema(gojsonschema.NewBytesLoader([]byte(contractSchema)))
+	sch, err := jsonschema.CompileString("schema.json", contractSchema)
 	if err != nil {
 		return fmt.Errorf("failed to parse schema - %v", err)
 	}
 
-	report, err := schema.Validate(gojsonschema.NewBytesLoader([]byte(jsonData)))
+	if err := sch.Validate(contractStringMap); err != nil {
+		return fmt.Errorf("contract validation failed - %v", err)
+	}
+
+	return nil
+}
+
+// stringToMap - function to convert string contract to Map
+func stringToMap(contract string) (map[any]any, error) {
+	data := Contract{}
+
+	err := yaml.Unmarshal([]byte(contract), &data)
 	if err != nil {
-		return fmt.Errorf("failed to validate contract - %v", err)
+		return nil, err
 	}
 
-	result := report.Valid()
+	dataEnv := make(map[any]any)
+	err = yaml.Unmarshal([]byte(data.Env), &dataEnv)
+	if err != nil {
+		return nil, err
+	}
 
-	if result {
-		return nil
-	} else {
-		var consolidatedErrors strings.Builder
-		for i, err := range report.Errors() {
-			if i > 0 {
-				consolidatedErrors.WriteString(", ")
-			}
-			consolidatedErrors.WriteString(err.String())
+	dataWorkload := make(map[any]any)
+	err = yaml.Unmarshal([]byte(data.Workload), &dataWorkload)
+	if err != nil {
+		return nil, err
+	}
+
+	dataMap := make(map[any]any)
+	dataMap["env"] = dataEnv
+	dataMap["workload"] = dataWorkload
+	if len(data.WorkloadSignature) != 0 {
+		dataMap["envWorkloadSignature"] = data.WorkloadSignature
+	}
+
+	return dataMap, err
+}
+
+// convertToStringkeys - function to convert any map to string map
+func convertToStringkeys(m map[any]any) map[string]any {
+	result := map[string]any{}
+	for k, v := range m {
+		switch v2 := v.(type) {
+		case map[any]any:
+			result[fmt.Sprint(k)] = convertToStringkeys(v2)
+		default:
+			result[fmt.Sprint(k)] = v
 		}
-
-		return fmt.Errorf("validation failed - %s", consolidatedErrors.String())
 	}
+	return result
 }
 
 // fetchContractSchema - function that returns contract schema according to hyper protect version
