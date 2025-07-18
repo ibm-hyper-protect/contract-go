@@ -1,3 +1,9 @@
+## [1.13.2](https://github.com/ibm-hyper-protect/contract-go/compare/v1.13.1...v1.13.2) (2025-07-18)
+
+### Bug Fixes
+
+* **deps:** update module github.com/santhosh-tekuri/jsonschema/v5 to v6 ([d3f2051](https://github.com/ibm-hyper-protect/contract-go/commit/d3f20515415b907e0a7d17c8f497bda37f2f71ad))
+
 ## [1.13.1](https://github.com/ibm-hyper-protect/contract-go/compare/v1.13.0...v1.13.1) (2025-07-10)
 
 ### Bug Fixes
