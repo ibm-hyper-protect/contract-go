@@ -17,7 +17,7 @@ For more details on Hyper Protect Virtual Servers for VPC and Hyper Protect Cont
 
 1. Decrypt encrypted attestation records.
 2. Download encryption certificates from IBM Cloud docs.
-3. Get specific encryption certificate from encryption certificates JSON downloaded.
+3. Get a specific encryption certificate from encryption certificates JSON downloaded.
 4. Generate Base64 of a string.
 5. Validate schema of unencrypted contract.
 6. Generate IBM Hyper Protect encrypted string.
