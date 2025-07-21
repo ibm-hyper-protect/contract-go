@@ -17,6 +17,7 @@ package general
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -32,6 +33,8 @@ const (
 
 	simpleContractPath        = "../../samples/simple_contract.yaml"
 	simpleInvalidContractPath = "../../samples/simple_contract_invalid.yaml"
+
+	simpleWorkloadPath = "../../samples/workload.yaml"
 
 	certificateDownloadUrl = "https://cloud.ibm.com/media/docs/downloads/hyper-protect-container-runtime/ibm-hyper-protect-container-runtime-1-0-s390x-15-encrypt.crt"
 
@@ -170,19 +173,19 @@ func TestGenerateSha256(t *testing.T) {
 
 // Testcase to check if MapToYaml() can convert Map to YAML string
 func TestMapToYaml(t *testing.T) {
-	var contractMap map[string]interface{}
+	var workloadMap map[string]interface{}
 
-	contract, err := ReadDataFromFile(simpleContractPath)
+	workload, err := ReadDataFromFile(simpleWorkloadPath)
 	if err != nil {
 		t.Errorf("failed to read contract - %v", err)
 	}
 
-	err = yaml.Unmarshal([]byte(contract), &contractMap)
+	err = yaml.Unmarshal([]byte(workload), &workloadMap)
 	if err != nil {
 		t.Errorf("failed to unmarshal YAML - %v", err)
 	}
 
-	_, err = MapToYaml(contractMap["env"].(map[string]interface{}))
+	_, err = MapToYaml(workloadMap["compose"].(map[string]interface{}))
 	if err != nil {
 		t.Errorf("failed to convert MAP to YAML - %v", err)
 	}
@@ -190,7 +193,6 @@ func TestMapToYaml(t *testing.T) {
 
 // Testcase to check if KeyValueInjector() can add key value to existing map
 func TestKeyValueInjector(t *testing.T) {
-	var contractMap map[string]interface{}
 	key := "envWorkloadSignature"
 	value := "testing123"
 
@@ -199,12 +201,7 @@ func TestKeyValueInjector(t *testing.T) {
 		t.Errorf("failed to read contract - %v", err)
 	}
 
-	err = yaml.Unmarshal([]byte(contract), &contractMap)
-	if err != nil {
-		t.Errorf("failed to unmarshal contract - %v", err)
-	}
-
-	finalContract, err := KeyValueInjector(contractMap, key, value)
+	finalContract, err := KeyValueInjector(contract, key, value)
 	if err != nil {
 		t.Errorf("failed to inject envWorkloadSignature - %v", err)
 	}
@@ -331,4 +328,33 @@ func TestFetchContractSchemaRhvs(t *testing.T) {
 	}
 
 	assert.NotEmpty(t, result)
+}
+
+// TestGetOpenSSLPath_WithEnvVarSet tests the case when the OPENSSL_BIN environment variable is set.
+// It should return the value of the environment variable instead of the default "openssl".
+func TestGetOpenSSLPath_WithEnvVarSet(t *testing.T) {
+	expectedPath := "/usr/bin/openssl"
+
+	// Set the environment variable
+	os.Setenv("OPENSSL_BIN", expectedPath)
+	defer os.Unsetenv("OPENSSL_BIN")
+
+	result := GetOpenSSLPath()
+	if result != expectedPath {
+		t.Errorf("expected %s, got %s", expectedPath, result)
+	}
+}
+
+// TestGetOpenSSLPath_WithoutEnvVarSet tests the fallback case when OPENSSL_BIN is not set.
+// It should return the default command name "openssl".
+func TestGetOpenSSLPath_WithoutEnvVarSet(t *testing.T) {
+	// Ensure env variable is not set
+	os.Unsetenv("OPENSSL_BIN")
+
+	result := GetOpenSSLPath()
+	expected := "openssl"
+
+	if result != expected {
+		t.Errorf("expected %s, got %s", expected, result)
+	}
 }
