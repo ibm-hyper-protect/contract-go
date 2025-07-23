@@ -38,6 +38,7 @@ import (
 
 	cert "github.com/ibm-hyper-protect/contract-go/encryption"
 	sch "github.com/ibm-hyper-protect/contract-go/schema/contract"
+	schn "github.com/ibm-hyper-protect/contract-go/schema/network"
 )
 
 const (
@@ -468,4 +469,34 @@ func fetchContractSchema(version string) (string, error) {
 	} else {
 		return "", fmt.Errorf("invalid Hyper Protect version")
 	}
+}
+
+func VerifyNetworkSchema(Network_Config_File string) error {
+	var data map[string]any
+	var err error
+	data, err = YAMLParse(Network_Config_File)
+	if err != nil {
+		return fmt.Errorf("Invalid schema file %s: ", err)
+	}
+	sch, err := jsonschema.CompileString("schema.json", schn.NetworkSchemaHPVS)
+	if err != nil {
+		return fmt.Errorf("failed to parse schema - %v", err)
+	}
+
+	if err := sch.Validate(data); err != nil {
+		return fmt.Errorf("contract validation failed - %v", err)
+	}
+
+	return nil
+}
+
+func YAMLParse(filename string) (map[string]any, error) {
+	var yamlObj map[string]any
+	if err := yaml.Unmarshal([]byte(filename), &yamlObj); err == nil {
+		if json.Valid([]byte(filename)) {
+			return nil, fmt.Errorf("error unmarshelling the YAML file")
+		}
+		return yamlObj, nil
+	}
+	return nil, fmt.Errorf("error unmarshelling the YAML file")
 }
