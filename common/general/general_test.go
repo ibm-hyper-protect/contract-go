@@ -34,6 +34,9 @@ const (
 	simpleContractPath        = "../../samples/simple_contract.yaml"
 	simpleInvalidContractPath = "../../samples/simple_contract_invalid.yaml"
 
+	simpleNetworkConfigPath        = "../../samples/network/network_config.yaml"
+	simpleInvalidNetworkConfigPath = "../../samples/network/network_config_invalid.yaml"
+
 	simpleWorkloadPath = "../../samples/workload.yaml"
 
 	certificateDownloadUrl = "https://cloud.ibm.com/media/docs/downloads/hyper-protect-container-runtime/ibm-hyper-protect-container-runtime-1-0-s390x-15-encrypt.crt"
@@ -357,4 +360,42 @@ func TestGetOpenSSLPath_WithoutEnvVarSet(t *testing.T) {
 	if result != expected {
 		t.Errorf("expected %s, got %s", expected, result)
 	}
+}
+
+// Testcase to check if VerifyNetworkSchema() is able to verify schema of network-config
+func TestVerifyNetworkSchema(t *testing.T) {
+	network, err := ReadDataFromFile(simpleNetworkConfigPath)
+	if err != nil {
+		t.Errorf("failed to read network config file - %v", err)
+	}
+
+	err = VerifyNetworkSchema(network)
+
+	assert.NoError(t, err)
+}
+
+// Testcase to check if VerifyNetworkSchema() is able to throw error for invalid network-config
+func TestVerifyNetworkSchemaInvalid(t *testing.T) {
+	network, err := ReadDataFromFile(simpleInvalidNetworkConfigPath)
+	if err != nil {
+		t.Errorf("failed to read network config file - %v", err)
+	}
+
+	err = VerifyNetworkSchema(network)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "additionalProperties 'enc' not allowed")
+}
+
+// Testcase to check if yamlParse() is able to unmarshell the YAML file
+func TestNetworkConfigYamlParse(t *testing.T) {
+	network, err := ReadDataFromFile(simpleInvalidNetworkConfigPath)
+	if err != nil {
+		t.Errorf("failed to read network config file - %v", err)
+	}
+	result, err := yamlParse(network)
+	if err != nil {
+		t.Errorf("failed to unmarshell the YAML file - %v", err)
+	}
+
+	assert.NotEmpty(t, result)
 }
