@@ -367,8 +367,9 @@ The CSR parameters should be of the format:-
 3. Checksum of output
 4. Error (If any)
 
+
 ### HpcrVerifyNetworkConfig()
-This function verifies if network-config is schematically valid. The validation is successful, if error is nil.
+This function verifies if network-config for ON PREM is schematically valid. The validation is successful, if error is nil.
 
 ### Example
 ```go
