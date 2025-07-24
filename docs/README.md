@@ -366,3 +366,20 @@ The CSR parameters should be of the format:-
 2. Checksum of input
 3. Checksum of output
 4. Error (If any)
+
+### HpcrVerifyNetworkConfig()
+This function verifies if network-config is schematically valid. The validation is successful, if error is nil.
+
+### Example
+```go
+import "github.com/ibm-hyper-protect/contract-go/network_schema"
+func main() {
+    err := HpcrVerifyNetworkConfig(network_config_file)
+}
+```
+
+#### Input(s)
+1. network-config file
+
+#### Output(s)
+1. Error (If any)
