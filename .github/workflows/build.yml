@@ -105,36 +105,40 @@ jobs:
           echo "dry_run=$dry_run" >> $GITHUB_OUTPUT
 
       - name: Semantic Release
+        id: semantic
         run: |
-          npx -p @semantic-release/changelog \
-              -p @semantic-release/git \
-              -p @semantic-release/github \
-              -p conventional-changelog-conventionalcommits \
-              -p semantic-release \
-              semantic-release --dry-run ${{ steps.dry_run.outputs.dry_run }}
+          result=$(npx -p @semantic-release/changelog \
+                        -p @semantic-release/git \
+                        -p @semantic-release/github \
+                        -p conventional-changelog-conventionalcommits \
+                        -p semantic-release \
+                        semantic-release --dry-run ${{ steps.dry_run.outputs.dry_run }} --json || true)
+
+          echo "$result"
+
+          if echo "$result" | grep -q '"type": "release"'; then
+            tag=$(echo "$result" | jq -r '.[] | select(.type == "release") | .gitTag')
+            echo "published=true" >> $GITHUB_OUTPUT
+            echo "tag=$tag" >> $GITHUB_OUTPUT
+          else
+            echo "published=false" >> $GITHUB_OUTPUT
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get latest Git tag
-        id: get_tag
-        if: steps.dry_run.outputs.dry_run == 'false'
-        run: |
-          tag=$(git describe --tags --abbrev=0)
-          echo "tag=$tag" >> $GITHUB_OUTPUT
-
       - name: Generate SBOM
         id: generate_sbom
-        if: steps.dry_run.outputs.dry_run == 'false'
+        if: steps.semantic.outputs.published == 'true'
         run: |
-          sbom_file="contract-go-${{ steps.get_tag.outputs.tag }}.sbom.json"
+          sbom_file="contract-go-${{ steps.semantic.outputs.tag }}.sbom.json"
           cyclonedx-gomod mod -licenses -json -output "$sbom_file"
           echo "sbom_file=$sbom_file" >> $GITHUB_OUTPUT
 
       - name: Upload SBOM to GitHub Release
-        if: steps.dry_run.outputs.dry_run == 'false'
+        if: steps.semantic.outputs.published == 'true'
         uses: softprops/action-gh-release@v2
         with:
           files: ${{ steps.generate_sbom.outputs.sbom_file }}
-          tag_name: ${{ steps.get_tag.outputs.tag }}
+          tag_name: ${{ steps.semantic.outputs.tag }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
