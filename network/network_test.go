@@ -31,7 +31,7 @@ const (
 func TestProcessNetworkSchemaValid(t *testing.T) {
 	network_config, err := gen.ReadDataFromFile(validNetworkConfigFile)
 	if err != nil {
-		t.Errorf("failed to read encrypted checksum - %v", err)
+		t.Errorf("failed to read network config file - %v", err)
 	}
 	err = HpcrVerifyNetworkConfig(network_config)
 	assert.NoError(t, err)
@@ -41,7 +41,7 @@ func TestProcessNetworkSchemaValid(t *testing.T) {
 func TestProcessNetworkSchemaInvalid(t *testing.T) {
 	network_config_invalid, err := gen.ReadDataFromFile(invalidNetworkConfigFile)
 	if err != nil {
-		t.Errorf("failed to read encrypted checksum - %v", err)
+		t.Errorf("failed to read network config file - %v", err)
 	}
 	err = HpcrVerifyNetworkConfig(network_config_invalid)
 	assert.Error(t, err)
