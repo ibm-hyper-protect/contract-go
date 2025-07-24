@@ -1,3 +1,9 @@
+## [1.13.4](https://github.com/ibm-hyper-protect/contract-go/compare/v1.13.3...v1.13.4) (2025-07-24)
+
+### Bug Fixes
+
+* invalid sbom trigger in GitHub actions ([0eb5d66](https://github.com/ibm-hyper-protect/contract-go/commit/0eb5d66d01ef917412d167fd051697b9dc45b6ac))
+
 ## [1.13.3](https://github.com/ibm-hyper-protect/contract-go/compare/v1.13.2...v1.13.3) (2025-07-24)
 
 ### Bug Fixes
