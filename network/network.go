@@ -13,11 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package schema
+package network
 
 import (
-	_ "embed"
+	gen "github.com/ibm-hyper-protect/contract-go/common/general"
 )
 
-//go:embed hpse-network-schema.json
-var NetworkSchema string
+// HpcrVerifyNetworkConfig - function to verify network-config schema
+func HpcrVerifyNetworkConfig(network_config string) error {
+	return gen.VerifyNetworkSchema(network_config)
+}

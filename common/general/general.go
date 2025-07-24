@@ -471,14 +471,13 @@ func fetchContractSchema(version string) (string, error) {
 	}
 }
 
+// VerifyNetworkSchema - function to validates a network-config YAML file
 func VerifyNetworkSchema(Network_Config_File string) error {
-	var data map[string]any
-	var err error
-	data, err = YAMLParse(Network_Config_File)
+	data, err := yamlParse(Network_Config_File)
 	if err != nil {
 		return fmt.Errorf("Invalid schema file %s: ", err)
 	}
-	sch, err := jsonschema.CompileString("schema.json", schn.NetworkSchemaHPVS)
+	sch, err := jsonschema.CompileString("schema.json", schn.NetworkSchema)
 	if err != nil {
 		return fmt.Errorf("failed to parse schema - %v", err)
 	}
@@ -490,7 +489,8 @@ func VerifyNetworkSchema(Network_Config_File string) error {
 	return nil
 }
 
-func YAMLParse(filename string) (map[string]any, error) {
+// yamlParse - function to Parses and unmarshal a YAML file
+func yamlParse(filename string) (map[string]any, error) {
 	var yamlObj map[string]any
 	if err := yaml.Unmarshal([]byte(filename), &yamlObj); err == nil {
 		if json.Valid([]byte(filename)) {
