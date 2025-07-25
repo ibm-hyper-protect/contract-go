@@ -1,3 +1,10 @@
+## [1.13.5](https://github.com/ibm-hyper-protect/contract-go/compare/v1.13.4...v1.13.5) (2025-07-25)
+
+### Bug Fixes
+
+* added testcases ([d3866e2](https://github.com/ibm-hyper-protect/contract-go/commit/d3866e24370f136d9f1015d8f314018168c8c284))
+* Update error message in network config verification ([41efd58](https://github.com/ibm-hyper-protect/contract-go/commit/41efd58a94ea02de583223159247a14dfe3c0952))
+
 ## [1.13.4](https://github.com/ibm-hyper-protect/contract-go/compare/v1.13.3...v1.13.4) (2025-07-24)
 
 ### Bug Fixes
