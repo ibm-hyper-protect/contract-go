@@ -483,7 +483,7 @@ func VerifyNetworkSchema(Network_Config_File string) error {
 	}
 
 	if err := sch.Validate(data); err != nil {
-		return fmt.Errorf("contract validation failed - %v", err)
+		return fmt.Errorf("network schema verification failed - %v", err)
 	}
 
 	return nil
