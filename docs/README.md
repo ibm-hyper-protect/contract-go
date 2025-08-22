@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The library has been developed to automate the process for provisioning Hyper Protect Virtual Servers for VPC and Hyper Protect Container Runtime.
+The library is developed to automate the process for provisioning Hyper Protect Virtual Servers for VPC and Hyper Protect Container Runtime.
 
 
 ## Configuration
@@ -12,8 +12,7 @@ The library has been developed to automate the process for provisioning Hyper Pr
 ##### `OPENSSL_BIN` (optional)
 
 You can configure the path to the `openssl` binary using the `OPENSSL_BIN` environment variable.
-
-This is useful especially on systems where `openssl` is not available in the system `PATH` (e.g., on Windows).
+It is useful especially on systems where `openssl` is not available in the system `PATH` (for example, on Windows).
 
 #### Usage:
 
@@ -44,11 +43,11 @@ func main() {
 }
 ```
 
-#### Input(s)
+#### Inputs
 1. Encrypted attestation records
 2. Private key
 
-#### Output(s)
+#### Outputs
 1. Decrypted attestation records
 2. Error (If any)
 
@@ -65,18 +64,18 @@ func main() {
 }
 ```
 
-#### Input(s)
-1. List of versions to download (eg: ["1.1.14", "1.1.15"])
-2. Output format (json or yaml)
+#### Inputs
+1. List of versions to download (for example: ["1.1.14", "1.1.15"])
+2. Output format (JSON or YAML)
 3. Encryption certificate URL Template (default to `https://hpvsvpcubuntu.s3.us.cloud-object-storage.appdomain.cloud/s390x-{{.Patch}}/ibm-hyper-protect-container-runtime-{{.Major}}-{{.Minor}}-s390x-{{.Patch}}-encrypt.crt`)
 
-#### Output(s)
+#### Outputs
 1. Certificates and versions as JSON string
 2. Error (If any)
 
 
 ### HpcrGetEncryptionCertificateFromJson()
-This function returns encryption certificate and version from HpcrDownloadEncryptionCertificates() output.
+This function returns the encryption certificate and version from HpcrDownloadEncryptionCertificates() output.
 
 ### Example
 ```go
@@ -87,11 +86,11 @@ func main() {
 }
 ```
 
-#### Input(s)
+#### Inputs
 1. Encryption certificate JSON string
 2. Version name
 
-#### Output(s)
+#### Outputs
 1. Version name
 2. Encryption Certificate
 3. Error (If any)
@@ -109,17 +108,17 @@ func main() {
 }
 ```
 
-#### Input(s)
-1. Image JSON from IBM Cloud images from Terraform, API or CLI. The input can be as follows:-
+#### Inputs
+1. Image JSON from IBM Cloud images from Terraform, API, or CLI. The input can be as follows:-
     1. Terraform `ibmcloud is images`: The input should be output of `data.ibm_is_images.hyper_protect_images.images`.
     2. IBM Cloud API: The result of following command should be input:
         ```bash
         curl -X GET "https://<region>.cloud.ibm.com/v1/images?version=2022-09-13&generation=2"  -H "Authorization: Bearer <token>" -H "Content-Type: application/json" | jq .images
         ```
     3. IBM CLI output: The input should be output of `ibmcloud is images --json`.
-2. version to select (optional)
+2. Version to select (optional)
 
-#### Output(s)
+#### Outputs
 1. Image ID
 2. Image name
 3. Image checksum
@@ -139,10 +138,10 @@ func main() {
 }
 ```
 
-#### Input(s)
+#### Inputs
 1. Text to encode
 
-#### Output(s)
+#### Outputs
 1. Base64 of input
 2. Checksum of input
 3. Checksum of output
@@ -150,7 +149,7 @@ func main() {
 
 
 ### HpcrTextEncrypted()
-This function encrypts text and formats text as per `hyper-protect-basic.<encoded-encrypted-password>.<encoded-encrypted-data>`.
+This function encrypts text and formats tex as `hyper-protect-basic.<encoded-encrypted-password>.<encoded-encrypted-data>`.
 
 ### Example
 ```go
@@ -161,12 +160,12 @@ func main() {
 }
 ```
 
-#### Input(s)
+#### Inputs
 1. Text to encrypt
 2. Hyper Protect OS (hpvs or hpcr-rhvs) (optional)
 3. Encryption certificate (optional)
 
-#### Output(s)
+#### Outputs
 1. Encrypted text
 2. Checksum of input
 3. Checksum of output
@@ -185,10 +184,10 @@ func main() {
 }
 ```
 
-#### Input(s)
+#### Inputs
 1. Text to encode
 
-#### Output(s)
+#### Outputs
 1. Base64 of input
 2. Checksum of input
 3. Checksum of output
@@ -207,12 +206,12 @@ func main() {
 }
 ```
 
-#### Input(s)
+#### Inputs
 1. JSON text to encrypt
 2. Hyper Protect OS (hpvs or hpcr-rhvs) (optional)
 3. Encryption certificate (optional)
 
-#### Output(s)
+#### Outputs
 1. Encrypted text
 2. Checksum of input
 3. Checksum of output
@@ -220,7 +219,7 @@ func main() {
 
 
 ### HpcrTgz()
-This function generates base64 of TGZ that contains files under the given folder
+This function generates a Base64 of TGZ that contains files under the given folder
 
 ### Example
 ```go
@@ -231,18 +230,18 @@ func main() {
 }
 ```
 
-#### Input(s)
+#### Input
 1. Path of folder
 
-#### Output(s)
-1. Base64 of TGZ where TGZ is contents of given folder
-2. Checksum of imput
+#### Outputs
+1. Base64 of TGZ where TGZ is the contents of given folder
+2. Checksum of input
 3. Checksum of output
 4. Error (If any)
 
 
 ### HpcrVerifyContract()
-This function verifies if the parsed encrypted contract is schematically valid. The validation is successful, if error is nil.
+This function verifies whether the parsed encrypted contract is schematically valid. The validation is successful, if error is nil.
 
 ### Example
 ```go
@@ -253,16 +252,16 @@ func main() {
 }
 ```
 
-#### Input(s)
+#### Inputs
 1. Contract
 2. Hyper Protect OS (hpvs or hpcr-rhvs) (optional)
 
-#### Output(s)
+#### Outputs
 1. Error (if any)
 
 
 ### HpcrTgzEncrypted()
-This function first generates base64 of TGZ that contains files under the given folder and then encrypts the data as per `hyper-protect-basic.<encoded-encrypted-password>.<encoded-encrypted-data>`.
+This function first generates Base64 of TGZ that contains files under the given folder and then encrypts the data as `hyper-protect-basic.<encoded-encrypted-password>.<encoded-encrypted-data>`.
 
 ### Example
 ```go
@@ -273,13 +272,13 @@ func main() {
 }
 ```
 
-#### Input(s)
+#### Inputs
 1. Path of folder
 2. Hyper Protect OS (hpvs or hpcr-rhvs) (optional)
 3. Encryption certificate (optional)
 
-#### Output(s)
-1. encrypted base64 of TGZ where TGZ is contents of given folder
+#### Outputs
+1. Encrypted Base64 of TGZ where TGZ is the contents of given folder
 2. Checksum of input
 3. Checksum of output
 4. Error (If any)
@@ -297,13 +296,13 @@ func main() {
 }
 ```
 
-#### Input(s)
+#### Inputs
 1. Contract
 2. Hyper Protect OS (hpvs or hpcr-rhvs) (optional)
 3. Encryption certificate (optional)
 4. Private Key for signing
 
-#### Output(s)
+#### Outputs
 1. Signed and encrypted contract
 2. Checksum of input
 3. Checksum of output
@@ -311,7 +310,7 @@ func main() {
 
 
 ### HpcrContractSignedEncryptedContractExpiry()
-This function generates a signed and encrypted contract with contract expiry enabled. The output will be of the format `hyper-protect-basic.<encoded-encrypted-password>.<encoded-encrypted-data>`.
+This function generates a signed and encrypted contract with contract expiry enabled. The output is of the format `hyper-protect-basic.<encoded-encrypted-password>.<encoded-encrypted-data>`.
 
 ### Example
 ```go
@@ -336,7 +335,7 @@ func usingCsrPem() {
 }
 ```
 
-#### Input(s)
+#### Inputs
 1. Contract
 2. Hyper Protect OS (hpvs or hpcr-rhvs) (optional)
 3. Encryption certificate (optional)
@@ -361,7 +360,7 @@ The CSR parameters should be of the format:-
 "mail":     "sashwat.k@ibm.com"
 ```
 
-#### Output(s)
+#### Outputs
 1. Signed and encrypted contract
 2. Checksum of input
 3. Checksum of output
