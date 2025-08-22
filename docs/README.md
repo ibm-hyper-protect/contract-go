@@ -234,7 +234,7 @@ func main() {
 1. Path of folder
 
 #### Outputs
-1. Base64 of TGZ where TGZ is the contents of given folder
+1. Base64 of TGZ where TGZ is the contents of a given folder
 2. Checksum of input
 3. Checksum of output
 4. Error (If any)
@@ -278,7 +278,7 @@ func main() {
 3. Encryption certificate (optional)
 
 #### Outputs
-1. Encrypted Base64 of TGZ where TGZ is the contents of given folder
+1. Encrypted Base64 of TGZ where TGZ is the contents of a given folder
 2. Checksum of input
 3. Checksum of output
 4. Error (If any)
