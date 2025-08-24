@@ -1,3 +1,14 @@
+## [1.13.7](https://github.com/ibm-hyper-protect/contract-go/compare/v1.13.6...v1.13.7) (2025-08-24)
+
+### Bug Fixes
+
+* **deps:** update module github.com/stretchr/testify to v1.11.0 ([#136](https://github.com/ibm-hyper-protect/contract-go/issues/136)) ([380e5ff](https://github.com/ibm-hyper-protect/contract-go/commit/380e5ff48380bbb49d0fae49a4eeb99b9338b239))
+
+### Miscellaneous Chores
+
+* **deps:** update docker.io/library/hello-world docker digest to 1d98307 ([#134](https://github.com/ibm-hyper-protect/contract-go/issues/134)) ([bc0adce](https://github.com/ibm-hyper-protect/contract-go/commit/bc0adce48814be96ecb641eddd0b10ff365e90c6))
+* **deps:** update docker.io/library/hello-world docker digest to a0dfb02 ([#135](https://github.com/ibm-hyper-protect/contract-go/issues/135)) ([d31c8ec](https://github.com/ibm-hyper-protect/contract-go/commit/d31c8ec81ca7d243d96443816b5e7ec501a7607a))
+
 ## [1.13.6](https://github.com/ibm-hyper-protect/contract-go/compare/v1.13.5...v1.13.6) (2025-08-14)
 
 ### Bug Fixes
