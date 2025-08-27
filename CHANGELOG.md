@@ -1,3 +1,9 @@
+## [1.13.8](https://github.com/ibm-hyper-protect/contract-go/compare/v1.13.7...v1.13.8) (2025-08-27)
+
+### Bug Fixes
+
+* **deps:** update module github.com/stretchr/testify to v1.11.1 ([#138](https://github.com/ibm-hyper-protect/contract-go/issues/138)) ([4a98797](https://github.com/ibm-hyper-protect/contract-go/commit/4a98797cf3c930635f0dd5799d4be68f2cb4bac0))
+
 ## [1.13.7](https://github.com/ibm-hyper-protect/contract-go/compare/v1.13.6...v1.13.7) (2025-08-24)
 
 ### Bug Fixes
