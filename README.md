@@ -28,7 +28,7 @@ For more details on Hyper Protect Virtual Servers for VPC and Hyper Protect Cont
 
 ## Usage
 
-Refer [Docs](docs/README.md) for more details on how to leverage this library for your usecases.
+Refer [Contract-Go docs](https://ibm-hyper-protect.github.io/contract-go) for more details on how to leverage this library for your usecases.
 
 
 ## References
