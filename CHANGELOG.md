@@ -1,3 +1,20 @@
+## [1.14.0](https://github.com/ibm-hyper-protect/contract-go/compare/v1.13.8...v1.14.0) (2025-10-06)
+
+### Features
+
+* update certificate to latest version ([2e21c46](https://github.com/ibm-hyper-protect/contract-go/commit/2e21c46f22c05d438e089e16a2abf51726795a52))
+* update go version ([395d418](https://github.com/ibm-hyper-protect/contract-go/commit/395d418c6d5f0e7461cddbfd7a856b4c3bbcd035))
+* update REAME with doc link ([981c9d0](https://github.com/ibm-hyper-protect/contract-go/commit/981c9d02f19359184a35d122d0f94fbc964a1778))
+* update schema to latest version ([431b4d7](https://github.com/ibm-hyper-protect/contract-go/commit/431b4d7cf4bb7800442cbd638fcb2b705531f070))
+
+### Bug Fixes
+
+* **deps:** update go dependencies ([#137](https://github.com/ibm-hyper-protect/contract-go/issues/137)) ([afe820b](https://github.com/ibm-hyper-protect/contract-go/commit/afe820b4346bebf41cedb7781a04fd5535713603))
+
+### Miscellaneous Chores
+
+* **deps:** update docker.io/library/hello-world docker digest to 54e66cc ([#139](https://github.com/ibm-hyper-protect/contract-go/issues/139)) ([368eccf](https://github.com/ibm-hyper-protect/contract-go/commit/368eccfd6f5fcfa79c66a68a06e75f0908793e9b))
+
 ## [1.13.8](https://github.com/ibm-hyper-protect/contract-go/compare/v1.13.7...v1.13.8) (2025-08-27)
 
 ### Bug Fixes
