@@ -1,3 +1,9 @@
+## [1.14.1](https://github.com/ibm-hyper-protect/contract-go/compare/v1.14.0...v1.14.1) (2025-10-14)
+
+### Bug Fixes
+
+* **deps:** update go dependencies to v6 ([#141](https://github.com/ibm-hyper-protect/contract-go/issues/141)) ([28dbc0b](https://github.com/ibm-hyper-protect/contract-go/commit/28dbc0b8de74d381f0a0cf99e210d7dd0e57c99f))
+
 ## [1.14.0](https://github.com/ibm-hyper-protect/contract-go/compare/v1.13.8...v1.14.0) (2025-10-06)
 
 ### Features
