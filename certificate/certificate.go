@@ -60,11 +60,13 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 	if formatType == "" {
 		formatType = defaultFormat
 	}
+
 	if gen.CheckIfEmpty(versionList) {
 		return "", fmt.Errorf(missingParameterErrStatement)
 	}
 
 	var verCertMap = make(map[string]string)
+
 	for _, version := range versionList {
 		verSpec := strings.Split(version, ".")
 
@@ -93,6 +95,7 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 		if err != nil {
 			return "", fmt.Errorf("failed to download encryption certificate - %v", err)
 		}
+
 		verCertMap[version] = cert
 	}
 
@@ -101,6 +104,7 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 		if err != nil {
 			return "", fmt.Errorf("failed to marshal JSON - %v", err)
 		}
+
 		return string(jsonBytes), nil
 	} else if formatType == formatYaml {
 		yamlBytes, err := yaml.Marshal(verCertMap)
