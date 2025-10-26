@@ -16,10 +16,13 @@
 package certificate
 
 import (
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"strings"
 	"text/template"
+	"time"
 
 	gen "github.com/ibm-hyper-protect/contract-go/common/general"
 	"gopkg.in/yaml.v3"
@@ -57,13 +60,11 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 	if formatType == "" {
 		formatType = defaultFormat
 	}
-
 	if gen.CheckIfEmpty(versionList) {
 		return "", fmt.Errorf(missingParameterErrStatement)
 	}
 
 	var verCertMap = make(map[string]string)
-
 	for _, version := range versionList {
 		verSpec := strings.Split(version, ".")
 
@@ -92,7 +93,6 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 		if err != nil {
 			return "", fmt.Errorf("failed to download encryption certificate - %v", err)
 		}
-
 		verCertMap[version] = cert
 	}
 
@@ -101,7 +101,6 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 		if err != nil {
 			return "", fmt.Errorf("failed to marshal JSON - %v", err)
 		}
-
 		return string(jsonBytes), nil
 	} else if formatType == formatYaml {
 		yamlBytes, err := yaml.Marshal(verCertMap)
@@ -112,4 +111,62 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 	} else {
 		return "", fmt.Errorf("invalid output format")
 	}
+}
+
+// HpcrEncryptionCertificatesValidation - checks encryption certificate validity for all given versions
+func HpcrEncryptionCertificatesValidation(certPEM string) (string, error) {
+	var certMap map[string]string
+	if err := json.Unmarshal([]byte(certPEM), &certMap); err != nil {
+		return "", fmt.Errorf("failed to parse input JSON: %v", err)
+	}
+
+	if len(certMap) == 0 {
+		return "", fmt.Errorf("No encryption certificate found")
+	}
+
+	var summary string
+
+	for version, certString := range certMap {
+		block, _ := pem.Decode([]byte(certString))
+		if block == nil {
+			msg := fmt.Sprintf("Failed to parse PEM block for version %s\n", version)
+			fmt.Print(msg)
+			summary += msg
+			continue
+		}
+
+		cert, err := x509.ParseCertificate(block.Bytes)
+		if err != nil {
+			msg := fmt.Sprintf("Failed to parse certificate for version %s: %v\n", version, err)
+			fmt.Print(msg)
+			summary += msg
+			continue
+		}
+
+		now := time.Now()
+		daysLeft := cert.NotAfter.Sub(now).Hours() / 24
+
+		switch {
+		case daysLeft < 0:
+			msg := fmt.Sprintf("Certificate version %s has already expired on %s\n",
+				version, cert.NotAfter.Format(time.RFC3339))
+			fmt.Print(msg)
+			summary += msg
+
+		case daysLeft < 180:
+			msg := fmt.Sprintf("Warning: Certificate version %s will expire in %.0f days (on %s)\n",
+				version, daysLeft, cert.NotAfter.Format(time.RFC3339))
+			fmt.Print(msg)
+			summary += msg
+
+		default:
+			msg := fmt.Sprintf("Certificate version %s is valid for another %.0f days (until %s)\n",
+				version, daysLeft, cert.NotAfter.Format(time.RFC3339))
+			fmt.Print(msg)
+			summary += msg
+		}
+	}
+
+	fmt.Println("All certificates validated successfully.")
+	return summary, nil
 }
