@@ -97,6 +97,7 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 		if err != nil {
 			return "", err
 		}
+		fmt.Println("Encryption certificate validity status - ", msg)
 		var verCertMap = make(map[string]string)
 		verCertMap["encryption_certificate"] = cert
 		verCertMap["encryption_cert_status"] = msg
