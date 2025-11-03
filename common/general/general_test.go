@@ -42,13 +42,26 @@ const (
 	sampleBase64Data   = "c2FzaHdhdGs="
 	sampleDataChecksum = "05fb716cba07a0cdda231f1aa19621ce9e183a4fb6e650b459bc3c5db7593e42"
 
+	// sampleCertificateJson = `{
+	// 	"1.0.0": "data1",
+	// 	"1.2.5": "data2",
+	// 	"2.0.5": "data3",
+	// 	"3.5.10": "data4",
+	// 	"4.0.0": "data5"
+	// }`
+
 	sampleCertificateJson = `{
-		"1.0.0": "data1",
-		"1.2.5": "data2",
-		"2.0.5": "data3",
-		"3.5.10": "data4",
-		"4.0.0": "data5"
-	}`
+    "1.0.0": {
+        "cert": "data1",
+        "days left": "1",
+        "msg": "test1"
+    },
+    "3.5.10": {
+        "cert": "data4",
+        "days left": "2",
+        "msg": "test2"
+    }
+}`
 
 	sampleComposeFolder = "../../samples/tgz"
 )
@@ -249,7 +262,12 @@ func TestGetDataFromLatestVersion(t *testing.T) {
 	}
 
 	assert.Equal(t, key, "3.5.10")
-	assert.Equal(t, value, "data4")
+	expected := map[string]string{
+		"cert":      "data4",
+		"days left": "2",
+		"msg":       "test2",
+	}
+	assert.Equal(t, expected, value)
 }
 
 // Testcase to check if FetchEncryptionCertificate() fetches encryption certificate

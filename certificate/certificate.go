@@ -16,13 +16,11 @@
 package certificate
 
 import (
-	"crypto/x509"
 	"encoding/json"
-	"encoding/pem"
 	"fmt"
+	"strconv"
 	"strings"
 	"text/template"
-	"time"
 
 	gen "github.com/ibm-hyper-protect/contract-go/common/general"
 	"gopkg.in/yaml.v3"
@@ -43,9 +41,9 @@ type CertSpec struct {
 }
 
 // HpcrGetEncryptionCertificateFromJson - function to get encryption certificate from encryption certificate JSON data
-func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version string) (string, string, error) {
+func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version string) (string, map[string]string, error) {
 	if gen.CheckIfEmpty(encryptionCertificateJson, version) {
-		return "", "", fmt.Errorf(missingParameterErrStatement)
+		return "", nil, fmt.Errorf(missingParameterErrStatement)
 	}
 
 	return gen.GetDataFromLatestVersion(encryptionCertificateJson, version)
@@ -65,8 +63,7 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 		return "", fmt.Errorf(missingParameterErrStatement)
 	}
 
-	var verCertMap = make(map[string]string)
-
+	var vertCertMapVersion = make(map[string]map[string]string)
 	for _, version := range versionList {
 		verSpec := strings.Split(version, ".")
 
@@ -96,18 +93,26 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 			return "", fmt.Errorf("failed to download encryption certificate - %v", err)
 		}
 
-		verCertMap[version] = cert
+		msg, daysLeft, err := gen.CheckEncryptionCertValidity(cert, version)
+		if err != nil {
+			return "", err
+		}
+		var verCertMap = make(map[string]string)
+		verCertMap["encryption_certificate"] = cert
+		verCertMap["encryption_cert_status"] = msg
+		verCertMap["expiry_days"] = strconv.Itoa(daysLeft)
+		vertCertMapVersion[version] = verCertMap
 	}
 
 	if formatType == formatJson {
-		jsonBytes, err := json.Marshal(verCertMap)
+		jsonBytes, err := json.Marshal(vertCertMapVersion)
 		if err != nil {
 			return "", fmt.Errorf("failed to marshal JSON - %v", err)
 		}
 
 		return string(jsonBytes), nil
 	} else if formatType == formatYaml {
-		yamlBytes, err := yaml.Marshal(verCertMap)
+		yamlBytes, err := yaml.Marshal(vertCertMapVersion)
 		if err != nil {
 			return "", fmt.Errorf("failed to marshal YAML - %v", err)
 		}
@@ -118,59 +123,27 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 }
 
 // HpcrEncryptionCertificatesValidation - checks encryption certificate validity for all given versions
-func HpcrEncryptionCertificatesValidation(certPEM string) (string, error) {
-	var certMap map[string]string
-	if err := json.Unmarshal([]byte(certPEM), &certMap); err != nil {
-		return "", fmt.Errorf("failed to parse input JSON: %v", err)
+func HpcrEncryptionCertificatesValidation(encryptionCert string) (string, int, error) {
+	var certificates map[string]map[string]string
+	if err := json.Unmarshal([]byte(encryptionCert), &certificates); err != nil {
+		return "", 0, fmt.Errorf("failed to parse input JSON: %v", err)
 	}
 
-	if len(certMap) == 0 {
-		return "", fmt.Errorf("No encryption certificate found")
+	if len(certificates) == 0 {
+		return "", 0, fmt.Errorf("no encryption certificates found")
 	}
 
-	var summary string
-
-	for version, certString := range certMap {
-		block, _ := pem.Decode([]byte(certString))
-		if block == nil {
-			msg := fmt.Sprintf("Failed to parse PEM block for version %s\n", version)
-			fmt.Print(msg)
-			summary += msg
-			continue
+	for version, certData := range certificates {
+		cert, ok := certData["cert"]
+		if !ok {
+			return "", 0, fmt.Errorf("certificate missing for version %s", version)
 		}
 
-		cert, err := x509.ParseCertificate(block.Bytes)
+		msg, _, err := gen.CheckEncryptionCertValidity(cert, version)
 		if err != nil {
-			msg := fmt.Sprintf("Failed to parse certificate for version %s: %v\n", version, err)
-			fmt.Print(msg)
-			summary += msg
-			continue
+			return "", 0, err
 		}
-
-		now := time.Now()
-		daysLeft := cert.NotAfter.Sub(now).Hours() / 24
-
-		switch {
-		case daysLeft < 0:
-			msg := fmt.Sprintf("Certificate version %s has already expired on %s\n",
-				version, cert.NotAfter.Format(time.RFC3339))
-			fmt.Print(msg)
-			summary += msg
-
-		case daysLeft < 180:
-			msg := fmt.Sprintf("Warning: Certificate version %s will expire in %.0f days (on %s)\n",
-				version, daysLeft, cert.NotAfter.Format(time.RFC3339))
-			fmt.Print(msg)
-			summary += msg
-
-		default:
-			msg := fmt.Sprintf("Certificate version %s is valid for another %.0f days (until %s)\n",
-				version, daysLeft, cert.NotAfter.Format(time.RFC3339))
-			fmt.Print(msg)
-			summary += msg
-		}
+		fmt.Println(msg)
 	}
-
-	fmt.Println("All certificates validated successfully.")
-	return summary, nil
+	return "", 0, nil
 }
