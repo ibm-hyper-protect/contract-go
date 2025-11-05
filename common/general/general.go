@@ -20,9 +20,11 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"net/http"
@@ -31,6 +33,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/santhosh-tekuri/jsonschema/v5"
@@ -282,15 +285,15 @@ func CheckUrlExists(url string) (bool, error) {
 }
 
 // GetDataFromLatestVersion - function to get the value based on constraints
-func GetDataFromLatestVersion(jsonData, version string) (string, string, error) {
-	var dataMap map[string]string
+func GetDataFromLatestVersion(jsonData, version string) (string, map[string]string, error) {
+	var dataMap map[string]map[string]string
 	if err := json.Unmarshal([]byte(jsonData), &dataMap); err != nil {
-		return "", "", fmt.Errorf("error unmarshaling JSON data - %v", err)
+		return "", nil, fmt.Errorf("error unmarshaling JSON data - %v", err)
 	}
 
 	targetConstraint, err := semver.NewConstraint(version)
 	if err != nil {
-		return "", "", fmt.Errorf("error parsing target version constraint - %v", err)
+		return "", nil, fmt.Errorf("error parsing target version constraint - %v", err)
 	}
 
 	var matchingVersions []*semver.Version
@@ -298,7 +301,7 @@ func GetDataFromLatestVersion(jsonData, version string) (string, string, error) 
 	for versionStr := range dataMap {
 		version, err := semver.NewVersion(versionStr)
 		if err != nil {
-			return "", "", fmt.Errorf("error parsing version - %v", err)
+			return "", nil, fmt.Errorf("error parsing version - %v", err)
 		}
 
 		if targetConstraint.Check(version) {
@@ -315,7 +318,7 @@ func GetDataFromLatestVersion(jsonData, version string) (string, string, error) 
 	}
 
 	// No matching version found
-	return "", "", fmt.Errorf("no matching version found for the given constraint")
+	return "", nil, fmt.Errorf("no matching version found for the given constraint")
 }
 
 // FetchEncryptionCertificate - function to get encryption certificate
@@ -499,4 +502,67 @@ func yamlParse(filename string) (map[string]any, error) {
 		return yamlObj, nil
 	}
 	return nil, fmt.Errorf("error unmarshelling the YAML file")
+}
+
+// CheckEncryptionCertValidity - function return downloaded encryption cert status and number of days left to expire
+func CheckEncryptionCertValidity(encryptionCert, version string) (string, int, error) {
+	block, _ := pem.Decode([]byte(encryptionCert))
+	if block == nil {
+		return "", 0, fmt.Errorf("failed to parse PEM block for version %s", version)
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return "", 0, fmt.Errorf("failed to parse certificate for version %s: %v", version, err)
+	}
+
+	now := time.Now()
+	daysLeft := cert.NotAfter.Sub(now).Hours() / 24
+
+	switch {
+	case daysLeft < 0:
+		msg := fmt.Sprintf("Certificate version %s has already expired on %s\n",
+			version, cert.NotAfter.Format(time.RFC3339))
+		return msg, int(daysLeft), nil
+
+	case daysLeft < 180:
+		msg := fmt.Sprintf("Warning: Certificate version %s will expire in %.0f days (on %s)\n",
+			version, daysLeft, cert.NotAfter.Format(time.RFC3339))
+		return msg, int(daysLeft), nil
+
+	default:
+		msg := fmt.Sprintf("Certificate version %s is valid for another %.0f days (until %s)\n",
+			version, daysLeft, cert.NotAfter.Format(time.RFC3339))
+		return msg, int(daysLeft), nil
+	}
+}
+
+// CheckEncryptionCertValidityForContractEncryption - function checks the encryption certificate used for contract encryption. It returns an error if the certificate has expired and issues a warning if the certificate is set to expire within the next six months
+func CheckEncryptionCertValidityForContractEncryption(encryptionCert string) (string, error) {
+	block, _ := pem.Decode([]byte(encryptionCert))
+	if block == nil {
+		return "", fmt.Errorf("failed to parse PEM block")
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse certificate %v", err)
+	}
+
+	now := time.Now()
+	daysLeft := cert.NotAfter.Sub(now).Hours() / 24
+
+	switch {
+	case daysLeft < 0:
+		return "", fmt.Errorf("encryption certificate has already expired on %s",
+			cert.NotAfter.Format(time.RFC3339))
+
+	case daysLeft < 180:
+		return fmt.Sprintf("Warning: Encryption certificate will expire in %.0f days (on %s)\n",
+			daysLeft, cert.NotAfter.Format(time.RFC3339)), nil
+
+	default:
+		return fmt.Sprintf("Used encryption certificate is valid for another %.0f days (until %s)\n",
+			daysLeft, cert.NotAfter.Format(time.RFC3339)), nil
+	}
 }

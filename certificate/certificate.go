@@ -18,6 +18,7 @@ package certificate
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -40,9 +41,9 @@ type CertSpec struct {
 }
 
 // HpcrGetEncryptionCertificateFromJson - function to get encryption certificate from encryption certificate JSON data
-func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version string) (string, string, error) {
+func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version string) (string, map[string]string, error) {
 	if gen.CheckIfEmpty(encryptionCertificateJson, version) {
-		return "", "", fmt.Errorf(missingParameterErrStatement)
+		return "", nil, fmt.Errorf(missingParameterErrStatement)
 	}
 
 	return gen.GetDataFromLatestVersion(encryptionCertificateJson, version)
@@ -62,7 +63,7 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 		return "", fmt.Errorf(missingParameterErrStatement)
 	}
 
-	var verCertMap = make(map[string]string)
+	var vertCertMapVersion = make(map[string]map[string]string)
 
 	for _, version := range versionList {
 		verSpec := strings.Split(version, ".")
@@ -93,18 +94,27 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 			return "", fmt.Errorf("failed to download encryption certificate - %v", err)
 		}
 
-		verCertMap[version] = cert
+		msg, daysLeft, err := gen.CheckEncryptionCertValidity(cert, version)
+		if err != nil {
+			return "", err
+		}
+		fmt.Println("Encryption certificate validity status - ", msg)
+		var verCertMap = make(map[string]string)
+		verCertMap["encryption_certificate"] = cert
+		verCertMap["encryption_cert_status"] = msg
+		verCertMap["expiry_days"] = strconv.Itoa(daysLeft)
+		vertCertMapVersion[version] = verCertMap
 	}
 
 	if formatType == formatJson {
-		jsonBytes, err := json.Marshal(verCertMap)
+		jsonBytes, err := json.Marshal(vertCertMapVersion)
 		if err != nil {
 			return "", fmt.Errorf("failed to marshal JSON - %v", err)
 		}
 
 		return string(jsonBytes), nil
 	} else if formatType == formatYaml {
-		yamlBytes, err := yaml.Marshal(verCertMap)
+		yamlBytes, err := yaml.Marshal(vertCertMapVersion)
 		if err != nil {
 			return "", fmt.Errorf("failed to marshal YAML - %v", err)
 		}
@@ -112,4 +122,30 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 	} else {
 		return "", fmt.Errorf("invalid output format")
 	}
+}
+
+// HpcrEncryptionCertificatesValidation - checks encryption certificate validity for all given versions
+func HpcrEncryptionCertificatesValidation(encryptionCert string) (string, int, error) {
+	var certificates map[string]map[string]string
+	if err := json.Unmarshal([]byte(encryptionCert), &certificates); err != nil {
+		return "", 0, fmt.Errorf("failed to parse input JSON: %v", err)
+	}
+
+	if len(certificates) == 0 {
+		return "", 0, fmt.Errorf("no encryption certificates found")
+	}
+
+	for version, certData := range certificates {
+		cert, ok := certData["encryption_certificate"]
+		if !ok {
+			return "", 0, fmt.Errorf("certificate missing for version %s", version)
+		}
+
+		msg, _, err := gen.CheckEncryptionCertValidity(cert, version)
+		if err != nil {
+			return "", 0, err
+		}
+		fmt.Println(msg)
+	}
+	return "", 0, nil
 }

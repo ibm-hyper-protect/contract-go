@@ -17,6 +17,8 @@ package contract
 
 import (
 	"encoding/json"
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -198,13 +200,18 @@ func TestHpcrVerifyContract(t *testing.T) {
 
 // Testcase to check if HpcrContractSignedEncrypted() is able to generate
 func TestHpcrContractSignedEncrypted(t *testing.T) {
-
+	encryption_cert := "../samples/encryption-cert/ibm-hyper-protect-container-runtime-1-0-s390x-22-encrypt.crt"
+	data, err := os.ReadFile(encryption_cert)
+	if err != nil {
+		fmt.Println("Error reading file:", err)
+		return
+	}
 	contract, privateKey, _, _, _, err := common(t.Name())
 	if err != nil {
 		t.Errorf("failed to get contract and private key - %v", err)
 	}
 
-	result, inputSha256, _, err := HpcrContractSignedEncrypted(contract, sampleHyperProtectOsVersion, "", privateKey)
+	result, inputSha256, _, err := HpcrContractSignedEncrypted(contract, sampleHyperProtectOsVersion, string(data), privateKey)
 	if err != nil {
 		t.Errorf("failed to generate signed and encrypted contract - %v", err)
 	}
