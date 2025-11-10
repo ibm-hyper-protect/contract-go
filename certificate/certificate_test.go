@@ -24,14 +24,16 @@ import (
 var (
 	sampleJsonData = `{
 		"1.0.0": {
-			"encryption_certificate": "data1",
-			"expiry_days": "1",
-			"encryption_cert_status": "test1"
+			"cert": "data1",
+			"status": "test1",
+			"expiry_date": "26-02-26 12:27:33 GMT",
+			"expiry_days": "1"
 		},
 		"4.0.0": {
-			"encryption_certificate": "data2",
-			"expiry_days": "2",
-			"encryption_cert_status": "test2"
+			"cert": "data2",
+			"status": "test2",
+			"expiry_date": "26-02-26 12:27:33 GMT",
+			"expiry_days": "2"
 		}
 	}`
 	sampleEncryptionCertVersions = []string{"1.0.20", "1.0.21", "1.0.22"}

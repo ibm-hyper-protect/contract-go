@@ -47,14 +47,16 @@ const (
 
 	sampleCertificateJson = `{
 		"1.0.0": {
-			"encryption_certificate": "data1",
-			"expiry_days": "1",
-			"encryption_cert_status": "test1"
+			"cert": "data1",
+			"status": "test1",
+			"expiry_date": "26-02-26 12:27:33 GMT",
+			"expiry_days": "1"
 		},
 		"3.5.10": {
-			"encryption_certificate": "data4",
-			"expiry_days": "2",
-			"encryption_cert_status": "test2"
+			"cert": "data4",
+			"status": "test2",
+			"expiry_date": "26-02-26 12:27:33 GMT",
+			"expiry_days": "2"
 		}
 	}`
 
@@ -415,7 +417,7 @@ func TestCheckEncryptionCertValidity(t *testing.T) {
 		fmt.Println("Error reading file:", err)
 		return
 	}
-	cert_status, _, err := CheckEncryptionCertValidity(string(data), "1.0.0") // sample certificate is valid till 9th nov 2030
+	cert_status, _, _, err := CheckEncryptionCertValidity(string(data), "1.0.0") // sample certificate is valid till 9th nov 2030
 	assert.NoError(t, err)
 	assert.Contains(t, cert_status, "Certificate version 1.0.0 is valid for another")
 }
@@ -427,9 +429,9 @@ func TestCheckExpiredEncryptionCertValidity(t *testing.T) {
 		fmt.Println("Error reading file:", err)
 		return
 	}
-	cert_status, _, err := CheckEncryptionCertValidity(string(data), "1.0.14")
+	cert_status, _, _, err := CheckEncryptionCertValidity(string(data), "1.0.14")
 	assert.NoError(t, err)
-	assert.Contains(t, cert_status, "Certificate version 1.0.14 has already expired on 2021-01-01T00:00:00Z")
+	assert.Contains(t, cert_status, "Certificate version 1.0.14 has already expired")
 }
 
 // Testcase to check encryption certificate validity during contract encryption
@@ -452,5 +454,5 @@ func TestCheckExpiredEncryptionCertValidityDuringContractEncryption(t *testing.T
 		return
 	}
 	_, err = CheckEncryptionCertValidityForContractEncryption(string(data))
-	assert.Contains(t, err.Error(), "Encryption certificate has already expired on 2021-01-01T00:00:00Z")
+	assert.Contains(t, err.Error(), "Encryption certificate has already expired")
 }

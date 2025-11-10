@@ -314,7 +314,7 @@ func GetDataFromLatestVersion(jsonData, version string) (string, string, error) 
 	// Get the latest version and its corresponding data
 	if len(matchingVersions) > 0 {
 		latestVersion := matchingVersions[0]
-		return latestVersion.String(), dataMap[latestVersion.String()]["encryption_certificate"], nil
+		return latestVersion.String(), dataMap[latestVersion.String()]["cert"], nil
 	}
 
 	// No matching version found
@@ -505,35 +505,36 @@ func yamlParse(filename string) (map[string]any, error) {
 }
 
 // CheckEncryptionCertValidity - function return downloaded encryption cert status and number of days left to expire
-func CheckEncryptionCertValidity(encryptionCert, version string) (string, int, error) {
+func CheckEncryptionCertValidity(encryptionCert, version string) (string, int, string, error) {
 	block, _ := pem.Decode([]byte(encryptionCert))
 	if block == nil {
-		return "", 0, fmt.Errorf("failed to parse PEM block for version %s", version)
+		return "", 0, "", fmt.Errorf("failed to parse PEM block for version %s", version)
 	}
 
 	cert, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		return "", 0, fmt.Errorf("failed to parse certificate for version %s: %v", version, err)
+		return "", 0, "", fmt.Errorf("failed to parse certificate for version %s: %v", version, err)
 	}
 
 	now := time.Now()
 	daysLeft := cert.NotAfter.Sub(now).Hours() / 24
-
+	gmtTime := cert.NotAfter.UTC()
+	formattedExpiryDays := gmtTime.Format("02-01-06 15:04:05") + " GMT"
 	switch {
 	case daysLeft < 0:
-		msg := fmt.Sprintf("Certificate version %s has already expired on %s",
-			version, cert.NotAfter.Format(time.RFC3339))
-		return msg, int(daysLeft), nil
+		msg := fmt.Sprintf("Certificate version %s has already expired",
+			version)
+		return msg, int(daysLeft), formattedExpiryDays, nil
 
 	case daysLeft < 180:
-		msg := fmt.Sprintf("Warning: Certificate version %s will expire in %.0f days (on %s)",
-			version, daysLeft, cert.NotAfter.Format(time.RFC3339))
-		return msg, int(daysLeft), nil
+		msg := fmt.Sprintf("Warning: Certificate version %s will expire in %.0f days",
+			version, daysLeft)
+		return msg, int(daysLeft), formattedExpiryDays, nil
 
 	default:
-		msg := fmt.Sprintf("Certificate version %s is valid for another %.0f days (until %s)",
-			version, daysLeft, cert.NotAfter.Format(time.RFC3339))
-		return msg, int(daysLeft), nil
+		msg := fmt.Sprintf("Certificate version %s is valid for another %.0f days",
+			version, daysLeft)
+		return msg, int(daysLeft), formattedExpiryDays, nil
 	}
 }
 
@@ -555,14 +556,14 @@ func CheckEncryptionCertValidityForContractEncryption(encryptionCert string) (st
 	switch {
 	case daysLeft < 0:
 		return "", fmt.Errorf("Encryption certificate has already expired on %s",
-			cert.NotAfter.Format(time.RFC3339))
+			cert.NotAfter.Format("02-01-06 15:04:05"))
 
 	case daysLeft < 180:
 		return fmt.Sprintf("Warning: Encryption certificate will expire in %.0f days (on %s)",
-			daysLeft, cert.NotAfter.Format(time.RFC3339)), nil
+			daysLeft, cert.NotAfter.Format("02-01-06 15:04:05")), nil
 
 	default:
 		return fmt.Sprintf("Encryption certificate is valid for another %.0f days (until %s)",
-			daysLeft, cert.NotAfter.Format(time.RFC3339)), nil
+			daysLeft, cert.NotAfter.Format("02-01-06 15:04:05")), nil
 	}
 }
