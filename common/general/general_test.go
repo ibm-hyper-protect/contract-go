@@ -47,20 +47,21 @@ const (
 
 	sampleCertificateJson = `{
 		"1.0.0": {
-			"cert": "data1",
-			"days left": "1",
-			"msg": "test1"
+			"encryption_certificate": "data1",
+			"expiry_days": "1",
+			"encryption_cert_status": "test1"
 		},
 		"3.5.10": {
-			"cert": "data4",
-			"days left": "2",
-			"msg": "test2"
+			"encryption_certificate": "data4",
+			"expiry_days": "2",
+			"encryption_cert_status": "test2"
 		}
 	}`
 
-	sampleComposeFolder                = "../../samples/tgz"
-	sampleEncryptionCertificate        = "../../samples/encryption-cert/ibm-hyper-protect-container-runtime-1-0-s390x-22-encrypt.crt"
-	sampleEncryptionCertificateExpired = "../../samples/encryption-cert/ibm-hyper-protect-container-runtime-1-0-s390x-14-encrypt.crt"
+	sampleComposeFolder = "../../samples/tgz"
+	// active.crt will be valid up to November 9, 2030
+	sampleEncryptionCertificate        = "../../samples/encryption-cert/active.crt"
+	sampleEncryptionCertificateExpired = "../../samples/encryption-cert/expired.crt"
 )
 
 // Testcase to check if CheckIfEmpty() is able to identify empty variables
@@ -259,12 +260,7 @@ func TestGetDataFromLatestVersion(t *testing.T) {
 	}
 
 	assert.Equal(t, key, "3.5.10")
-	expected := map[string]string{
-		"cert":      "data4",
-		"days left": "2",
-		"msg":       "test2",
-	}
-	assert.Equal(t, expected, value)
+	assert.Equal(t, value, "data4")
 }
 
 // Testcase to check if FetchEncryptionCertificate() fetches encryption certificate
@@ -419,9 +415,9 @@ func TestCheckEncryptionCertValidity(t *testing.T) {
 		fmt.Println("Error reading file:", err)
 		return
 	}
-	cert_status, _, err := CheckEncryptionCertValidity(string(data), "1.0.22")
+	cert_status, _, err := CheckEncryptionCertValidity(string(data), "1.0.0") // sample certificate is valid till 9th nov 2030
 	assert.NoError(t, err)
-	assert.Contains(t, cert_status, "Warning: Certificate version 1.0.22 will expire in")
+	assert.Contains(t, cert_status, "Certificate version 1.0.0 is valid for another")
 }
 
 // Testcase to check encryption certificate validity that is expired during certificate download
@@ -433,19 +429,19 @@ func TestCheckExpiredEncryptionCertValidity(t *testing.T) {
 	}
 	cert_status, _, err := CheckEncryptionCertValidity(string(data), "1.0.14")
 	assert.NoError(t, err)
-	assert.Contains(t, cert_status, "Certificate version 1.0.14 has already expired on 2024-10-05T06:06:38Z")
+	assert.Contains(t, cert_status, "Certificate version 1.0.14 has already expired on 2021-01-01T00:00:00Z")
 }
 
 // Testcase to check encryption certificate validity during contract encryption
 func TestCheckEncryptionCertValidityDuringContractEncryption(t *testing.T) {
-	data, err := os.ReadFile(sampleEncryptionCertificate)
+	data, err := os.ReadFile(sampleEncryptionCertificate) // sample certificate is valid till 9th nov 2030
 	if err != nil {
 		fmt.Println("Error reading file:", err)
 		return
 	}
 	cert_status, err := CheckEncryptionCertValidityForContractEncryption(string(data))
 	assert.NoError(t, err)
-	assert.Contains(t, cert_status, "Warning: Encryption certificate will expire in ")
+	assert.Contains(t, cert_status, "Encryption certificate is valid for another")
 }
 
 // Testcase to check encryption certificate validity that is expired during contract encryption
@@ -456,5 +452,5 @@ func TestCheckExpiredEncryptionCertValidityDuringContractEncryption(t *testing.T
 		return
 	}
 	_, err = CheckEncryptionCertValidityForContractEncryption(string(data))
-	assert.Contains(t, err.Error(), "encryption certificate has already expired on 2024-10-05T06:06:38Z")
+	assert.Contains(t, err.Error(), "Encryption certificate has already expired on 2021-01-01T00:00:00Z")
 }

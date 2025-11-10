@@ -285,15 +285,15 @@ func CheckUrlExists(url string) (bool, error) {
 }
 
 // GetDataFromLatestVersion - function to get the value based on constraints
-func GetDataFromLatestVersion(jsonData, version string) (string, map[string]string, error) {
+func GetDataFromLatestVersion(jsonData, version string) (string, string, error) {
 	var dataMap map[string]map[string]string
 	if err := json.Unmarshal([]byte(jsonData), &dataMap); err != nil {
-		return "", nil, fmt.Errorf("error unmarshaling JSON data - %v", err)
+		return "", "", fmt.Errorf("error unmarshaling JSON data - %v", err)
 	}
 
 	targetConstraint, err := semver.NewConstraint(version)
 	if err != nil {
-		return "", nil, fmt.Errorf("error parsing target version constraint - %v", err)
+		return "", "", fmt.Errorf("error parsing target version constraint - %v", err)
 	}
 
 	var matchingVersions []*semver.Version
@@ -301,7 +301,7 @@ func GetDataFromLatestVersion(jsonData, version string) (string, map[string]stri
 	for versionStr := range dataMap {
 		version, err := semver.NewVersion(versionStr)
 		if err != nil {
-			return "", nil, fmt.Errorf("error parsing version - %v", err)
+			return "", "", fmt.Errorf("error parsing version - %v", err)
 		}
 
 		if targetConstraint.Check(version) {
@@ -314,11 +314,11 @@ func GetDataFromLatestVersion(jsonData, version string) (string, map[string]stri
 	// Get the latest version and its corresponding data
 	if len(matchingVersions) > 0 {
 		latestVersion := matchingVersions[0]
-		return latestVersion.String(), dataMap[latestVersion.String()], nil
+		return latestVersion.String(), dataMap[latestVersion.String()]["encryption_certificate"], nil
 	}
 
 	// No matching version found
-	return "", nil, fmt.Errorf("no matching version found for the given constraint")
+	return "", "", fmt.Errorf("no matching version found for the given constraint")
 }
 
 // FetchEncryptionCertificate - function to get encryption certificate
@@ -521,17 +521,17 @@ func CheckEncryptionCertValidity(encryptionCert, version string) (string, int, e
 
 	switch {
 	case daysLeft < 0:
-		msg := fmt.Sprintf("Certificate version %s has already expired on %s\n",
+		msg := fmt.Sprintf("Certificate version %s has already expired on %s",
 			version, cert.NotAfter.Format(time.RFC3339))
 		return msg, int(daysLeft), nil
 
 	case daysLeft < 180:
-		msg := fmt.Sprintf("Warning: Certificate version %s will expire in %.0f days (on %s)\n",
+		msg := fmt.Sprintf("Warning: Certificate version %s will expire in %.0f days (on %s)",
 			version, daysLeft, cert.NotAfter.Format(time.RFC3339))
 		return msg, int(daysLeft), nil
 
 	default:
-		msg := fmt.Sprintf("Certificate version %s is valid for another %.0f days (until %s)\n",
+		msg := fmt.Sprintf("Certificate version %s is valid for another %.0f days (until %s)",
 			version, daysLeft, cert.NotAfter.Format(time.RFC3339))
 		return msg, int(daysLeft), nil
 	}
@@ -554,15 +554,15 @@ func CheckEncryptionCertValidityForContractEncryption(encryptionCert string) (st
 
 	switch {
 	case daysLeft < 0:
-		return "", fmt.Errorf("encryption certificate has already expired on %s",
+		return "", fmt.Errorf("Encryption certificate has already expired on %s",
 			cert.NotAfter.Format(time.RFC3339))
 
 	case daysLeft < 180:
-		return fmt.Sprintf("Warning: Encryption certificate will expire in %.0f days (on %s)\n",
+		return fmt.Sprintf("Warning: Encryption certificate will expire in %.0f days (on %s)",
 			daysLeft, cert.NotAfter.Format(time.RFC3339)), nil
 
 	default:
-		return fmt.Sprintf("Used encryption certificate is valid for another %.0f days (until %s)\n",
+		return fmt.Sprintf("Encryption certificate is valid for another %.0f days (until %s)",
 			daysLeft, cert.NotAfter.Format(time.RFC3339)), nil
 	}
 }

@@ -24,14 +24,14 @@ import (
 var (
 	sampleJsonData = `{
 		"1.0.0": {
-			"cert": "data1",
-			"days left": "1",
-			"msg": "test1"
+			"encryption_certificate": "data1",
+			"expiry_days": "1",
+			"encryption_cert_status": "test1"
 		},
 		"4.0.0": {
-			"cert": "data2",
-			"days left": "2",
-			"msg": "test2"
+			"encryption_certificate": "data2",
+			"expiry_days": "2",
+			"encryption_cert_status": "test2"
 		}
 	}`
 	sampleEncryptionCertVersions = []string{"1.0.20", "1.0.21", "1.0.22"}
@@ -48,12 +48,7 @@ func TestGetEncryptionCertificateFromJson(t *testing.T) {
 	}
 
 	assert.Equal(t, key, "4.0.0")
-	expected := map[string]string{
-		"cert":      "data2",
-		"days left": "2",
-		"msg":       "test2",
-	}
-	assert.Equal(t, expected, value)
+	assert.Equal(t, value, "data2")
 }
 
 // Testcase to check if DownloadEncryptionCertificates() is able to download encryption certificates as per constraint

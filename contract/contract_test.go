@@ -200,7 +200,7 @@ func TestHpcrVerifyContract(t *testing.T) {
 
 // Testcase to check if HpcrContractSignedEncrypted() is able to generate
 func TestHpcrContractSignedEncrypted(t *testing.T) {
-	encryption_cert := "../samples/encryption-cert/ibm-hyper-protect-container-runtime-1-0-s390x-22-encrypt.crt"
+	encryption_cert := "../encryption/ibm-hyper-protect-container-runtime-1-0-s390x-24-encrypt.crt"
 	data, err := os.ReadFile(encryption_cert)
 	if err != nil {
 		fmt.Println("Error reading file:", err)

@@ -41,9 +41,9 @@ type CertSpec struct {
 }
 
 // HpcrGetEncryptionCertificateFromJson - function to get encryption certificate from encryption certificate JSON data
-func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version string) (string, map[string]string, error) {
+func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version string) (string, string, error) {
 	if gen.CheckIfEmpty(encryptionCertificateJson, version) {
-		return "", nil, fmt.Errorf(missingParameterErrStatement)
+		return "", "", fmt.Errorf(missingParameterErrStatement)
 	}
 
 	return gen.GetDataFromLatestVersion(encryptionCertificateJson, version)
