@@ -46,6 +46,7 @@ const (
 
 	HyperProtectOsHpvs     = "hpvs"
 	HyperProtectOsHpcrRhvs = "hpcr-rhvs"
+	HyperProtectConfidentialContainerPeerPods = "hpcc-peerpod"
 )
 
 type Contract struct {
@@ -331,6 +332,8 @@ func FetchEncryptionCertificate(version, encryptionCertificate string) (string, 
 			return cert.EncryptionCertificateHpvs, nil
 		} else if version == HyperProtectOsHpcrRhvs {
 			return cert.EncryptionCertificateHpcrRhvs, nil
+		} else if version == HyperProtectConfidentialContainerPeerPods{
+			return cert.EncryptionCertificateHpccPeerPods
 		} else {
 			return "", fmt.Errorf("invalid Hyper Protect version")
 		}
