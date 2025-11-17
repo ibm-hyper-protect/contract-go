@@ -272,6 +272,13 @@ func TestFetchEncryptionCertificateRhvs(t *testing.T) {
 		t.Errorf("failed to fetch encryption certificate - %v", err)
 	}
 }
+// Testcase to check if FetchEncryptionCertificate() is able to fetch encryption certificate
+func TestFetchEncryptionCertificateHpcc(t *testing.T){
+	_, err := FetchEncryptionCertificate(HyperProtectConfidentialContainerPeerPods, "")
+	if err != nil {
+		t.Errorf("failed to fetch encryption certificate - %v", err)
+	}
+}
 
 // Testcase to check if TestGenerateTgzBase64() is able generate base64 of compose tgz
 func TestGenerateTgzBase64(t *testing.T) {
