@@ -332,7 +332,7 @@ func FetchEncryptionCertificate(version, encryptionCertificate string) (string, 
 			return cert.EncryptionCertificateHpvs, nil
 		} else if version == HyperProtectOsHpcrRhvs {
 			return cert.EncryptionCertificateHpcrRhvs, nil
-		} else if version == HyperProtectConfidentialContainerPeerPods{
+		} else if version == HyperProtectConfidentialContainerPeerPods {
 			return cert.EncryptionCertificateHpccPeerPods, nil
 		} else {
 			return "", fmt.Errorf("invalid Hyper Protect version")

@@ -255,7 +255,7 @@ func TestGetDataFromLatestVersion(t *testing.T) {
 	assert.Equal(t, value, "data4")
 }
 
-// Testcase to check if FetchEncryptionCertificate() fetches encryption certificate
+// Testcase to check if FetchEncryptionCertificate() fetches encryption certificate for HPVS
 func TestFetchEncryptionCertificate(t *testing.T) {
 	result, err := FetchEncryptionCertificate(HyperProtectOsHpvs, "")
 	if err != nil {
@@ -265,14 +265,15 @@ func TestFetchEncryptionCertificate(t *testing.T) {
 	assert.Equal(t, result, cert.EncryptionCertificateHpvs)
 }
 
-// Testcase to check if FetchEncryptionCertificate() is able to fetch encryption certificate
+// Testcase to check if FetchEncryptionCertificate() is able to fetch encryption certificate for HPCR RHVS
 func TestFetchEncryptionCertificateRhvs(t *testing.T) {
 	_, err := FetchEncryptionCertificate(HyperProtectOsHpcrRhvs, "")
 	if err != nil {
 		t.Errorf("failed to fetch encryption certificate - %v", err)
 	}
 }
-// Testcase to check if FetchEncryptionCertificate() is able to fetch encryption certificate
+
+// Testcase to check if FetchEncryptionCertificate() is able to fetch encryption certificate for HPCC peerpods
 func TestFetchEncryptionCertificateHpcc(t *testing.T){
 	_, err := FetchEncryptionCertificate(HyperProtectConfidentialContainerPeerPods, "")
 	if err != nil {
