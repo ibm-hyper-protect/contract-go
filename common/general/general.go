@@ -467,6 +467,8 @@ func convertToStringkeys(m map[any]any) map[string]any {
 func fetchContractSchema(version string) (string, error) {
 	if version == HyperProtectOsHpvs || version == "" {
 		return sch.ContractSchemaHpvs, nil
+	} else if version == HyperProtectConfidentialContainerPeerPods {
+		return sch.ContractSchemaHpvs, nil
 	} else if version == HyperProtectOsHpcrRhvs {
 		return sch.ContractSchemaHpcrRhvs, nil
 	} else {
