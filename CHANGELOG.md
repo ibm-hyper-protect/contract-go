@@ -1,3 +1,16 @@
+## [1.15.0](https://github.com/ibm-hyper-protect/contract-go/compare/v1.14.1...v1.15.0) (2025-11-24)
+
+### Features
+
+* update readme for hpcc peer pod ([04991c3](https://github.com/ibm-hyper-protect/contract-go/commit/04991c3ec30ab3ee838899faac937178cca59c97))
+* update user documentation for HPCC peerpod ([c340509](https://github.com/ibm-hyper-protect/contract-go/commit/c340509c6650373fc9edd35155475ad190b25608))
+
+### Miscellaneous Chores
+
+* **deps:** update docker.io/library/hello-world docker digest to 56433a6 ([#147](https://github.com/ibm-hyper-protect/contract-go/issues/147)) ([08ff557](https://github.com/ibm-hyper-protect/contract-go/commit/08ff5572f795abae829b8f7e3d894e2cd17882b8))
+* **deps:** update docker.io/library/hello-world docker digest to 6dc565a ([#143](https://github.com/ibm-hyper-protect/contract-go/issues/143)) ([f1ed6aa](https://github.com/ibm-hyper-protect/contract-go/commit/f1ed6aa90397d51dba234b9bc83150e7c21b0a82))
+* **deps:** update docker.io/library/hello-world docker digest to f793160 ([#150](https://github.com/ibm-hyper-protect/contract-go/issues/150)) ([b2af59e](https://github.com/ibm-hyper-protect/contract-go/commit/b2af59e4c5d19102760a58dfbd5ca67f9d55d3d0))
+
 ## [1.14.1](https://github.com/ibm-hyper-protect/contract-go/compare/v1.14.0...v1.14.1) (2025-10-14)
 
 ### Bug Fixes
