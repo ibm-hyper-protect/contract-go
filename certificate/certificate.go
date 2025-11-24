@@ -126,27 +126,10 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 }
 
 // HpcrEncryptionCertificatesValidation - checks encryption certificate validity for all given versions
-func HpcrEncryptionCertificatesValidation(encryptionCert string) (string, int, error) {
-	var certificates map[string]map[string]string
-	if err := json.Unmarshal([]byte(encryptionCert), &certificates); err != nil {
-		return "", 0, fmt.Errorf("failed to parse input JSON: %v", err)
+func HpcrEncryptionCertificatesValidation(encryptionCert string) (string, error) {
+	msg, err := gen.CheckEncryptionCertValidityForContractEncryption(encryptionCert)
+	if err != nil {
+		return "", err
 	}
-
-	if len(certificates) == 0 {
-		return "", 0, fmt.Errorf("no encryption certificates found")
-	}
-
-	for version, certData := range certificates {
-		cert, ok := certData["cert"]
-		if !ok {
-			return "", 0, fmt.Errorf("certificate missing for version %s", version)
-		}
-
-		msg, _, _, err := gen.CheckEncryptionCertValidity(cert, version)
-		if err != nil {
-			return "", 0, err
-		}
-		fmt.Println(msg)
-	}
-	return "", 0, nil
+	return msg, nil
 }

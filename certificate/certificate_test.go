@@ -18,6 +18,7 @@ package certificate
 import (
 	"testing"
 
+	gen "github.com/ibm-hyper-protect/contract-go/common/general"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -90,10 +91,10 @@ func TestCombined(t *testing.T) {
 
 // Testcase to CheckEncryptionCertValidity() is able to validate encryption certificate
 func TestHpcrDownloadEncryptionCertificates(t *testing.T) {
-	certs, err := HpcrDownloadEncryptionCertificates([]string{"1.0.22"}, "", sampleCertDownloadTemplate)
+	encryptionCert, err := gen.ReadDataFromFile("../samples/encryption-cert/active.crt")
 	if err != nil {
-		t.Errorf("failed to download HPCR encryption certificates - %v", err)
+		t.Errorf("failed to get encrypted checksum - %v", err)
 	}
-	_, _, err = HpcrEncryptionCertificatesValidation(certs)
+	_, err = HpcrEncryptionCertificatesValidation(encryptionCert)
 	assert.NoError(t, err)
 }
