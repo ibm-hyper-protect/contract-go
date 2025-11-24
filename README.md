@@ -8,9 +8,9 @@
 
 ## Introduction
 
-The library has been developed to automate the process of provisioning Hyper Protect Virtual Servers (HPVS) and Hyper Protect Container Runtime for RedHat Virtualization solutions (HPCR RHVS).
+The library has been developed to automate the process of provisioning Hyper Protect Virtual Servers (HPVS), Hyper Protect Container Runtime for RedHat Virtualization solutions (HPCR RHVS) and IBM Hyper Protect Confidential Container for Red Hat OpenShift Container Platform (HPCC Peer Pod).
 
-For more details on Hyper Protect Virtual Servers for VPC and Hyper Protect Container Runtime, refer [Confidential computing with LinuxONE](https://cloud.ibm.com/docs/vpc?topic=vpc-about-se) and [IBM Hyper Protect Virtual Servers](https://www.ibm.com/docs/en/hpvs/2.2.x).
+For more details on Hyper Protect Virtual Servers for VPC and Hyper Protect Container Runtime, refer [Confidential computing with LinuxONE](https://cloud.ibm.com/docs/vpc?topic=vpc-about-se), [IBM Hyper Protect Virtual Servers](https://www.ibm.com/docs/en/hpvs/2.2.x) and [IBM Hyper Protect Confidential Container for Red Hat OpenShift Container Platform](https://www.ibm.com/docs/en/hpcc/1.1.x).
 
 
 ## Features
@@ -24,7 +24,7 @@ For more details on Hyper Protect Virtual Servers for VPC and Hyper Protect Cont
 7. Generate IBM Hyper Protect signed and encrypted contract (With and without contract expiry).
 8. Generate Base64 tar of `docker-compose.yaml` or `pods.yaml`.
 9. Get latest HPCR Image from IBM Cloud Image JSON data.
-10. Validate schema of network-config (for on-prem environment) for HPVS and HPCR RHVS.
+10. Validate schema of network-config (for on-prem environment) for HPVS, HPCR RHVS and HPCC Peer Pod.
 
 ## Usage
 
