@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The library has been developed to automate the process for provisioning Hyper Protect Virtual Servers for VPC and Hyper Protect Container Runtime.
+The library has been developed to automate the process for provisioning Hyper Protect Virtual Servers for VPC, Hyper Protect Container Runtime and IBM Hyper Protect Confidential Container for Red Hat OpenShift Container Platform.
 
 
 ## Configuration
@@ -163,7 +163,7 @@ func main() {
 
 #### Input(s)
 1. Text to encrypt
-2. Hyper Protect OS (hpvs or hpcr-rhvs) (optional)
+2. Hyper Protect OS (hpvs or hpcr-rhvs or hpcc-peerpod) (optional)
 3. Encryption certificate (optional)
 
 #### Output(s)
@@ -209,7 +209,7 @@ func main() {
 
 #### Input(s)
 1. JSON text to encrypt
-2. Hyper Protect OS (hpvs or hpcr-rhvs) (optional)
+2. Hyper Protect OS (hpvs or hpcr-rhvs or hpcc-peerpod) (optional)
 3. Encryption certificate (optional)
 
 #### Output(s)
@@ -255,7 +255,7 @@ func main() {
 
 #### Input(s)
 1. Contract
-2. Hyper Protect OS (hpvs or hpcr-rhvs) (optional)
+2. Hyper Protect OS (hpvs or hpcr-rhvs or hpcc-peerpod) (optional)
 
 #### Output(s)
 1. Error (if any)
@@ -275,7 +275,7 @@ func main() {
 
 #### Input(s)
 1. Path of folder
-2. Hyper Protect OS (hpvs or hpcr-rhvs) (optional)
+2. Hyper Protect OS (hpvs or hpcr-rhvs or hpcc-peerpod) (optional)
 3. Encryption certificate (optional)
 
 #### Output(s)
@@ -299,7 +299,7 @@ func main() {
 
 #### Input(s)
 1. Contract
-2. Hyper Protect OS (hpvs or hpcr-rhvs) (optional)
+2. Hyper Protect OS (hpvs or hpcr-rhvs or hpcc-peerpod) (optional)
 3. Encryption certificate (optional)
 4. Private Key for signing
 
@@ -338,7 +338,7 @@ func usingCsrPem() {
 
 #### Input(s)
 1. Contract
-2. Hyper Protect OS (hpvs or hpcr-rhvs) (optional)
+2. Hyper Protect OS (hpvs or hpcr-rhvs or hpcc-peerpod) (optional)
 3. Encryption certificate (optional)
 4. Private Key for signing
 5. CA Certificate
