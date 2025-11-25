@@ -505,15 +505,15 @@ func yamlParse(filename string) (map[string]any, error) {
 }
 
 // CheckEncryptionCertValidity - function return downloaded encryption cert status and number of days left to expire
-func CheckEncryptionCertValidity(encryptionCert, version string) (string, int, string, error) {
+func CheckEncryptionCertValidity(encryptionCert string) (string, int, string, error) {
 	block, _ := pem.Decode([]byte(encryptionCert))
 	if block == nil {
-		return "", 0, "", fmt.Errorf("failed to parse PEM block for version %s", version)
+		return "", 0, "", fmt.Errorf("failed to parse PEM block")
 	}
 
 	cert, err := x509.ParseCertificate(block.Bytes)
 	if err != nil {
-		return "", 0, "", fmt.Errorf("failed to parse certificate for version %s: %v", version, err)
+		return "", 0, "", fmt.Errorf("failed to parse certificate %v", err)
 	}
 
 	now := time.Now()
@@ -522,19 +522,13 @@ func CheckEncryptionCertValidity(encryptionCert, version string) (string, int, s
 	formattedExpiryDays := gmtTime.Format("02-01-06 15:04:05") + " GMT"
 	switch {
 	case daysLeft < 0:
-		msg := fmt.Sprintf("Certificate version %s has already expired",
-			version)
-		return msg, int(daysLeft), formattedExpiryDays, nil
+		return "expired", int(daysLeft), formattedExpiryDays, nil
 
 	case daysLeft < 180:
-		msg := fmt.Sprintf("Warning: Certificate version %s will expire in %.0f days",
-			version, daysLeft)
-		return msg, int(daysLeft), formattedExpiryDays, nil
+		return "valid", int(daysLeft), formattedExpiryDays, nil
 
 	default:
-		msg := fmt.Sprintf("Certificate version %s is valid for another %.0f days",
-			version, daysLeft)
-		return msg, int(daysLeft), formattedExpiryDays, nil
+		return "valid", int(daysLeft), formattedExpiryDays, nil
 	}
 }
 

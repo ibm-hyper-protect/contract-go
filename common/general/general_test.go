@@ -417,9 +417,9 @@ func TestCheckEncryptionCertValidity(t *testing.T) {
 		fmt.Println("Error reading file:", err)
 		return
 	}
-	cert_status, _, _, err := CheckEncryptionCertValidity(string(data), "1.0.0") // sample certificate is valid till 9th nov 2030
+	cert_status, _, _, err := CheckEncryptionCertValidity(string(data)) // sample certificate is valid till 9th nov 2030
 	assert.NoError(t, err)
-	assert.Contains(t, cert_status, "Certificate version 1.0.0 is valid for another")
+	assert.Contains(t, cert_status, "valid")
 }
 
 // Testcase to check encryption certificate validity that is expired during certificate download
@@ -429,9 +429,9 @@ func TestCheckExpiredEncryptionCertValidity(t *testing.T) {
 		fmt.Println("Error reading file:", err)
 		return
 	}
-	cert_status, _, _, err := CheckEncryptionCertValidity(string(data), "1.0.14")
+	cert_status, _, _, err := CheckEncryptionCertValidity(string(data))
 	assert.NoError(t, err)
-	assert.Contains(t, cert_status, "Certificate version 1.0.14 has already expired")
+	assert.Contains(t, cert_status, "expired")
 }
 
 // Testcase to check encryption certificate validity during contract encryption

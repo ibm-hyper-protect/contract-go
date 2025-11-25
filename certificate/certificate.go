@@ -94,14 +94,13 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 			return "", fmt.Errorf("failed to download encryption certificate - %v", err)
 		}
 
-		msg, daysLeft, certificateExpiryDate, err := gen.CheckEncryptionCertValidity(cert, version)
+		cert_status, daysLeft, certificateExpiryDate, err := gen.CheckEncryptionCertValidity(cert)
 		if err != nil {
 			return "", err
 		}
-		fmt.Println("Encryption certificate validity status - ", msg)
 		var verCertMap = make(map[string]string)
 		verCertMap["cert"] = cert
-		verCertMap["status"] = msg
+		verCertMap["status"] = cert_status
 		verCertMap["expiry_days"] = strconv.Itoa(daysLeft)
 		verCertMap["expiry_date"] = certificateExpiryDate
 		vertCertMapVersion[version] = verCertMap
