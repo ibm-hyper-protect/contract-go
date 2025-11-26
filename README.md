@@ -34,7 +34,9 @@ This library provides cryptographic operations, contract generation, validation,
 
 ### What are Hyper Protect Services?
 
-IBM Hyper Protect services provide confidential computing capabilities that protect data in use by leveraging Secure Execution feature of Z. Learn more:
+IBM Hyper Protect services provide confidential computing capabilities that protect data in use by leveraging Secure Execution feature of Z. 
+
+Learn more:
 
 - [Confidential computing with LinuxONE](https://cloud.ibm.com/docs/vpc?topic=vpc-about-se)
 - [IBM Hyper Protect Virtual Servers](https://www.ibm.com/docs/en/hpvs/2.2.x)
@@ -46,9 +48,9 @@ IBM Hyper Protect services provide confidential computing capabilities that prot
   - Decrypt encrypted attestation records
 
 - **Certificate Operations**
-  - Download  HPVS encryption certificates from IBM Cloud
-  - Extract specific certificates by version
-  - Validate certificate schemas
+  - Download HPVS encryption certificates from IBM Cloud
+  - Extract specific encryption certificates by version
+  - Validate expiry of encryption certificate
 
 - **Contract Generation**
   - Generate Base64-encoded data from text, JSON, and docker compose / podman play archives
@@ -58,10 +60,10 @@ IBM Hyper Protect services provide confidential computing capabilities that prot
 
 - **Archive Management**
   - Generate Base64 tar archives of `docker-compose.yaml` or `pods.yaml`
-  - Support encrypted TGZ generation
+  - Support encrypted base64 tar generation
 
 - **Image Selection**
-  - Retrieve latest HPVS images from IBM Cloud
+  - Retrieve latest HPVS image details from IBM Cloud API
   - Filter images by semantic versioning
 
 - **Network Validation**
@@ -114,8 +116,9 @@ func main() {
 env: |
   type: env
   logging:
-    logDNA:
-      ingestionKey: your-key
+    logRouter:
+      hostname: 5c2d6b69-c7f0-41bd-b69b-240695369d6e.ingress.us-south.logs.cloud.ibm.com
+      iamApiKey: ab00e3c09p1d4ff7fff9f04c12183413
 workload: |
   type: workload
   compose:
@@ -175,7 +178,7 @@ func main() {
 
 Comprehensive documentation is available at:
 
-- **[User Documentation](docs/README.md)** - Detailed API reference and usage examples
+- **[User Documentation](https://ibm-hyper-protect.github.io/contract-go)** - Detailed API reference and usage examples
 - **[Go Package Documentation](https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go)** - Generated Go docs
 - **[Examples](samples/)** - Sample contracts and configurations
 
@@ -225,9 +228,24 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ## Support
 
-- **Issues**: Report bugs or request features via [GitHub Issues](https://github.com/ibm-hyper-protect/contract-go/issues)
-- **Security**: Report security vulnerabilities via our [Security Policy](SECURITY.md)
-- **Maintainers**: See [MAINTAINERS.md](MAINTAINERS.md) for the current maintainer list
+### Reporting Issues
+
+We use GitHub issue templates to help us understand and address your concerns efficiently:
+
+- **[Report a Bug](https://github.com/ibm-hyper-protect/contract-go/issues/new?template=bug_report.yml)** - Found a bug? Let us know!
+- **[Request a Feature](https://github.com/ibm-hyper-protect/contract-go/issues/new?template=feature_request.yml)** - Have an idea for improvement?
+- **[Ask a Question](https://github.com/ibm-hyper-protect/contract-go/issues/new?template=question.yml)** - Need help using the library?
+
+### Security
+
+- **Security Vulnerabilities**: Report via [GitHub Security Advisories](https://github.com/ibm-hyper-protect/contract-go/security/advisories/new) - **DO NOT** create public issues
+- See our complete [Security Policy](SECURITY.md) for details
+
+### Community
+
+- **[Discussions](https://github.com/ibm-hyper-protect/contract-go/discussions)** - General questions and community discussion
+- **[Documentation](https://ibm-hyper-protect.github.io/contract-go)** - Comprehensive API documentation
+- **[Maintainers](MAINTAINERS.md)** - Current maintainer list and contact info
 
 ## Contributors
 

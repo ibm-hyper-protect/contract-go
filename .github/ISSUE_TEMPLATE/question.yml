@@ -1,0 +1,118 @@
+name: Question / Help
+description: Ask a question or request help using contract-go
+title: "[Question]: "
+labels: ["question", "help wanted"]
+assignees:
+  - Sashwat-K
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reaching out! Please provide details about your question to help us assist you better.
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Prerequisites
+      description: Please verify these before asking your question
+      options:
+        - label: I have searched [existing issues](https://github.com/ibm-hyper-protect/contract-go/issues) for similar questions
+          required: true
+        - label: I have read the [documentation](https://github.com/ibm-hyper-protect/contract-go/blob/main/docs/README.md)
+          required: true
+        - label: I have checked the [examples](https://github.com/ibm-hyper-protect/contract-go/tree/main/samples)
+          required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Question Category
+      description: What is your question about?
+      options:
+        - Installation / Setup
+        - API Usage
+        - Contract Generation
+        - Certificate Management
+        - Image Selection
+        - Attestation
+        - Network Configuration
+        - Error Troubleshooting
+        - Best Practices
+        - Integration
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know?
+      placeholder: |
+        I'm trying to...
+        I need help with...
+        How do I...
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context / What You've Tried
+      description: Provide context about what you're trying to accomplish and what you've already tried
+      placeholder: |
+        I'm working on: ...
+        I've tried: ...
+        I'm stuck because: ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: code
+    attributes:
+      label: Relevant Code
+      description: If applicable, provide code snippets related to your question
+      render: go
+      placeholder: |
+        package main
+
+        import "github.com/ibm-hyper-protect/contract-go/..."
+
+        func main() {
+            // Your code here
+        }
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Target Platform
+      description: Which Hyper Protect platform are you working with?
+      options:
+        - HPVS (Hyper Protect Virtual Servers)
+        - HPCR-RHVS (Hyper Protect Container Runtime)
+        - HPCC-PeerPod (Confidential Container Peer Pods)
+        - Not sure / General question
+    validations:
+      required: true
+
+  - type: input
+    id: go-version
+    attributes:
+      label: Go Version
+      description: Output of `go version` (if applicable)
+      placeholder: "go version go1.24.7 darwin/arm64"
+
+  - type: input
+    id: library-version
+    attributes:
+      label: contract-go Version
+      description: Which version are you using? (if applicable)
+      placeholder: "v1.15.0"
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context or information that might help
+      placeholder: Any other details that might be relevant...

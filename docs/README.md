@@ -59,12 +59,14 @@ func HpcrGetAttestationRecords(data, privateKey string) (string, error)
 ```
 
 **Parameters:**
+
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `data` | `string` | Encrypted attestation data in the format `hyper-protect-basic.<password>.<data>` |
 | `privateKey` | `string` | RSA private key (PEM format) used to decrypt the password |
 
 **Returns:**
+
 | Return | Type | Description |
 |--------|------|-------------|
 | Attestation Records | `string` | Decrypted attestation records |
@@ -121,6 +123,7 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 ```
 
 **Parameters:**
+
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `versionList` | `[]string` | List of HPCR versions to download (e.g., `["1.1.14", "1.1.15"]`) |
@@ -133,6 +136,7 @@ https://hpvsvpcubuntu.s3.us.cloud-object-storage.appdomain.cloud/s390x-{{.Patch}
 ```
 
 **Returns:**
+
 | Return | Type | Description |
 |--------|------|-------------|
 | Certificates | `string` | JSON or YAML formatted map of versions to certificates |
@@ -191,12 +195,14 @@ func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version str
 ```
 
 **Parameters:**
+
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `encryptionCertificateJson` | `string` | JSON/YAML output from `HpcrDownloadEncryptionCertificates` |
 | `version` | `string` | Specific version to extract (e.g., `"1.1.15"`) |
 
 **Returns:**
+
 | Return | Type | Description |
 |--------|------|-------------|
 | Version | `string` | The requested version number |
@@ -251,11 +257,13 @@ func HpcrValidateEncryptionCertificate(encryptionCert string) (string, error)
 ```
 
 **Parameters:**
+
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `encryptionCert` | `string` | PEM-formatted encryption certificate |
 
 **Returns:**
+
 | Return | Type | Description |
 |--------|------|-------------|
 | Expiry Details | `string` | Certificate expiration information |
@@ -307,6 +315,7 @@ func HpcrSelectImage(imageJsonData, versionSpec string) (string, string, string,
 ```
 
 **Parameters:**
+
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `imageJsonData` | `string` | JSON array of IBM Cloud images |
@@ -327,6 +336,7 @@ func HpcrSelectImage(imageJsonData, versionSpec string) (string, string, string,
    ```
 
 **Returns:**
+
 | Return | Type | Description |
 |--------|------|-------------|
 | Image ID | `string` | IBM Cloud image ID |
@@ -415,11 +425,13 @@ func HpcrText(plainText string) (string, string, string, error)
 ```
 
 **Parameters:**
+
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `plainText` | `string` | Text data to encode |
 
 **Returns:**
+
 | Return | Type | Description |
 |--------|------|-------------|
 | Base64 Data | `string` | Base64-encoded text |
@@ -473,6 +485,7 @@ func HpcrTextEncrypted(plainText, hyperProtectOs, encryptionCertificate string) 
 ```
 
 **Parameters:**
+
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `plainText` | `string` | Text to encrypt |
@@ -480,6 +493,7 @@ func HpcrTextEncrypted(plainText, hyperProtectOs, encryptionCertificate string) 
 | `encryptionCertificate` | `string` | PEM certificate (uses embedded default if empty) |
 
 **Returns:**
+
 | Return | Type | Description |
 |--------|------|-------------|
 | Encrypted Data | `string` | Format: `hyper-protect-basic.<password>.<data>` |
@@ -527,11 +541,13 @@ func HpcrJson(plainJson string) (string, string, string, error)
 ```
 
 **Parameters:**
+
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `plainJson` | `string` | Valid JSON string |
 
 **Returns:**
+
 | Return | Type | Description |
 |--------|------|-------------|
 | Base64 Data | `string` | Base64-encoded JSON |
@@ -578,6 +594,7 @@ func HpcrJsonEncrypted(plainJson, hyperProtectOs, encryptionCertificate string) 
 ```
 
 **Parameters:**
+
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `plainJson` | `string` | Valid JSON string to encrypt |
@@ -585,6 +602,7 @@ func HpcrJsonEncrypted(plainJson, hyperProtectOs, encryptionCertificate string) 
 | `encryptionCertificate` | `string` | PEM certificate (optional) |
 
 **Returns:**
+
 | Return | Type | Description |
 |--------|------|-------------|
 | Encrypted JSON | `string` | Format: `hyper-protect-basic.<password>.<data>` |
@@ -634,11 +652,13 @@ func HpcrTgz(folderPath string) (string, string, string, error)
 ```
 
 **Parameters:**
+
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `folderPath` | `string` | Path to folder containing compose/pods files |
 
 **Returns:**
+
 | Return | Type | Description |
 |--------|------|-------------|
 | TGZ Base64 | `string` | Base64-encoded tar.gz archive |
@@ -690,6 +710,7 @@ func HpcrTgzEncrypted(folderPath, hyperProtectOs, encryptionCertificate string) 
 ```
 
 **Parameters:**
+
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `folderPath` | `string` | Path to folder with compose/pods files |
@@ -697,6 +718,7 @@ func HpcrTgzEncrypted(folderPath, hyperProtectOs, encryptionCertificate string) 
 | `encryptionCertificate` | `string` | PEM certificate (optional) |
 
 **Returns:**
+
 | Return | Type | Description |
 |--------|------|-------------|
 | Encrypted TGZ | `string` | Format: `hyper-protect-basic.<password>.<data>` |
@@ -739,12 +761,14 @@ func HpcrVerifyContract(contract, version string) error
 ```
 
 **Parameters:**
+
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `contract` | `string` | YAML contract to validate |
 | `version` | `string` | Platform: `"hpvs"`, `"hpcr-rhvs"`, or `"hpcc-peerpod"` (optional) |
 
 **Returns:**
+
 | Return | Type | Description |
 |--------|------|-------------|
 | Error | `error` | `nil` if valid, error with validation details if invalid |
@@ -765,8 +789,9 @@ func main() {
 env: |
   type: env
   logging:
-    logDNA:
-      ingestionKey: abc123
+    logRouter:
+      hostname: 5c2d6b69-c7f0-41bd-b69b-240695369d6e.ingress.us-south.logs.cloud.ibm.com
+      iamApiKey: ab00e3c09p1d4ff7fff9f04c12183413
 workload: |
   type: workload
   compose:
@@ -803,6 +828,7 @@ func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate
 ```
 
 **Parameters:**
+
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `contract` | `string` | YAML contract with `env` and `workload` sections |
@@ -811,6 +837,7 @@ func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate
 | `privateKey` | `string` | RSA private key (PEM format) for signing |
 
 **Returns:**
+
 | Return | Type | Description |
 |--------|------|-------------|
 | Signed Contract | `string` | YAML with encrypted `workload`, `env`, and `envWorkloadSignature` |
@@ -834,10 +861,9 @@ func main() {
 env: |
   type: env
   logging:
-    logDNA:
-      ingestionKey: your-key
-      hostname: syslog-a.private.us-south.logging.cloud.ibm.com
-      port: 6514
+    logRouter:
+      hostname: 5c2d6b69-c7f0-41bd-b69b-240695369d6e.ingress.us-south.logs.cloud.ibm.com
+      iamApiKey: ab00e3c09p1d4ff7fff9f04c12183413
 workload: |
   type: workload
   compose:
@@ -887,6 +913,7 @@ func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encrypt
 ```
 
 **Parameters:**
+
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `contract` | `string` | YAML contract |
@@ -915,6 +942,7 @@ func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encrypt
 ```
 
 **Returns:**
+
 | Return | Type | Description |
 |--------|------|-------------|
 | Signed Contract | `string` | Contract with time-limited signature |
@@ -1044,11 +1072,13 @@ func HpcrVerifyNetworkConfig(networkConfig string) error
 ```
 
 **Parameters:**
+
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `networkConfig` | `string` | Network configuration in YAML format |
 
 **Returns:**
+
 | Return | Type | Description |
 |--------|------|-------------|
 | Error | `error` | `nil` if valid, error with details if invalid |
@@ -1126,8 +1156,9 @@ func main() {
 env: |
   type: env
   logging:
-    logDNA:
-      ingestionKey: your-key
+    logRouter:
+      hostname: 5c2d6b69-c7f0-41bd-b69b-240695369d6e.ingress.us-south.logs.cloud.ibm.com
+      iamApiKey: ab00e3c09p1d4ff7fff9f04c12183413
 workload: |
   type: workload
   compose:
