@@ -21,11 +21,53 @@ env:
   NODE_VERSION: 20
 
 jobs:
+  commit-lint:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+
+      - name: Validate commit message
+        run: |
+          # Conventional commit regex pattern
+          # Matches: type(optional-scope): description
+          # Valid types from .releaserc: feat, fix, docs, perf, revert, chore, refactor, test, build, ci
+          pattern='^(feat|fix|docs|perf|revert|chore|refactor|test|build|ci)(\([a-z0-9-]+\))?!?: .{1,}'
+
+          # Get the latest commit message (HEAD)
+          commit_sha="${{ github.event.pull_request.head.sha }}"
+          commit_message=$(git log --format=%B -n 1 $commit_sha | head -n 1)
+          short_sha=$(echo $commit_sha | cut -c1-7)
+
+          echo "Checking commit: $short_sha"
+          echo "Message: $commit_message"
+          echo ""
+
+          if ! echo "$commit_message" | grep -qE "$pattern"; then
+            echo "Invalid commit message format!"
+            echo ""
+            echo "Commit: $short_sha"
+            echo "Message: $commit_message"
+            echo ""
+            echo "────────────────────────────────────────"
+            echo "Valid format: <type>(<optional-scope>): <description>"
+            echo ""
+            echo "Allowed types: feat, fix, docs, perf, revert, chore, refactor, test, build, ci"
+            echo ""
+            echo "Examples:"
+            echo "  ✓ feat: add new feature"
+            echo "  ✓ fix(api): resolve null pointer exception"
+            echo "  ✓ docs: update README"
+            echo "  ✓ chore!: breaking change in build process"
+            exit 1
+          fi
+
+          echo "Commit message is valid!"
+
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go-version: ['1.24.x']
     steps:
       # full checkout for semantic-release
       - uses: actions/checkout@v5
@@ -106,12 +148,21 @@ jobs:
 
       - name: Semantic Release
         run: |
-          npx -p @semantic-release/changelog \
-              -p @semantic-release/git \
-              -p @semantic-release/github \
-              -p conventional-changelog-conventionalcommits \
-              -p semantic-release \
-              semantic-release --dry-run ${{ steps.dry_run.outputs.dry_run }}
+          if [[ "${{ steps.dry_run.outputs.dry_run }}" == "true" ]]; then
+            npx -p @semantic-release/changelog \
+                -p @semantic-release/git \
+                -p @semantic-release/github \
+                -p conventional-changelog-conventionalcommits \
+                -p semantic-release \
+                semantic-release --dry-run
+          else
+            npx -p @semantic-release/changelog \
+                -p @semantic-release/git \
+                -p @semantic-release/github \
+                -p conventional-changelog-conventionalcommits \
+                -p semantic-release \
+                semantic-release
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -119,7 +170,11 @@ jobs:
         id: get_tag
         if: steps.dry_run.outputs.dry_run == 'false'
         run: |
-          tag=$(git describe --tags --abbrev=0)
+          tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$tag" ]; then
+            echo "No tags found in repository"
+            exit 1
+          fi
           echo "tag=$tag" >> $GITHUB_OUTPUT
 
       - name: Generate SBOM
