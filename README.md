@@ -46,9 +46,9 @@ IBM Hyper Protect services provide confidential computing capabilities that prot
   - Decrypt encrypted attestation records
 
 - **Certificate Operations**
-  - Download  HPVS encryption certificates from IBM Cloud
+  - Download HPVS encryption certificates from IBM Cloud
   - Extract specific certificates by version
-  - Validate certificate schemas
+  - Validate encryption certificate expiry
 
 - **Contract Generation**
   - Generate Base64-encoded data from text, JSON, and docker compose / podman play archives

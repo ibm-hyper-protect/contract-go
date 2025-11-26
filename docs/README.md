@@ -765,8 +765,9 @@ func main() {
 env: |
   type: env
   logging:
-    logDNA:
-      ingestionKey: abc123
+    logRouter:
+      hostname: 5c2d6b69-c7f0-41bd-b69b-240695369d6e.ingress.us-south.logs.cloud.ibm.com
+      iamApiKey: ab00e3c09p1d4ff7fff9f04c12183413
 workload: |
   type: workload
   compose:
@@ -834,10 +835,9 @@ func main() {
 env: |
   type: env
   logging:
-    logDNA:
-      ingestionKey: your-key
-      hostname: syslog-a.private.us-south.logging.cloud.ibm.com
-      port: 6514
+    logRouter:
+      hostname: 5c2d6b69-c7f0-41bd-b69b-240695369d6e.ingress.us-south.logs.cloud.ibm.com
+      iamApiKey: ab00e3c09p1d4ff7fff9f04c12183413
 workload: |
   type: workload
   compose:
@@ -1126,8 +1126,9 @@ func main() {
 env: |
   type: env
   logging:
-    logDNA:
-      ingestionKey: your-key
+    logRouter:
+      hostname: 5c2d6b69-c7f0-41bd-b69b-240695369d6e.ingress.us-south.logs.cloud.ibm.com
+      iamApiKey: ab00e3c09p1d4ff7fff9f04c12183413
 workload: |
   type: workload
   compose:
