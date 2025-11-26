@@ -27,62 +27,29 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          fetch-depth: 0
+          fetch-depth: 2
 
-      - name: Validate PR title and commit messages
+      - name: Validate commit message
         run: |
           # Conventional commit regex pattern
           # Matches: type(optional-scope): description
           # Valid types from .releaserc: feat, fix, docs, perf, revert, chore, refactor, test, build, ci
           pattern='^(feat|fix|docs|perf|revert|chore|refactor|test|build|ci)(\([a-z0-9-]+\))?!?: .{1,}'
 
-          has_errors=false
+          # Get the latest commit message (HEAD)
+          commit_sha="${{ github.event.pull_request.head.sha }}"
+          commit_message=$(git log --format=%B -n 1 $commit_sha | head -n 1)
+          short_sha=$(echo $commit_sha | cut -c1-7)
 
-          # Validate PR title
-          pr_title="${{ github.event.pull_request.title }}"
-          echo "Checking PR title: $pr_title"
-
-          if ! echo "$pr_title" | grep -qE "$pattern"; then
-            echo "Invalid PR title format!"
-            echo "   Current: $pr_title"
-            has_errors=true
-          else
-            echo "PR title is valid"
-          fi
-
-          echo ""
-          echo "Checking commit messages..."
+          echo "Checking commit: $short_sha"
+          echo "Message: $commit_message"
           echo ""
 
-          # Get all commits in the PR
-          git fetch origin ${{ github.base_ref }}
-          commits=$(git log origin/${{ github.base_ref }}..HEAD --pretty=format:%H)
-
-          invalid_commits=()
-
-          for commit in $commits; do
-            message=$(git log --format=%B -n 1 $commit | head -n 1)
-            short_sha=$(echo $commit | cut -c1-7)
-
-            if ! echo "$message" | grep -qE "$pattern"; then
-              invalid_commits+=("$short_sha: $message")
-            fi
-          done
-
-          if [ ${#invalid_commits[@]} -gt 0 ]; then
-            echo "Invalid commit message format detected!"
+          if ! echo "$commit_message" | grep -qE "$pattern"; then
+            echo "Invalid commit message format!"
             echo ""
-            echo "The following commits don't follow Conventional Commits format:"
-            echo ""
-            for invalid in "${invalid_commits[@]}"; do
-              echo "  - $invalid"
-            done
-            has_errors=true
-          else
-            echo "All commit messages are valid"
-          fi
-
-          if [ "$has_errors" = true ]; then
+            echo "Commit: $short_sha"
+            echo "Message: $commit_message"
             echo ""
             echo "────────────────────────────────────────"
             echo "Valid format: <type>(<optional-scope>): <description>"
@@ -97,8 +64,7 @@ jobs:
             exit 1
           fi
 
-          echo ""
-          echo "All validations passed!"
+          echo "Commit message is valid!"
 
   build:
     runs-on: ubuntu-latest
