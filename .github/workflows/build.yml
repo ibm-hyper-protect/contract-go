@@ -21,11 +21,87 @@ env:
   NODE_VERSION: 20
 
 jobs:
+  commit-lint:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Validate PR title and commit messages
+        run: |
+          # Conventional commit regex pattern
+          # Matches: type(optional-scope): description
+          # Valid types from .releaserc: feat, fix, docs, perf, revert, chore, refactor, test, build, ci
+          pattern='^(feat|fix|docs|perf|revert|chore|refactor|test|build|ci)(\([a-z0-9-]+\))?!?: .{1,}'
+
+          has_errors=false
+
+          # Validate PR title
+          pr_title="${{ github.event.pull_request.title }}"
+          echo "Checking PR title: $pr_title"
+
+          if ! echo "$pr_title" | grep -qE "$pattern"; then
+            echo "Invalid PR title format!"
+            echo "   Current: $pr_title"
+            has_errors=true
+          else
+            echo "PR title is valid"
+          fi
+
+          echo ""
+          echo "Checking commit messages..."
+          echo ""
+
+          # Get all commits in the PR
+          git fetch origin ${{ github.base_ref }}
+          commits=$(git log origin/${{ github.base_ref }}..HEAD --pretty=format:%H)
+
+          invalid_commits=()
+
+          for commit in $commits; do
+            message=$(git log --format=%B -n 1 $commit | head -n 1)
+            short_sha=$(echo $commit | cut -c1-7)
+
+            if ! echo "$message" | grep -qE "$pattern"; then
+              invalid_commits+=("$short_sha: $message")
+            fi
+          done
+
+          if [ ${#invalid_commits[@]} -gt 0 ]; then
+            echo "Invalid commit message format detected!"
+            echo ""
+            echo "The following commits don't follow Conventional Commits format:"
+            echo ""
+            for invalid in "${invalid_commits[@]}"; do
+              echo "  - $invalid"
+            done
+            has_errors=true
+          else
+            echo "All commit messages are valid"
+          fi
+
+          if [ "$has_errors" = true ]; then
+            echo ""
+            echo "────────────────────────────────────────"
+            echo "Valid format: <type>(<optional-scope>): <description>"
+            echo ""
+            echo "Allowed types: feat, fix, docs, perf, revert, chore, refactor, test, build, ci"
+            echo ""
+            echo "Examples:"
+            echo "  feat: add new feature"
+            echo "  fix(api): resolve null pointer exception"
+            echo "  docs: update README"
+            echo "  chore!: breaking change in build process"
+            exit 1
+          fi
+
+          echo ""
+          echo "All validations passed!"
+
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go-version: ['1.24.x']
     steps:
       # full checkout for semantic-release
       - uses: actions/checkout@v5
@@ -106,12 +182,21 @@ jobs:
 
       - name: Semantic Release
         run: |
-          npx -p @semantic-release/changelog \
-              -p @semantic-release/git \
-              -p @semantic-release/github \
-              -p conventional-changelog-conventionalcommits \
-              -p semantic-release \
-              semantic-release --dry-run ${{ steps.dry_run.outputs.dry_run }}
+          if [[ "${{ steps.dry_run.outputs.dry_run }}" == "true" ]]; then
+            npx -p @semantic-release/changelog \
+                -p @semantic-release/git \
+                -p @semantic-release/github \
+                -p conventional-changelog-conventionalcommits \
+                -p semantic-release \
+                semantic-release --dry-run
+          else
+            npx -p @semantic-release/changelog \
+                -p @semantic-release/git \
+                -p @semantic-release/github \
+                -p conventional-changelog-conventionalcommits \
+                -p semantic-release \
+                semantic-release
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -119,7 +204,11 @@ jobs:
         id: get_tag
         if: steps.dry_run.outputs.dry_run == 'false'
         run: |
-          tag=$(git describe --tags --abbrev=0)
+          tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$tag" ]; then
+            echo "No tags found in repository"
+            exit 1
+          fi
           echo "tag=$tag" >> $GITHUB_OUTPUT
 
       - name: Generate SBOM
