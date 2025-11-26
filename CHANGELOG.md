@@ -1,3 +1,13 @@
+## [1.16.0](https://github.com/ibm-hyper-protect/contract-go/compare/v1.15.0...v1.16.0) (2025-11-26)
+
+### Features
+
+* Add functionality to check encryption certificate validity ([3f1c2bb](https://github.com/ibm-hyper-protect/contract-go/commit/3f1c2bb3d74bd6c9ba347aea23fa5289e9f0c7aa))
+* Resolving review comments, updating sample encryption certificate ([ba2732a](https://github.com/ibm-hyper-protect/contract-go/commit/ba2732a48be2645114fd96bd4c2929fd72b3f93d))
+* updated download certificate schema and time format ([78d012b](https://github.com/ibm-hyper-protect/contract-go/commit/78d012bebfa4696541a76c822f041c3a1c991e8f))
+* Updated HpcrEncryptionCertificatesValidation() to verify encryption cert ([6b2f483](https://github.com/ibm-hyper-protect/contract-go/commit/6b2f48368285758cb4669e086af1240df0167851))
+* updated logic to get response of download certificate ([8e8b2c4](https://github.com/ibm-hyper-protect/contract-go/commit/8e8b2c444727ff449c9d957df34d941dbf685b98))
+
 ## [1.15.0](https://github.com/ibm-hyper-protect/contract-go/compare/v1.14.1...v1.15.0) (2025-11-24)
 
 ### Features
