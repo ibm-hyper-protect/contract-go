@@ -226,9 +226,24 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ## Support
 
-- **Issues**: Report bugs or request features via [GitHub Issues](https://github.com/ibm-hyper-protect/contract-go/issues)
-- **Security**: Report security vulnerabilities via our [Security Policy](SECURITY.md)
-- **Maintainers**: See [MAINTAINERS.md](MAINTAINERS.md) for the current maintainer list
+### Reporting Issues
+
+We use GitHub issue templates to help us understand and address your concerns efficiently:
+
+- **[Report a Bug](https://github.com/ibm-hyper-protect/contract-go/issues/new?template=bug_report.yml)** - Found a bug? Let us know!
+- **[Request a Feature](https://github.com/ibm-hyper-protect/contract-go/issues/new?template=feature_request.yml)** - Have an idea for improvement?
+- **[Ask a Question](https://github.com/ibm-hyper-protect/contract-go/issues/new?template=question.yml)** - Need help using the library?
+
+### Security
+
+- **Security Vulnerabilities**: Report via [GitHub Security Advisories](https://github.com/ibm-hyper-protect/contract-go/security/advisories/new) - **DO NOT** create public issues
+- See our complete [Security Policy](SECURITY.md) for details
+
+### Community
+
+- **[Discussions](https://github.com/ibm-hyper-protect/contract-go/discussions)** - General questions and community discussion
+- **[Documentation](docs/README.md)** - Comprehensive API documentation
+- **[Maintainers](MAINTAINERS.md)** - Current maintainer list and contact info
 
 ## Contributors
 

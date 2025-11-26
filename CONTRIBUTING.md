@@ -24,24 +24,42 @@ This project and everyone participating in it is governed by our [Code of Conduc
 
 ### Reporting Bugs
 
-Before creating bug reports, please check the [existing issues](https://github.com/ibm-hyper-protect/contract-go/issues) to avoid duplicates. When creating a bug report, include as many details as possible:
+We use GitHub issue templates to ensure we collect all necessary information. To report a bug:
 
-- **Use a clear and descriptive title**
-- **Describe the exact steps to reproduce the problem**
-- **Provide specific examples** (code snippets, commands, etc.)
-- **Describe the behavior you observed and what you expected**
-- **Include your environment details** (Go version, OS, etc.)
-- **Add relevant logs or error messages**
+1. **Check for existing issues**: Search [existing issues](https://github.com/ibm-hyper-protect/contract-go/issues) to avoid duplicates
+2. **Use the bug report template**: Click [here](https://github.com/ibm-hyper-protect/contract-go/issues/new?template=bug_report.yml) or select "Bug Report" when creating a new issue
+3. **Fill out all required fields**: The template will guide you through providing:
+   - Bug description and impact
+   - Steps to reproduce
+   - Expected vs actual behavior
+   - Code samples demonstrating the issue
+   - Environment details (Go version, OS, OpenSSL version, etc.)
+   - Target platform (HPVS, HPCR-RHVS, HPCC-PeerPod)
+
+**Important**: For security vulnerabilities, **do NOT create a public issue**. Instead, report them via [GitHub Security Advisories](https://github.com/ibm-hyper-protect/contract-go/security/advisories/new) or follow our [Security Policy](SECURITY.md).
 
 ### Suggesting Enhancements
 
-Enhancement suggestions are tracked as GitHub issues. When creating an enhancement suggestion:
+To suggest a new feature or enhancement:
 
-- **Use a clear and descriptive title**
-- **Provide a detailed description** of the proposed feature
-- **Explain why this enhancement would be useful** to most users
-- **List any alternative solutions** you've considered
-- **Include examples** of how the feature would be used
+1. **Check for existing requests**: Search [existing issues](https://github.com/ibm-hyper-protect/contract-go/issues) to see if it's already been suggested
+2. **Use the feature request template**: Click [here](https://github.com/ibm-hyper-protect/contract-go/issues/new?template=feature_request.yml) or select "Feature Request" when creating a new issue
+3. **Provide detailed information**: The template will guide you through:
+   - Problem statement and motivation
+   - Proposed solution
+   - Alternatives considered
+   - Use cases and examples
+   - Expected API usage
+   - Priority and impact assessment
+
+### Asking Questions
+
+If you have questions about using the library:
+
+1. **Check the documentation first**: Review our [API documentation](docs/README.md) and [examples](samples/)
+2. **Search existing Q&A**: Look through [closed issues](https://github.com/ibm-hyper-protect/contract-go/issues?q=is%3Aissue+label%3Aquestion) with the "question" label
+3. **Use GitHub Discussions**: For general questions, use [GitHub Discussions](https://github.com/ibm-hyper-protect/contract-go/discussions)
+4. **Create a question issue**: If needed, use our [question template](https://github.com/ibm-hyper-protect/contract-go/issues/new?template=question.yml)
 
 ### Code Contributions
 

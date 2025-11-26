@@ -1,0 +1,152 @@
+name: Bug Report
+description: Report a bug or unexpected behavior in contract-go
+title: "[Bug]: "
+labels: ["bug", "triage"]
+assignees:
+  - Sashwat-K
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the form below with as much detail as possible to help us investigate and fix the issue.
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Prerequisites
+      description: Please verify these before submitting your bug report
+      options:
+        - label: I have searched [existing issues](https://github.com/ibm-hyper-protect/contract-go/issues) to avoid duplicates
+          required: true
+        - label: I am using the latest version of contract-go
+          required: true
+        - label: I have read the [documentation](https://github.com/ibm-hyper-protect/contract-go/blob/main/docs/README.md)
+          required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is
+      placeholder: Describe the issue you're experiencing...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Detailed steps to reproduce the behavior
+      placeholder: |
+        1. Import the library with '...'
+        2. Call function '...'
+        3. Pass parameters '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: Describe what you expected to happen...
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+      placeholder: Describe what actually happened...
+    validations:
+      required: true
+
+  - type: textarea
+    id: code
+    attributes:
+      label: Code Sample
+      description: Please provide a minimal code sample that reproduces the issue
+      render: go
+      placeholder: |
+        package main
+
+        import "github.com/ibm-hyper-protect/contract-go/contract"
+
+        func main() {
+            // Your code here
+        }
+    validations:
+      required: true
+
+  - type: textarea
+    id: error
+    attributes:
+      label: Error Message / Stack Trace
+      description: If applicable, paste the complete error message or stack trace
+      render: shell
+      placeholder: Paste error message here...
+
+  - type: input
+    id: go-version
+    attributes:
+      label: Go Version
+      description: Output of `go version`
+      placeholder: "go version go1.24.7 darwin/arm64"
+    validations:
+      required: true
+
+  - type: input
+    id: library-version
+    attributes:
+      label: contract-go Version
+      description: Which version of contract-go are you using?
+      placeholder: "v1.15.0"
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating System
+      description: What OS are you running on?
+      placeholder: "macOS 14.0, Ubuntu 22.04, Windows 11"
+    validations:
+      required: true
+
+  - type: input
+    id: openssl-version
+    attributes:
+      label: OpenSSL Version
+      description: Output of `openssl version` (if applicable)
+      placeholder: "OpenSSL 3.0.2 15 Mar 2022"
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Target Platform
+      description: Which Hyper Protect platform are you targeting?
+      options:
+        - HPVS (Hyper Protect Virtual Servers)
+        - HPCR-RHVS (Hyper Protect Container Runtime)
+        - HPCC-PeerPod (Confidential Container Peer Pods)
+        - Not applicable
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here (screenshots, logs, etc.)
+      placeholder: Any additional information that might help us debug this issue...
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      description: Are you willing to help fix this bug?
+      options:
+        - label: I would be willing to submit a PR to fix this bug
