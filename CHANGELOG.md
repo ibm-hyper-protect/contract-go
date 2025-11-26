@@ -1,3 +1,20 @@
+## [1.16.1](https://github.com/ibm-hyper-protect/contract-go/compare/v1.16.0...v1.16.1) (2025-11-26)
+
+### Bug Fixes
+
+* merge error ([bba7bf5](https://github.com/ibm-hyper-protect/contract-go/commit/bba7bf5c3f6e9df78c05884b4340ed6afdc500e1))
+
+### Documentation
+
+* refined documentation ([11ff3af](https://github.com/ibm-hyper-protect/contract-go/commit/11ff3af690efe6d913820b4989ffc7bce6e1747e))
+* update SECURITY, README, CONTRIBUTING, CODE_OF_CONDUCT and user documentation with latest changes ([f13d55b](https://github.com/ibm-hyper-protect/contract-go/commit/f13d55bef26f443b3d7b9d852acc2403e4c9f271))
+
+### CI/CD updates
+
+* add commit message checker & fix semantic release bug ([c6f6941](https://github.com/ibm-hyper-protect/contract-go/commit/c6f69418dce0783324591a2a8da87ff4af08decb))
+* fix commit message checker condition ([a489660](https://github.com/ibm-hyper-protect/contract-go/commit/a4896606f0d8b701818d632952253112f00f849e))
+* fix commit message checker condition ([288bb70](https://github.com/ibm-hyper-protect/contract-go/commit/288bb703e0ecc1810d6abc2a3e7138ee9475c450))
+
 ## [1.16.0](https://github.com/ibm-hyper-protect/contract-go/compare/v1.15.0...v1.16.0) (2025-11-26)
 
 ### Features
