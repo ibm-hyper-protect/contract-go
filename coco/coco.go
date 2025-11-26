@@ -19,6 +19,7 @@ version = "0.1.0"
 [data]
 "contract.yaml" = '''{{ .Encrypted_contract }}'''
 `
+
 // HpccGzippedInitdata - Function to generate gzipped initdata value. 
 func HpccGzippedInitdata(contract string) (string , error) {
 
@@ -87,3 +88,4 @@ func generateTomlFile(contract string) (string, error) {
 
 	return tempTomlFile , nil
 }
+
