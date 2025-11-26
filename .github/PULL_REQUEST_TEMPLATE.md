@@ -1,12 +1,22 @@
 ## Description
+Brief description of the changes
 
-Please explain the change and link to the related issue.
+## Related Issue
+Fixes #issue_number
+
+## Type of Change
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation update
+
+## Testing
+Describe the tests you ran and how to reproduce them
 
 ## Checklist
-
-- [ ] I have opened an issue for this change
-- [ ] The issue has been approved by a maintainer
-- [ ] I have added tests or explained on feature / bug
-- [ ] I have run `make tidy`, `make test` and it passes
-
-Closes: #[ISSUE_NUMBER]
+- [ ] My code follows the project's coding standards
+- [ ] I have performed a self-review of my code
+- [ ] I have commented my code where necessary
+- [ ] I have updated the documentation
+- [ ] I have added tests that prove my fix/feature works
+- [ ] All new and existing tests pass
