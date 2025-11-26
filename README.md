@@ -4,42 +4,230 @@
 [![Latest Release](https://img.shields.io/github/v/release/ibm-hyper-protect/contract-go?include_prereleases)](https://github.com/ibm-hyper-protect/contract-go/releases/latest)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ibm-hyper-protect/contract-go)](https://goreportcard.com/report/ibm-hyper-protect/contract-go)
 [![Go Reference](https://pkg.go.dev/badge/github.com/ibm-hyper-protect/contract-go.svg)](https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
+A Go library for automating the provisioning and management of IBM Hyper Protect confidential computing workloads.
 
-## Introduction
+## Table of Contents
 
-The library has been developed to automate the process of provisioning Hyper Protect Virtual Servers (HPVS), Hyper Protect Container Runtime for RedHat Virtualization solutions (HPCR RHVS) and IBM Hyper Protect Confidential Container for Red Hat OpenShift Container Platform (HPCC Peer Pod).
+- [Overview](#overview)
+- [Features](#features)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Documentation](#documentation)
+- [Supported Platforms](#supported-platforms)
+- [Examples](#examples)
+- [Related Projects](#related-projects)
+- [Contributing](#contributing)
+- [License](#license)
+- [Support](#support)
 
-For more details on Hyper Protect Virtual Servers for VPC and Hyper Protect Container Runtime, refer [Confidential computing with LinuxONE](https://cloud.ibm.com/docs/vpc?topic=vpc-about-se), [IBM Hyper Protect Virtual Servers](https://www.ibm.com/docs/en/hpvs/2.2.x) and [IBM Hyper Protect Confidential Container for Red Hat OpenShift Container Platform](https://www.ibm.com/docs/en/hpcc/1.1.x).
+## Overview
 
+The `contract-go` library automates the provisioning of IBM Hyper Protect confidential computing solutions:
+
+- **Hyper Protect Virtual Servers (HPVS)** - Secure virtual servers on IBM Cloud
+- **Hyper Protect Container Runtime (HPCR)** for RedHat Virtualization (RHVS)
+- **Hyper Protect Confidential Container (HPCC)** for Red Hat OpenShift Peer Pods
+
+This library provides cryptographic operations, contract generation, validation, and management capabilities for deploying workloads in secure enclaves on IBM LinuxONE.
+
+### What are Hyper Protect Services?
+
+IBM Hyper Protect services provide confidential computing capabilities that protect data in use by leveraging Secure Execution feature of Z. Learn more:
+
+- [Confidential computing with LinuxONE](https://cloud.ibm.com/docs/vpc?topic=vpc-about-se)
+- [IBM Hyper Protect Virtual Servers](https://www.ibm.com/docs/en/hpvs/2.2.x)
+- [IBM Hyper Protect Confidential Container for Red Hat OpenShift](https://www.ibm.com/docs/en/hpcc/1.1.x)
 
 ## Features
 
-1. Decrypt encrypted attestation records.
-2. Download encryption certificates from IBM Cloud docs.
-3. Get specific encryption certificate from encryption certificates JSON downloaded.
-4. Generate Base64 of a string.
-5. Validate schema of unencrypted contract.
-6. Generate IBM Hyper Protect encrypted string.
-7. Generate IBM Hyper Protect signed and encrypted contract (With and without contract expiry).
-8. Generate Base64 tar of `docker-compose.yaml` or `pods.yaml`.
-9. Get latest HPCR Image from IBM Cloud Image JSON data.
-10. Validate schema of network-config (for on-prem environment) for HPVS, HPCR RHVS and HPCC Peer Pod.
+- **Attestation Management**
+  - Decrypt encrypted attestation records
 
-## Usage
+- **Certificate Operations**
+  - Download  HPVS encryption certificates from IBM Cloud
+  - Extract specific certificates by version
+  - Validate certificate schemas
 
-Refer [Contract-Go docs](https://ibm-hyper-protect.github.io/contract-go) for more details on how to leverage this library for your usecases.
+- **Contract Generation**
+  - Generate Base64-encoded data from text, JSON, and docker compose / podman play archives
+  - Create encrypted and signed contracts
+  - Support contract expiry with CSR (Certificate Signing Request)
+  - Validate contract schemas
 
+- **Archive Management**
+  - Generate Base64 tar archives of `docker-compose.yaml` or `pods.yaml`
+  - Support encrypted TGZ generation
 
-## References
+- **Image Selection**
+  - Retrieve latest HPVS images from IBM Cloud
+  - Filter images by semantic versioning
 
-- [contract-cli](https://github.com/ibm-hyper-protect/contract-cli) - CLI tool for generating Hyper Protect contracts (leverages contract-go)
-- [terraform-provider-hpcr](https://github.com/ibm-hyper-protect/terraform-provider-hpcr) - Terraform Provider for generating Hyper Protect contracts
-- [k8s-operator-hpcr](https://github.com/ibm-hyper-protect/k8s-operator-hpcr) - Kubernetes operator for generating Hyper Protect contracts
-- [linuxone-vsi-automation-samples - hpvs](https://github.com/ibm-hyper-protect/linuxone-vsi-automation-samples/tree/master/terraform-hpvs) - Terraform examples to provision HPVS
-- [linuxone-vsi-automation-samples - hpcr-rhvs](https://github.com/ibm-hyper-protect/linuxone-vsi-automation-samples/tree/master/terraform-hpcr-rhvs) - Terraform examples to provision HPCR RHVS
-- [hyper-protect-virtual-server-samples](https://github.com/ibm-hyper-protect/hyper-protect-virtual-server-samples) - HPVS scripts for different features
+- **Network Validation**
+  - Validate network-config schemas for on-premise deployments
+  - Support HPVS, HPCR RHVS, and HPCC Peer Pod configurations
 
+## Installation
+
+```bash
+go get github.com/ibm-hyper-protect/contract-go
+```
+
+### Prerequisites
+
+- **Go 1.24.7 or later**
+- **OpenSSL** - Required for encryption operations
+  - On Linux: `apt-get install openssl` or `yum install openssl`
+  - On macOS: `brew install openssl`
+  - On Windows: [Download OpenSSL](https://slproweb.com/products/Win32OpenSSL.html)
+
+#### Optional: Custom OpenSSL Path
+
+If OpenSSL is not in your system PATH, set the `OPENSSL_BIN` environment variable:
+
+```bash
+# Linux/macOS
+export OPENSSL_BIN=/usr/bin/openssl
+
+# Windows (PowerShell)
+$env:OPENSSL_BIN="C:\Program Files\OpenSSL-Win64\bin\openssl.exe"
+```
+
+## Quick Start
+
+### Generate a Signed and Encrypted Contract
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/contract"
+)
+
+func main() {
+    // Your contract YAML
+    contractYAML := `
+env: |
+  type: env
+  logging:
+    logDNA:
+      ingestionKey: your-key
+workload: |
+  type: workload
+  compose:
+    archive: your-archive
+`
+
+    // Generate signed and encrypted contract
+    signedContract, inputHash, outputHash, err := contract.HpcrContractSignedEncrypted(
+        contractYAML,
+        "hpvs",              // Hyper Protect OS type
+        "",                  // Use default encryption certificate
+        privateKey,          // Your RSA private key
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("Signed Contract: %s\n", signedContract)
+    fmt.Printf("Input SHA256: %s\n", inputHash)
+    fmt.Printf("Output SHA256: %s\n", outputHash)
+}
+```
+
+### Select Latest HPCR Image
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/image"
+)
+
+func main() {
+    // Image JSON from IBM Cloud
+    imageJSON := `[...]` // Your IBM Cloud images JSON
+
+    // Get latest image matching version constraint
+    imageID, imageName, checksum, version, err := image.HpcrSelectImage(
+        imageJSON,
+        ">=1.1.0", // Optional version constraint
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("Image ID: %s\n", imageID)
+    fmt.Printf("Image Name: %s\n", imageName)
+    fmt.Printf("Checksum: %s\n", checksum)
+    fmt.Printf("Version: %s\n", version)
+}
+```
+
+## Documentation
+
+Comprehensive documentation is available at:
+
+- **[User Documentation](docs/README.md)** - Detailed API reference and usage examples
+- **[Go Package Documentation](https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go)** - Generated Go docs
+- **[Examples](samples/)** - Sample contracts and configurations
+
+## Supported Platforms
+
+| Platform | Description | Support Status |
+|----------|-------------|----------------|
+| HPVS | Hyper Protect Virtual Servers | Supported |
+| HPCR-RHVS | Hyper Protect Container Runtime for Red Hat Virtualization | Supported |
+| HPCC-PeerPod | Hyper Protect Confidential Container Peer Pods | Supported |
+
+## Examples
+
+The [`samples/`](samples/) directory contains example configurations:
+
+- [Simple Contract](samples/simple_contract.yaml)
+- [Workload Configuration](samples/workload.yaml)
+- [Network Configuration](samples/network/network_config.yaml)
+- [Docker Compose](samples/tgz/docker-compose.yaml)
+
+## Related Projects
+
+This library is used by several tools in the IBM Hyper Protect ecosystem:
+
+| Project | Description |
+|---------|-------------|
+| [contract-cli](https://github.com/ibm-hyper-protect/contract-cli) | CLI tool for generating Hyper Protect contracts |
+| [terraform-provider-hpcr](https://github.com/ibm-hyper-protect/terraform-provider-hpcr) | Terraform provider for Hyper Protect contracts |
+| [k8s-operator-hpcr](https://github.com/ibm-hyper-protect/k8s-operator-hpcr) | Kubernetes operator for contract management |
+| [linuxone-vsi-automation-samples](https://github.com/ibm-hyper-protect/linuxone-vsi-automation-samples) | Terraform examples for HPVS and HPCR RHVS |
+| [hyper-protect-virtual-server-samples](https://github.com/ibm-hyper-protect/hyper-protect-virtual-server-samples) | HPVS feature samples and scripts |
+
+## Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details on:
+
+- Opening issues
+- Submitting pull requests
+- Code style and conventions
+- Testing requirements
+
+Please also read our [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
+
+## License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+- **Issues**: Report bugs or request features via [GitHub Issues](https://github.com/ibm-hyper-protect/contract-go/issues)
+- **Security**: Report security vulnerabilities via our [Security Policy](SECURITY.md)
+- **Maintainers**: See [MAINTAINERS.md](MAINTAINERS.md) for the current maintainer list
 
 ## Contributors
 
