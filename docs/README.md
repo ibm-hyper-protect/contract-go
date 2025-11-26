@@ -109,320 +109,927 @@ MIIEpAIBAAKCAQEA...
 
 ## Certificate Functions
 
+### HpcrDownloadEncryptionCertificates
 
-### HpcrDownloadEncryptionCertificates()
-This function downloads HPCR encryption certificates from IBM Cloud.
+Downloads encryption certificates for specified HPCR versions from IBM Cloud storage.
 
-### Example
+**Package:** `github.com/ibm-hyper-protect/contract-go/certificate`
+
+**Signature:**
 ```go
-import "github.com/ibm-hyper-protect/contract-go/certificate"
+func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDownloadUrlTemplate string) (string, error)
+```
+
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `versionList` | `[]string` | List of HPCR versions to download (e.g., `["1.1.14", "1.1.15"]`) |
+| `formatType` | `string` | Output format: `"json"` or `"yaml"` (defaults to `"json"` if empty) |
+| `certDownloadUrlTemplate` | `string` | Custom URL template (uses IBM Cloud default if empty) |
+
+**Default URL Template:**
+```
+https://hpvsvpcubuntu.s3.us.cloud-object-storage.appdomain.cloud/s390x-{{.Patch}}/ibm-hyper-protect-container-runtime-{{.Major}}-{{.Minor}}-s390x-{{.Patch}}-encrypt.crt
+```
+
+**Returns:**
+| Return | Type | Description |
+|--------|------|-------------|
+| Certificates | `string` | JSON or YAML formatted map of versions to certificates |
+| Error | `error` | Error if download fails or version not found |
+
+**Example:**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/certificate"
+)
 
 func main() {
-    certs, err := HpcrDownloadEncryptionCertificates(sampleEncryptionCertVersionsList, jsonFormat, certDownloadUrlTemplate)
+    // Download certificates for multiple versions
+    versions := []string{"1.1.14", "1.1.15", "1.1.16"}
+
+    // Get as JSON (default)
+    certsJSON, err := certificate.HpcrDownloadEncryptionCertificates(versions, "json", "")
+    if err != nil {
+        log.Fatalf("Failed to download certificates: %v", err)
+    }
+
+    fmt.Printf("Downloaded certificates:\n%s\n", certsJSON)
+
+    // Or get as YAML
+    certsYAML, err := certificate.HpcrDownloadEncryptionCertificates(versions, "yaml", "")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("YAML format:\n%s\n", certsYAML)
 }
 ```
 
-#### Input(s)
-1. List of versions to download (eg: ["1.1.14", "1.1.15"])
-2. Output format (json or yaml)
-3. Encryption certificate URL Template (default to `https://hpvsvpcubuntu.s3.us.cloud-object-storage.appdomain.cloud/s390x-{{.Patch}}/ibm-hyper-protect-container-runtime-{{.Major}}-{{.Minor}}-s390x-{{.Patch}}-encrypt.crt`)
+**Common Errors:**
+- `"required parameter is missing"` - Version list is empty
+- `"encryption certificate doesn't exist in <url>"` - Version not available
+- `"failed to download encryption certificate"` - Network or access error
+- `"invalid output format"` - Format type not "json" or "yaml"
 
-#### Output(s)
-1. Certificates and versions as JSON string
-2. Error (If any)
+---
 
+### HpcrGetEncryptionCertificateFromJson
 
-### HpcrGetEncryptionCertificateFromJson()
-This function returns encryption certificate and version from HpcrDownloadEncryptionCertificates() output.
+Extracts a specific version's encryption certificate from the output of `HpcrDownloadEncryptionCertificates`.
 
-### Example
+**Package:** `github.com/ibm-hyper-protect/contract-go/certificate`
+
+**Signature:**
 ```go
-import "github.com/ibm-hyper-protect/contract-go/certificate"
+func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version string) (string, string, error)
+```
+
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `encryptionCertificateJson` | `string` | JSON/YAML output from `HpcrDownloadEncryptionCertificates` |
+| `version` | `string` | Specific version to extract (e.g., `"1.1.15"`) |
+
+**Returns:**
+| Return | Type | Description |
+|--------|------|-------------|
+| Version | `string` | The requested version number |
+| Certificate | `string` | PEM-formatted encryption certificate |
+| Error | `error` | Error if version not found or JSON invalid |
+
+**Example:**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/certificate"
+)
 
 func main() {
-    version, cert, err := HpcrGetEncryptionCertificateFromJson(sampleJsonData, desiredVersion)
+    // First, download certificates
+    versions := []string{"1.1.14", "1.1.15"}
+    certsJSON, err := certificate.HpcrDownloadEncryptionCertificates(versions, "json", "")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Extract specific version
+    version, cert, err := certificate.HpcrGetEncryptionCertificateFromJson(certsJSON, "1.1.15")
+    if err != nil {
+        log.Fatalf("Failed to get certificate: %v", err)
+    }
+
+    fmt.Printf("Version: %s\n", version)
+    fmt.Printf("Certificate:\n%s\n", cert)
 }
 ```
 
-#### Input(s)
-1. Encryption certificate JSON string
-2. Version name
+**Common Errors:**
+- `"required parameter is missing"` - JSON or version parameter is empty
+- Version not found in the provided JSON data
 
-#### Output(s)
-1. Version name
-2. Encryption Certificate
-3. Error (If any)
+---
 
+### HpcrValidateEncryptionCertificate
 
-### HpcrSelectImage()
-This function selects the latest HPCR image details from image list out from IBM Cloud images API.
+Validates and returns expiry details of an encryption certificate.
 
-### Example
+**Package:** `github.com/ibm-hyper-protect/contract-go/certificate`
+
+**Signature:**
 ```go
-import "github.com/ibm-hyper-protect/contract-go/image"
+func HpcrValidateEncryptionCertificate(encryptionCert string) (string, error)
+```
+
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `encryptionCert` | `string` | PEM-formatted encryption certificate |
+
+**Returns:**
+| Return | Type | Description |
+|--------|------|-------------|
+| Expiry Details | `string` | Certificate expiration information |
+| Error | `error` | Error if certificate is invalid or expired |
+
+**Example:**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/certificate"
+)
 
 func main() {
-    imageId, imageName, imageChecksum, ImageVersion, err := HpcrSelectImage(imageJsonList, version)
+    cert := `-----BEGIN CERTIFICATE-----
+MIIDXTCCAkWgAwIBAgIJAKL...
+-----END CERTIFICATE-----`
+
+    expiryInfo, err := certificate.HpcrValidateEncryptionCertificate(cert)
+    if err != nil {
+        log.Fatalf("Certificate validation failed: %v", err)
+    }
+
+    fmt.Printf("Certificate expiry: %s\n", expiryInfo)
 }
 ```
 
-#### Input(s)
-1. Image JSON from IBM Cloud images from Terraform, API or CLI. The input can be as follows:-
-    1. Terraform `ibmcloud is images`: The input should be output of `data.ibm_is_images.hyper_protect_images.images`.
-    2. IBM Cloud API: The result of following command should be input:
-        ```bash
-        curl -X GET "https://<region>.cloud.ibm.com/v1/images?version=2022-09-13&generation=2"  -H "Authorization: Bearer <token>" -H "Content-Type: application/json" | jq .images
-        ```
-    3. IBM CLI output: The input should be output of `ibmcloud is images --json`.
-2. version to select (optional)
+**Use Cases:**
+- Verify certificate validity before using for encryption
+- Check certificate expiration dates
+- Validate certificate format and structure
 
-#### Output(s)
-1. Image ID
-2. Image name
-3. Image checksum
-4. Image version
-5. Error (If any)
+---
 
+## Image Functions
 
-### HpcrText()
-This function generates Base64 for given string.
+### HpcrSelectImage
 
-### Example
+Selects the latest HPCR image from IBM Cloud images based on version constraints and semantic versioning.
+
+**Package:** `github.com/ibm-hyper-protect/contract-go/image`
+
+**Signature:**
 ```go
-import "github.com/ibm-hyper-protect/contract-go/contract"
+func HpcrSelectImage(imageJsonData, versionSpec string) (string, string, string, string, error)
+```
+
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `imageJsonData` | `string` | JSON array of IBM Cloud images |
+| `versionSpec` | `string` | Version constraint (e.g., `">=1.1.0"`, `"~1.1.14"`) - optional, selects latest if empty |
+
+**Supported Image Sources:**
+
+1. **Terraform** - Output from `data.ibm_is_images.hyper_protect_images.images`
+2. **IBM Cloud API**:
+   ```bash
+   curl -X GET "https://<region>.cloud.ibm.com/v1/images?version=2022-09-13&generation=2" \
+     -H "Authorization: Bearer <token>" \
+     -H "Content-Type: application/json" | jq .images
+   ```
+3. **IBM Cloud CLI**:
+   ```bash
+   ibmcloud is images --json
+   ```
+
+**Returns:**
+| Return | Type | Description |
+|--------|------|-------------|
+| Image ID | `string` | IBM Cloud image ID |
+| Image Name | `string` | Full image name |
+| Checksum | `string` | SHA256 checksum of the image |
+| Version | `string` | Semantic version (e.g., `"1.1.15"`) |
+| Error | `error` | Error if no matching image found |
+
+**Example:**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os/exec"
+
+    "github.com/ibm-hyper-protect/contract-go/image"
+)
 
 func main() {
-    base64, inputSha256, outputSha256, err := HpcrText(sampleStringData)
+    // Get images from IBM Cloud CLI
+    cmd := exec.Command("ibmcloud", "is", "images", "--json")
+    output, err := cmd.Output()
+    if err != nil {
+        log.Fatalf("Failed to get images: %v", err)
+    }
+
+    // Select latest image version >= 1.1.0
+    imageID, imageName, checksum, version, err := image.HpcrSelectImage(
+        string(output),
+        ">=1.1.0",
+    )
+    if err != nil {
+        log.Fatalf("Failed to select image: %v", err)
+    }
+
+    fmt.Printf("Selected HPCR Image:\n")
+    fmt.Printf("  ID:       %s\n", imageID)
+    fmt.Printf("  Name:     %s\n", imageName)
+    fmt.Printf("  Version:  %s\n", version)
+    fmt.Printf("  Checksum: %s\n", checksum)
+
+    // Use with specific version constraint
+    imageID, _, _, version, err = image.HpcrSelectImage(string(output), "~1.1.14")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Selected version ~1.1.14: %s\n", version)
 }
 ```
 
-#### Input(s)
-1. Text to encode
+**Version Constraint Examples:**
+- `">= 1.1.0"` - Version 1.1.0 or higher
+- `"~1.1.14"` - Patch versions of 1.1.x (e.g., 1.1.14, 1.1.15)
+- `"^1.1.0"` - Minor versions of 1.x.x (e.g., 1.1.0, 1.2.0)
+- `"1.1.15"` - Exact version match
+- `""` - Latest available version
 
-#### Output(s)
-1. Base64 of input
-2. Checksum of input
-3. Checksum of output
-4. Error (If any)
+**Common Errors:**
+- `"required parameter is empty"` - Image JSON data is missing
+- `"no Hyper Protect image matching version found"` - No images match the version constraint
+- `"failed to unmarshal JSON"` - Invalid JSON format
 
+**Image Selection Criteria:**
+The function filters images based on:
+- Architecture: `s390x`
+- Status: `available`
+- Visibility: `public`
+- Operating System: Matches `hyper-protect-*-s390x-hpcr` pattern
+- Name: Matches `ibm-hyper-protect-container-runtime-*` pattern
 
-### HpcrTextEncrypted()
-This function encrypts text and formats text as per `hyper-protect-basic.<encoded-encrypted-password>.<encoded-encrypted-data>`.
+---
 
-### Example
+## Contract Functions
+
+### HpcrText
+
+Generates Base64-encoded representation of plain text data with integrity checksums.
+
+**Package:** `github.com/ibm-hyper-protect/contract-go/contract`
+
+**Signature:**
 ```go
-import "github.com/ibm-hyper-protect/contract-go/contract"
+func HpcrText(plainText string) (string, string, string, error)
+```
+
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `plainText` | `string` | Text data to encode |
+
+**Returns:**
+| Return | Type | Description |
+|--------|------|-------------|
+| Base64 Data | `string` | Base64-encoded text |
+| Input Checksum | `string` | SHA256 hash of original text |
+| Output Checksum | `string` | SHA256 hash of Base64-encoded data |
+| Error | `error` | Error if text is empty |
+
+**Example:**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/contract"
+)
 
 func main() {
-    encryptedText, inputSha256, outputSha256, err := HpcrTextEncrypted(sampleStringData, HyperProtectOsType, encryptionCertificate)
+    text := "Hello, Hyper Protect World!"
+
+    encoded, inputHash, outputHash, err := contract.HpcrText(text)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("Original text: %s\n", text)
+    fmt.Printf("Base64 encoded: %s\n", encoded)
+    fmt.Printf("Input SHA256: %s\n", inputHash)
+    fmt.Printf("Output SHA256: %s\n", outputHash)
 }
 ```
 
-#### Input(s)
-1. Text to encrypt
-2. Hyper Protect OS (hpvs or hpcr-rhvs or hpcc-peerpod) (optional)
-3. Encryption certificate (optional)
+**Use Cases:**
+- Encode environment variables for contracts
+- Prepare text data for workload configuration
+- Generate integrity checksums for verification
 
-#### Output(s)
-1. Encrypted text
-2. Checksum of input
-3. Checksum of output
-4. Error (If any)
+---
 
 
-### HpcrJson()
-This function generates Base64 of JSON input
+### HpcrTextEncrypted
 
-### Example
+Encrypts plain text using the Hyper Protect encryption format.
+
+**Package:** `github.com/ibm-hyper-protect/contract-go/contract`
+
+**Signature:**
 ```go
-import "github.com/ibm-hyper-protect/contract-go/contract"
+func HpcrTextEncrypted(plainText, hyperProtectOs, encryptionCertificate string) (string, string, string, error)
+```
+
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `plainText` | `string` | Text to encrypt |
+| `hyperProtectOs` | `string` | Platform: `"hpvs"`, `"hpcr-rhvs"`, or `"hpcc-peerpod"` (default if empty) |
+| `encryptionCertificate` | `string` | PEM certificate (uses embedded default if empty) |
+
+**Returns:**
+| Return | Type | Description |
+|--------|------|-------------|
+| Encrypted Data | `string` | Format: `hyper-protect-basic.<password>.<data>` |
+| Input Checksum | `string` | SHA256 of original text |
+| Output Checksum | `string` | SHA256 of encrypted output |
+| Error | `error` | Error if encryption fails |
+
+**Example:**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/contract"
+)
 
 func main() {
-    base64, inputSha256, outputSha256, err := HpcrJson(sampleStringJson)
+    text := "sensitive data"
+
+    // Use default certificate
+    encrypted, inputHash, outputHash, err := contract.HpcrTextEncrypted(text, "hpvs", "")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("Encrypted: %s\n", encrypted)
+    fmt.Printf("Input checksum: %s\n", inputHash)
+    fmt.Printf("Output checksum: %s\n", outputHash)
 }
 ```
 
-#### Input(s)
-1. Text to encode
+---
 
-#### Output(s)
-1. Base64 of input
-2. Checksum of input
-3. Checksum of output
-4. Error (If any)
+### HpcrJson
 
+Generates Base64-encoded representation of JSON data with integrity checksums.
 
-### HpcrJsonEncrypted()
-This function generates encrypts JSON and formats text as per `hyper-protect-basic.<encoded-encrypted-password>.<encoded-encrypted-data>`.
+**Package:** `github.com/ibm-hyper-protect/contract-go/contract`
 
-### Example
+**Signature:**
 ```go
-import "github.com/ibm-hyper-protect/contract-go/contract"
+func HpcrJson(plainJson string) (string, string, string, error)
+```
+
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `plainJson` | `string` | Valid JSON string |
+
+**Returns:**
+| Return | Type | Description |
+|--------|------|-------------|
+| Base64 Data | `string` | Base64-encoded JSON |
+| Input Checksum | `string` | SHA256 of original JSON |
+| Output Checksum | `string` | SHA256 of Base64 data |
+| Error | `error` | Error if not valid JSON |
+
+**Example:**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/contract"
+)
 
 func main() {
-    encryptedJson, inputSha256, outputSha256, err := HpcrJsonEncrypted(sampleStringJson, HyperProtectOsType, encryptionCertificate)
+    jsonData := `{"name": "app", "version": "1.0"}`
+
+    encoded, inputHash, outputHash, err := contract.HpcrJson(jsonData)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("Base64 JSON: %s\n", encoded)
+    fmt.Printf("Input SHA256: %s\n", inputHash)
+    fmt.Printf("Output SHA256: %s\n", outputHash)
 }
 ```
 
-#### Input(s)
-1. JSON text to encrypt
-2. Hyper Protect OS (hpvs or hpcr-rhvs or hpcc-peerpod) (optional)
-3. Encryption certificate (optional)
+---
 
-#### Output(s)
-1. Encrypted text
-2. Checksum of input
-3. Checksum of output
-4. Error (If any)
+### HpcrJsonEncrypted
 
+Encrypts JSON data using the Hyper Protect encryption format.
 
-### HpcrTgz()
-This function generates base64 of TGZ that contains files under the given folder
+**Package:** `github.com/ibm-hyper-protect/contract-go/contract`
 
-### Example
+**Signature:**
 ```go
-import "github.com/ibm-hyper-protect/contract-go/contract"
+func HpcrJsonEncrypted(plainJson, hyperProtectOs, encryptionCertificate string) (string, string, string, error)
+```
+
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `plainJson` | `string` | Valid JSON string to encrypt |
+| `hyperProtectOs` | `string` | Platform: `"hpvs"`, `"hpcr-rhvs"`, or `"hpcc-peerpod"` |
+| `encryptionCertificate` | `string` | PEM certificate (optional) |
+
+**Returns:**
+| Return | Type | Description |
+|--------|------|-------------|
+| Encrypted JSON | `string` | Format: `hyper-protect-basic.<password>.<data>` |
+| Input Checksum | `string` | SHA256 of original JSON |
+| Output Checksum | `string` | SHA256 of encrypted output |
+| Error | `error` | Error if not valid JSON or encryption fails |
+
+**Example:**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/contract"
+)
 
 func main() {
-    encodedTgz, inputSha256, outputSha256, err := HpcrTgz(composePath)
+    config := `{
+        "database": {
+            "host": "localhost",
+            "password": "secret123"
+        }
+    }`
+
+    encrypted, _, _, err := contract.HpcrJsonEncrypted(config, "hpvs", "")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("Encrypted config: %s\n", encrypted)
 }
 ```
 
-#### Input(s)
-1. Path of folder
+---
 
-#### Output(s)
-1. Base64 of TGZ where TGZ is contents of given folder
-2. Checksum of imput
-3. Checksum of output
-4. Error (If any)
+### HpcrTgz
 
+Creates a Base64-encoded TGZ archive from a directory containing `docker-compose.yaml` or `pods.yaml`.
 
-### HpcrVerifyContract()
-This function verifies if the parsed encrypted contract is schematically valid. The validation is successful, if error is nil.
+**Package:** `github.com/ibm-hyper-protect/contract-go/contract`
 
-### Example
+**Signature:**
 ```go
-import "github.com/ibm-hyper-protect/contract-go/contract"
+func HpcrTgz(folderPath string) (string, string, string, error)
+```
+
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `folderPath` | `string` | Path to folder containing compose/pods files |
+
+**Returns:**
+| Return | Type | Description |
+|--------|------|-------------|
+| TGZ Base64 | `string` | Base64-encoded tar.gz archive |
+| Input Checksum | `string` | SHA256 of folder path |
+| Output Checksum | `string` | SHA256 of Base64 TGZ |
+| Error | `error` | Error if folder doesn't exist or archive creation fails |
+
+**Example:**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/contract"
+)
 
 func main() {
-    err := HpcrVerifyContract(contract, HyperProtectOsType)
+    // Folder containing docker-compose.yaml
+    folderPath := "./compose"
+
+    tgzBase64, inputHash, outputHash, err := contract.HpcrTgz(folderPath)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("TGZ Base64 (first 100 chars): %s...\n", tgzBase64[:100])
+    fmt.Printf("Input SHA256: %s\n", inputHash)
+    fmt.Printf("Output SHA256: %s\n", outputHash)
 }
 ```
 
-#### Input(s)
-1. Contract
-2. Hyper Protect OS (hpvs or hpcr-rhvs or hpcc-peerpod) (optional)
+**Supported Files:**
+- `docker-compose.yaml` - Docker Compose configuration
+- `pods.yaml` - Podman play configuration
 
-#### Output(s)
-1. Error (if any)
+---
 
+### HpcrTgzEncrypted
 
-### HpcrTgzEncrypted()
-This function first generates base64 of TGZ that contains files under the given folder and then encrypts the data as per `hyper-protect-basic.<encoded-encrypted-password>.<encoded-encrypted-data>`.
+Creates an encrypted Base64 TGZ archive from a directory.
 
-### Example
+**Package:** `github.com/ibm-hyper-protect/contract-go/contract`
+
+**Signature:**
 ```go
-import "github.com/ibm-hyper-protect/contract-go/contract"
+func HpcrTgzEncrypted(folderPath, hyperProtectOs, encryptionCertificate string) (string, string, string, error)
+```
+
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `folderPath` | `string` | Path to folder with compose/pods files |
+| `hyperProtectOs` | `string` | Platform identifier (optional) |
+| `encryptionCertificate` | `string` | PEM certificate (optional) |
+
+**Returns:**
+| Return | Type | Description |
+|--------|------|-------------|
+| Encrypted TGZ | `string` | Format: `hyper-protect-basic.<password>.<data>` |
+| Input Checksum | `string` | SHA256 of folder path |
+| Output Checksum | `string` | SHA256 of encrypted output |
+| Error | `error` | Error if folder invalid or encryption fails |
+
+**Example:**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/contract"
+)
 
 func main() {
-    encodedTgz, inputSha256, outputSha256, err := HpcrTgzEncrypted(composePath, HyperProtectOsType, encryptionCertificate)
+    encrypted, _, _, err := contract.HpcrTgzEncrypted("./compose", "hpvs", "")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("Encrypted TGZ: %s\n", encrypted)
 }
 ```
 
-#### Input(s)
-1. Path of folder
-2. Hyper Protect OS (hpvs or hpcr-rhvs or hpcc-peerpod) (optional)
-3. Encryption certificate (optional)
+---
 
-#### Output(s)
-1. encrypted base64 of TGZ where TGZ is contents of given folder
-2. Checksum of input
-3. Checksum of output
-4. Error (If any)
+### HpcrVerifyContract
 
+Validates a contract against the JSON schema for the specified Hyper Protect platform.
 
-### HpcrContractSignedEncrypted()
-This function generates a signed and encrypted contract with format `hyper-protect-basic.<encoded-encrypted-password>.<encoded-encrypted-data>`.
+**Package:** `github.com/ibm-hyper-protect/contract-go/contract`
 
-### Example
+**Signature:**
 ```go
-import "github.com/ibm-hyper-protect/contract-go/contract"
+func HpcrVerifyContract(contract, version string) error
+```
+
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `contract` | `string` | YAML contract to validate |
+| `version` | `string` | Platform: `"hpvs"`, `"hpcr-rhvs"`, or `"hpcc-peerpod"` (optional) |
+
+**Returns:**
+| Return | Type | Description |
+|--------|------|-------------|
+| Error | `error` | `nil` if valid, error with validation details if invalid |
+
+**Example:**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/contract"
+)
 
 func main() {
-    signedEncryptedContract, inputSha256, outputSha256, err := HpcrContractSignedEncrypted(contract, HyperProtectOsType, encryptionCertificate, privateKey)
+    contractYAML := `
+env: |
+  type: env
+  logging:
+    logDNA:
+      ingestionKey: abc123
+workload: |
+  type: workload
+  compose:
+    archive: ZGF0YQ==
+`
+
+    // Validate for HPVS
+    err := contract.HpcrVerifyContract(contractYAML, "hpvs")
+    if err != nil {
+        log.Fatalf("Contract validation failed: %v", err)
+    }
+
+    fmt.Println("Contract is valid!")
 }
 ```
 
-#### Input(s)
-1. Contract
-2. Hyper Protect OS (hpvs or hpcr-rhvs or hpcc-peerpod) (optional)
-3. Encryption certificate (optional)
-4. Private Key for signing
+**Validated Fields:**
+- Contract structure (env, workload)
+- Required fields presence
+- Data types and formats
+- Platform-specific requirements
 
-#### Output(s)
-1. Signed and encrypted contract
-2. Checksum of input
-3. Checksum of output
-4. Error (If any)
+---
 
+### HpcrContractSignedEncrypted
 
-### HpcrContractSignedEncryptedContractExpiry()
-This function generates a signed and encrypted contract with contract expiry enabled. The output will be of the format `hyper-protect-basic.<encoded-encrypted-password>.<encoded-encrypted-data>`.
+Generates a signed and encrypted contract ready for deployment to Hyper Protect services.
 
-### Example
+**Package:** `github.com/ibm-hyper-protect/contract-go/contract`
+
+**Signature:**
 ```go
-import "github.com/ibm-hyper-protect/contract-go/contract"
+func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate, privateKey string) (string, string, string, error)
+```
 
-func usingCsrParams() {
-    sampleCeCSRPems = map[string]interface{}{
-		"country":  "IN",
-		"state":    "Karnataka",
-		"location": "Bangalore",
-		"org":      "IBM",
-		"unit":     "ISDL",
-		"domain":   "HPVS",
-		"mail":     "sashwat.k@ibm.com",
-	}
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `contract` | `string` | YAML contract with `env` and `workload` sections |
+| `hyperProtectOs` | `string` | Platform: `"hpvs"`, `"hpcr-rhvs"`, or `"hpcc-peerpod"` |
+| `encryptionCertificate` | `string` | PEM certificate (optional) |
+| `privateKey` | `string` | RSA private key (PEM format) for signing |
 
-    signedEncryptedCEContract, inputSha256, outputSha256, err := HpcrContractSignedEncryptedContractExpiry(contract, HyperProtectOsType, encryptionCertificate, privateKey, caCert, caKey, string(csrParams), "", sampleContractExpiryDays)
+**Returns:**
+| Return | Type | Description |
+|--------|------|-------------|
+| Signed Contract | `string` | YAML with encrypted `workload`, `env`, and `envWorkloadSignature` |
+| Input Checksum | `string` | SHA256 of original contract |
+| Output Checksum | `string` | SHA256 of final contract |
+| Error | `error` | Error if validation or signing fails |
+
+**Example:**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/contract"
+)
+
+func main() {
+    contractYAML := `
+env: |
+  type: env
+  logging:
+    logDNA:
+      ingestionKey: your-key
+      hostname: syslog-a.private.us-south.logging.cloud.ibm.com
+      port: 6514
+workload: |
+  type: workload
+  compose:
+    archive: ZGF0YQ==
+`
+
+    privateKey := `-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEA...
+-----END RSA PRIVATE KEY-----`
+
+    signedContract, inputHash, outputHash, err := contract.HpcrContractSignedEncrypted(
+        contractYAML,
+        "hpvs",
+        "",         // Use default certificate
+        privateKey,
+    )
+    if err != nil {
+        log.Fatalf("Failed to generate contract: %v", err)
+    }
+
+    fmt.Printf("Signed Contract:\n%s\n", signedContract)
+    fmt.Printf("Input SHA256: %s\n", inputHash)
+    fmt.Printf("Output SHA256: %s\n", outputHash)
 }
+```
 
-func usingCsrPem() {
-    signedEncryptedCEContract, inputSha256, outputSha256, err := HpcrContractSignedEncryptedContractExpiry(contract, encryptionCertificate, privateKey, caCert, caKey, "", csr, sampleContractExpiryDays)
+**Process Flow:**
+1. Validates contract schema
+2. Generates public key from private key
+3. Encrypts workload section
+4. Injects signing key into env section
+5. Encrypts env section
+6. Signs encrypted sections with private key
+7. Returns YAML with `workload`, `env`, and `envWorkloadSignature`
+
+---
+
+### HpcrContractSignedEncryptedContractExpiry
+
+Generates a signed and encrypted contract with time-based expiration using certificate authorities.
+
+**Package:** `github.com/ibm-hyper-protect/contract-go/contract`
+
+**Signature:**
+```go
+func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encryptionCertificate, privateKey, cacert, caKey, csrDataStr, csrPemData string, expiryDays int) (string, string, string, error)
+```
+
+**Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `contract` | `string` | YAML contract |
+| `hyperProtectOs` | `string` | Platform identifier |
+| `encryptionCertificate` | `string` | PEM certificate (optional) |
+| `privateKey` | `string` | RSA private key for signing |
+| `cacert` | `string` | CA certificate (PEM format) |
+| `caKey` | `string` | CA private key (PEM format) |
+| `csrDataStr` | `string` | CSR parameters as JSON (use if not providing PEM) |
+| `csrPemData` | `string` | CSR in PEM format (use if not providing JSON) |
+| `expiryDays` | `int` | Number of days until contract expires |
+
+**Note:** Either `csrDataStr` OR `csrPemData` must be provided, not both.
+
+**CSR Parameters JSON Format:**
+```json
+{
+  "country": "US",
+  "state": "California",
+  "location": "San Francisco",
+  "org": "MyOrganization",
+  "unit": "Engineering",
+  "domain": "example.com",
+  "mail": "admin@example.com"
 }
 ```
 
-#### Input(s)
-1. Contract
-2. Hyper Protect OS (hpvs or hpcr-rhvs or hpcc-peerpod) (optional)
-3. Encryption certificate (optional)
-4. Private Key for signing
-5. CA Certificate
-6. CA Key
-7. CSR Parameter JSON as string
-8. CSR PEM file
-9. Expiry of contract in number of days
+**Returns:**
+| Return | Type | Description |
+|--------|------|-------------|
+| Signed Contract | `string` | Contract with time-limited signature |
+| Input Checksum | `string` | SHA256 of original contract |
+| Output Checksum | `string` | SHA256 of final contract |
+| Error | `error` | Error if validation or signing fails |
 
-The point 7 and 8 is one of. That is, either CSR parameters or CSR PEM file.
+**Example - Using CSR Parameters:**
+```go
+package main
 
-The CSR parameters should be of the format:-
+import (
+    "encoding/json"
+    "fmt"
+    "log"
 
+    "github.com/ibm-hyper-protect/contract-go/contract"
+)
+
+func main() {
+    contractYAML := `...your contract...`
+    privateKey := `...your RSA private key...`
+    caCert := `...your CA certificate...`
+    caKey := `...your CA private key...`
+
+    // Define CSR parameters
+    csrParams := map[string]interface{}{
+        "country":  "US",
+        "state":    "California",
+        "location": "San Francisco",
+        "org":      "MyOrg",
+        "unit":     "DevOps",
+        "domain":   "myapp.example.com",
+        "mail":     "admin@example.com",
+    }
+
+    csrJSON, err := json.Marshal(csrParams)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Generate contract that expires in 90 days
+    signedContract, _, _, err := contract.HpcrContractSignedEncryptedContractExpiry(
+        contractYAML,
+        "hpvs",
+        "",                // Default encryption cert
+        privateKey,
+        caCert,
+        caKey,
+        string(csrJSON),   // CSR parameters
+        "",                // No CSR PEM file
+        90,                // Expires in 90 days
+    )
+    if err != nil {
+        log.Fatalf("Contract generation failed: %v", err)
+    }
+
+    fmt.Printf("Contract with 90-day expiry generated!\n")
+    fmt.Printf("%s\n", signedContract)
+}
 ```
-"country":  "IN",
-"state":    "Karnataka",
-"location": "Bangalore",
-"org":      "IBM",
-"unit":     "ISDL",
-"domain":   "HPVS",
-"mail":     "sashwat.k@ibm.com"
+
+**Example - Using CSR PEM:**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+
+    "github.com/ibm-hyper-protect/contract-go/contract"
+)
+
+func main() {
+    // Read CSR PEM file
+    csrPEM, err := os.ReadFile("request.csr")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    contractYAML := `...your contract...`
+    privateKey := `...your private key...`
+    caCert := `...your CA cert...`
+    caKey := `...your CA key...`
+
+    signedContract, _, _, err := contract.HpcrContractSignedEncryptedContractExpiry(
+        contractYAML,
+        "hpvs",
+        "",
+        privateKey,
+        caCert,
+        caKey,
+        "",                 // No CSR parameters
+        string(csrPEM),     // CSR PEM file
+        365,                // 1 year expiry
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("Contract generated with 1-year expiry!\n")
+}
 ```
 
-#### Output(s)
-1. Signed and encrypted contract
-2. Checksum of input
-3. Checksum of output
-4. Error (If any)
+**Use Cases:**
+- Production deployments requiring time-limited contracts
+- Compliance requirements for certificate rotation
+- Enhanced security with automatic contract expiration
+
+**Security Considerations:**
+- Keep CA private keys secure
+- Rotate CA certificates regularly
+- Set appropriate expiry periods based on security policies
+- Monitor contract expiration dates
 
 
 ### HpcrVerifyNetworkConfig

@@ -22,8 +22,9 @@ import (
 	"strings"
 	"text/template"
 
-	gen "github.com/ibm-hyper-protect/contract-go/common/general"
 	"gopkg.in/yaml.v3"
+
+	gen "github.com/ibm-hyper-protect/contract-go/common/general"
 )
 
 const (
@@ -106,26 +107,27 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 		vertCertMapVersion[version] = verCertMap
 	}
 
-	if formatType == formatJson {
+	switch formatType {
+	case formatJson:
 		jsonBytes, err := json.Marshal(vertCertMapVersion)
 		if err != nil {
 			return "", fmt.Errorf("failed to marshal JSON - %v", err)
 		}
 
 		return string(jsonBytes), nil
-	} else if formatType == formatYaml {
+	case formatYaml:
 		yamlBytes, err := yaml.Marshal(vertCertMapVersion)
 		if err != nil {
 			return "", fmt.Errorf("failed to marshal YAML - %v", err)
 		}
 		return string(yamlBytes), nil
-	} else {
+	default:
 		return "", fmt.Errorf("invalid output format")
 	}
 }
 
-// HpcrEncryptionCertificatesValidation - checks encryption certificate validity for all given versions
-func HpcrEncryptionCertificatesValidation(encryptionCert string) (string, error) {
+// HpcrValidateEncryptionCertificate - checks encryption certificate validity for all given versions
+func HpcrValidateEncryptionCertificate(encryptionCert string) (string, error) {
 	msg, err := gen.CheckEncryptionCertValidityForContractEncryption(encryptionCert)
 	if err != nil {
 		return "", err

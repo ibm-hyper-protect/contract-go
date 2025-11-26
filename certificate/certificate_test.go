@@ -95,6 +95,6 @@ func TestHpcrDownloadEncryptionCertificates(t *testing.T) {
 	if err != nil {
 		t.Errorf("failed to get encrypted checksum - %v", err)
 	}
-	_, err = HpcrEncryptionCertificatesValidation(encryptionCert)
+	_, err = HpcrValidateEncryptionCertificate(encryptionCert)
 	assert.NoError(t, err)
 }
