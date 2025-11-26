@@ -57,10 +57,10 @@ jobs:
             echo "Allowed types: feat, fix, docs, perf, revert, chore, refactor, test, build, ci"
             echo ""
             echo "Examples:"
-            echo "  feat: add new feature"
-            echo "  fix(api): resolve null pointer exception"
-            echo "  docs: update README"
-            echo "  chore!: breaking change in build process"
+            echo "  ✓ feat: add new feature"
+            echo "  ✓ fix(api): resolve null pointer exception"
+            echo "  ✓ docs: update README"
+            echo "  ✓ chore!: breaking change in build process"
             exit 1
           fi
 
