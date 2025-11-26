@@ -197,7 +197,6 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/) specifica
 - `feat:` - A new feature
 - `fix:` - A bug fix
 - `docs:` - Documentation only changes
-- `style:` - Code style changes (formatting, missing semi-colons, etc.)
 - `refactor:` - Code changes that neither fix a bug nor add a feature
 - `perf:` - Performance improvements
 - `test:` - Adding or updating tests

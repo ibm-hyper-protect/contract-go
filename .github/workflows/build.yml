@@ -17,7 +17,7 @@ on:
 env:
   # Currently no way to detect automatically
   DEFAULT_BRANCH: main
-  GO_VERSION: 1.23.4 # renovate: datasource=golang-version depName=golang
+  GO_VERSION: 1.24.7 # renovate: datasource=golang-version depName=golang
   NODE_VERSION: 20
 
 jobs:
@@ -37,8 +37,8 @@ jobs:
 
           # Conventional commit regex pattern
           # Matches: type(optional-scope): description
-          # Valid types from .releaserc: feat, fix, perf, revert, docs, chore, refactor, test, build
-          pattern='^(feat|fix|perf|revert|docs|chore|refactor|test|build)(\([a-z0-9-]+\))?!?: .{1,}'
+          # Valid types from .releaserc: feat, fix, docs, perf, revert, chore, refactor, test, build, ci
+          pattern='^(feat|fix|docs|perf|revert|chore|refactor|test|build|ci)(\([a-z0-9-]+\))?!?: .{1,}'
 
           invalid_commits=()
 
@@ -60,13 +60,13 @@ jobs:
             echo ""
             echo "Valid format: <type>(<optional-scope>): <description>"
             echo ""
-            echo "Allowed types: feat, fix, perf, revert, docs, chore, refactor, test, build"
+            echo "Allowed types: feat, fix, docs, perf, revert, chore, refactor, test, build, ci"
             echo ""
             echo "Examples:"
-            echo "  ✓ feat: add new feature"
-            echo "  ✓ fix(api): resolve null pointer exception"
-            echo "  ✓ docs: update README"
-            echo "  ✓ chore!: breaking change in build process"
+            echo "  feat: add new feature"
+            echo "  fix(api): resolve null pointer exception"
+            echo "  docs: update README"
+            echo "  chore!: breaking change in build process"
             exit 1
           fi
 
