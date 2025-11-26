@@ -46,14 +46,24 @@ const (
 	sampleDataChecksum = "05fb716cba07a0cdda231f1aa19621ce9e183a4fb6e650b459bc3c5db7593e42"
 
 	sampleCertificateJson = `{
-		"1.0.0": "data1",
-		"1.2.5": "data2",
-		"2.0.5": "data3",
-		"3.5.10": "data4",
-		"4.0.0": "data5"
+		"1.0.0": {
+			"cert": "data1",
+			"status": "test1",
+			"expiry_date": "26-02-26 12:27:33 GMT",
+			"expiry_days": "1"
+		},
+		"3.5.10": {
+			"cert": "data4",
+			"status": "test2",
+			"expiry_date": "26-02-26 12:27:33 GMT",
+			"expiry_days": "2"
+		}
 	}`
 
 	sampleComposeFolder = "../../samples/tgz"
+	// active.crt will be valid up to November 9, 2030
+	sampleEncryptionCertificate        = "../../samples/encryption-cert/active.crt"
+	sampleEncryptionCertificateExpired = "../../samples/encryption-cert/expired.crt"
 )
 
 // Testcase to check if CheckIfEmpty() is able to identify empty variables
@@ -406,4 +416,51 @@ func TestNetworkConfigYamlParse(t *testing.T) {
 	}
 
 	assert.NotEmpty(t, result)
+}
+
+// Testcase to check encryption certificate validity during certificate download
+func TestCheckEncryptionCertValidity(t *testing.T) {
+	data, err := os.ReadFile(sampleEncryptionCertificate)
+	if err != nil {
+		fmt.Println("Error reading file:", err)
+		return
+	}
+	cert_status, _, _, err := CheckEncryptionCertValidity(string(data)) // sample certificate is valid till 9th nov 2030
+	assert.NoError(t, err)
+	assert.Contains(t, cert_status, "valid")
+}
+
+// Testcase to check encryption certificate validity that is expired during certificate download
+func TestCheckExpiredEncryptionCertValidity(t *testing.T) {
+	data, err := os.ReadFile(sampleEncryptionCertificateExpired)
+	if err != nil {
+		fmt.Println("Error reading file:", err)
+		return
+	}
+	cert_status, _, _, err := CheckEncryptionCertValidity(string(data))
+	assert.NoError(t, err)
+	assert.Contains(t, cert_status, "expired")
+}
+
+// Testcase to check encryption certificate validity during contract encryption
+func TestCheckEncryptionCertValidityDuringContractEncryption(t *testing.T) {
+	data, err := os.ReadFile(sampleEncryptionCertificate) // sample certificate is valid till 9th nov 2030
+	if err != nil {
+		fmt.Println("Error reading file:", err)
+		return
+	}
+	cert_status, err := CheckEncryptionCertValidityForContractEncryption(string(data))
+	assert.NoError(t, err)
+	assert.Contains(t, cert_status, "Encryption certificate is valid for another")
+}
+
+// Testcase to check encryption certificate validity that is expired during contract encryption
+func TestCheckExpiredEncryptionCertValidityDuringContractEncryption(t *testing.T) {
+	data, err := os.ReadFile(sampleEncryptionCertificateExpired)
+	if err != nil {
+		fmt.Println("Error reading file:", err)
+		return
+	}
+	_, err = CheckEncryptionCertValidityForContractEncryption(string(data))
+	assert.Contains(t, err.Error(), "Encryption certificate has already expired")
 }

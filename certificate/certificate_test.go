@@ -18,16 +18,24 @@ package certificate
 import (
 	"testing"
 
+	gen "github.com/ibm-hyper-protect/contract-go/common/general"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
 	sampleJsonData = `{
-		"1.0.0": "data1",
-		"1.2.5": "data2",
-		"2.0.5": "data3",
-		"3.5.10": "data4",
-		"4.0.0": "data5"
+		"1.0.0": {
+			"cert": "data1",
+			"status": "test1",
+			"expiry_date": "26-02-26 12:27:33 GMT",
+			"expiry_days": "1"
+		},
+		"4.0.0": {
+			"cert": "data2",
+			"status": "test2",
+			"expiry_date": "26-02-26 12:27:33 GMT",
+			"expiry_days": "2"
+		}
 	}`
 	sampleEncryptionCertVersions = []string{"1.0.20", "1.0.21", "1.0.22"}
 	sampleCertDownloadTemplate   = "https://hpvsvpcubuntu.s3.us.cloud-object-storage.appdomain.cloud/s390x-{{.Patch}}/ibm-hyper-protect-container-runtime-{{.Major}}-{{.Minor}}-s390x-{{.Patch}}-encrypt.crt"
@@ -43,7 +51,7 @@ func TestGetEncryptionCertificateFromJson(t *testing.T) {
 	}
 
 	assert.Equal(t, key, "4.0.0")
-	assert.Equal(t, value, "data5")
+	assert.Equal(t, value, "data2")
 }
 
 // Testcase to check if DownloadEncryptionCertificates() is able to download encryption certificates as per constraint
@@ -79,4 +87,14 @@ func TestCombined(t *testing.T) {
 	}
 
 	assert.Equal(t, key, "1.0.22")
+}
+
+// Testcase to CheckEncryptionCertValidity() is able to validate encryption certificate
+func TestHpcrDownloadEncryptionCertificates(t *testing.T) {
+	encryptionCert, err := gen.ReadDataFromFile("../samples/encryption-cert/active.crt")
+	if err != nil {
+		t.Errorf("failed to get encrypted checksum - %v", err)
+	}
+	_, err = HpcrEncryptionCertificatesValidation(encryptionCert)
+	assert.NoError(t, err)
 }

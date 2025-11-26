@@ -20,9 +20,11 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"net/http"
@@ -31,6 +33,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/santhosh-tekuri/jsonschema/v5"
@@ -284,7 +287,7 @@ func CheckUrlExists(url string) (bool, error) {
 
 // GetDataFromLatestVersion - function to get the value based on constraints
 func GetDataFromLatestVersion(jsonData, version string) (string, string, error) {
-	var dataMap map[string]string
+	var dataMap map[string]map[string]string
 	if err := json.Unmarshal([]byte(jsonData), &dataMap); err != nil {
 		return "", "", fmt.Errorf("error unmarshaling JSON data - %v", err)
 	}
@@ -312,7 +315,7 @@ func GetDataFromLatestVersion(jsonData, version string) (string, string, error) 
 	// Get the latest version and its corresponding data
 	if len(matchingVersions) > 0 {
 		latestVersion := matchingVersions[0]
-		return latestVersion.String(), dataMap[latestVersion.String()], nil
+		return latestVersion.String(), dataMap[latestVersion.String()]["cert"], nil
 	}
 
 	// No matching version found
@@ -504,4 +507,62 @@ func yamlParse(filename string) (map[string]any, error) {
 		return yamlObj, nil
 	}
 	return nil, fmt.Errorf("error unmarshelling the YAML file")
+}
+
+// CheckEncryptionCertValidity - function return downloaded encryption cert status and number of days left to expire
+func CheckEncryptionCertValidity(encryptionCert string) (string, int, string, error) {
+	block, _ := pem.Decode([]byte(encryptionCert))
+	if block == nil {
+		return "", 0, "", fmt.Errorf("failed to parse PEM block")
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return "", 0, "", fmt.Errorf("failed to parse certificate %v", err)
+	}
+
+	now := time.Now()
+	daysLeft := cert.NotAfter.Sub(now).Hours() / 24
+	gmtTime := cert.NotAfter.UTC()
+	formattedExpiryDays := gmtTime.Format("02-01-06 15:04:05") + " GMT"
+	switch {
+	case daysLeft < 0:
+		return "expired", int(daysLeft), formattedExpiryDays, nil
+
+	case daysLeft < 180:
+		return "valid", int(daysLeft), formattedExpiryDays, nil
+
+	default:
+		return "valid", int(daysLeft), formattedExpiryDays, nil
+	}
+}
+
+// CheckEncryptionCertValidityForContractEncryption - function checks the encryption certificate used for contract encryption. It returns an error if the certificate has expired and issues a warning if the certificate is set to expire within the next six months
+func CheckEncryptionCertValidityForContractEncryption(encryptionCert string) (string, error) {
+	block, _ := pem.Decode([]byte(encryptionCert))
+	if block == nil {
+		return "", fmt.Errorf("failed to parse PEM block")
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse certificate %v", err)
+	}
+
+	now := time.Now()
+	daysLeft := cert.NotAfter.Sub(now).Hours() / 24
+
+	switch {
+	case daysLeft < 0:
+		return "", fmt.Errorf("Encryption certificate has already expired on %s",
+			cert.NotAfter.Format("02-01-06 15:04:05"))
+
+	case daysLeft < 180:
+		return fmt.Sprintf("Warning: Encryption certificate will expire in %.0f days (on %s)",
+			daysLeft, cert.NotAfter.Format("02-01-06 15:04:05")), nil
+
+	default:
+		return fmt.Sprintf("Encryption certificate is valid for another %.0f days (until %s)",
+			daysLeft, cert.NotAfter.Format("02-01-06 15:04:05")), nil
+	}
 }

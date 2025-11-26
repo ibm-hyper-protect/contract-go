@@ -18,6 +18,7 @@ package certificate
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -62,7 +63,7 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 		return "", fmt.Errorf(missingParameterErrStatement)
 	}
 
-	var verCertMap = make(map[string]string)
+	var vertCertMapVersion = make(map[string]map[string]string)
 
 	for _, version := range versionList {
 		verSpec := strings.Split(version, ".")
@@ -93,18 +94,27 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 			return "", fmt.Errorf("failed to download encryption certificate - %v", err)
 		}
 
-		verCertMap[version] = cert
+		cert_status, daysLeft, certificateExpiryDate, err := gen.CheckEncryptionCertValidity(cert)
+		if err != nil {
+			return "", err
+		}
+		var verCertMap = make(map[string]string)
+		verCertMap["cert"] = cert
+		verCertMap["status"] = cert_status
+		verCertMap["expiry_days"] = strconv.Itoa(daysLeft)
+		verCertMap["expiry_date"] = certificateExpiryDate
+		vertCertMapVersion[version] = verCertMap
 	}
 
 	if formatType == formatJson {
-		jsonBytes, err := json.Marshal(verCertMap)
+		jsonBytes, err := json.Marshal(vertCertMapVersion)
 		if err != nil {
 			return "", fmt.Errorf("failed to marshal JSON - %v", err)
 		}
 
 		return string(jsonBytes), nil
 	} else if formatType == formatYaml {
-		yamlBytes, err := yaml.Marshal(verCertMap)
+		yamlBytes, err := yaml.Marshal(vertCertMapVersion)
 		if err != nil {
 			return "", fmt.Errorf("failed to marshal YAML - %v", err)
 		}
@@ -112,4 +122,13 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 	} else {
 		return "", fmt.Errorf("invalid output format")
 	}
+}
+
+// HpcrEncryptionCertificatesValidation - checks encryption certificate validity for all given versions
+func HpcrEncryptionCertificatesValidation(encryptionCert string) (string, error) {
+	msg, err := gen.CheckEncryptionCertValidityForContractEncryption(encryptionCert)
+	if err != nil {
+		return "", err
+	}
+	return msg, nil
 }
