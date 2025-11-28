@@ -16,4 +16,7 @@ tidy:
 clean:
 	find ./build ! -name '.gitkeep' -type f -delete
 
-.PHONY: default test test-cover update-packages tidy clean
+fmt:
+	go fmt ./...
+
+.PHONY: default test test-cover update-packages tidy clean fmt

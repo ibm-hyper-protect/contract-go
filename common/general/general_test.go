@@ -284,7 +284,7 @@ func TestFetchEncryptionCertificateRhvs(t *testing.T) {
 }
 
 // Testcase to check if FetchEncryptionCertificate() is able to fetch encryption certificate for HPCC peerpods
-func TestFetchEncryptionCertificateHpcc(t *testing.T){
+func TestFetchEncryptionCertificateHpcc(t *testing.T) {
 	_, err := FetchEncryptionCertificate(HyperProtectConfidentialContainerPeerPods, "")
 	if err != nil {
 		t.Errorf("failed to fetch encryption certificate - %v", err)

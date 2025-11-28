@@ -139,14 +139,19 @@ We actively welcome your pull requests! However, please follow this process:
    make tidy
    ```
 
-5. **Commit your changes** with [proper commit messages](#commit-messages)
+5. **Run go code formatter**:
+   ```bash
+   make fmt
+   ```
 
-6. **Push to your fork**:
+6. **Commit your changes** with [proper commit messages](#commit-messages)
+
+7. **Push to your fork**:
    ```bash
    git push origin feature/your-feature-name
    ```
 
-7. **Open a Pull Request** from your fork to the main repository
+8. **Open a Pull Request** from your fork to the main repository
 
 ## Coding Standards
 
@@ -250,6 +255,7 @@ test(image): add tests for version constraint parsing
 - [ ] Link to the related issue in your PR description
 - [ ] Ensure all tests pass (`make test`)
 - [ ] Run `make tidy` to clean up dependencies
+- [ ] Run `make fmt` to format code
 - [ ] Update documentation if needed
 - [ ] Add or update tests for your changes
 - [ ] Follow the commit message conventions
