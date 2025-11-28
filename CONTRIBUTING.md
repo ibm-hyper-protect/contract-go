@@ -139,7 +139,7 @@ We actively welcome your pull requests! However, please follow this process:
    make tidy
    ```
 
-5. **Run go code formatter**:
+5. **Format your code** as per standards:
    ```bash
    make fmt
    ```
