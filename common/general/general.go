@@ -47,8 +47,8 @@ import (
 const (
 	TempFolderNamePrefix = "hpvs-"
 
-	HyperProtectOsHpvs     = "hpvs"
-	HyperProtectOsHpcrRhvs = "hpcr-rhvs"
+	HyperProtectOsHpvs                        = "hpvs"
+	HyperProtectOsHpcrRhvs                    = "hpcr-rhvs"
 	HyperProtectConfidentialContainerPeerPods = "hpcc-peerpod"
 )
 
