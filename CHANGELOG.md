@@ -1,3 +1,17 @@
+## [2.1.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.0.0...v2.1.0) (2025-12-02)
+
+### Features
+
+* add install dependencies make command ([fe26687](https://github.com/ibm-hyper-protect/contract-go/commit/fe266879007a15be7fdb1608f66923394b64394b))
+
+### Documentation
+
+* elevate quality ([f6f0243](https://github.com/ibm-hyper-protect/contract-go/commit/f6f02435196428f38911ee63ca6545d212c4c833))
+
+### CI/CD updates
+
+* fix print statements ([5118569](https://github.com/ibm-hyper-protect/contract-go/commit/51185699215d9e5df91d89d2db0d0d62b4d2af95))
+
 ## [2.0.0](https://github.com/ibm-hyper-protect/contract-go/compare/v1.16.1...v2.0.0) (2025-11-28)
 
 ### ⚠ BREAKING CHANGES
