@@ -1,5 +1,8 @@
 default: test
 
+install-deps:
+	go mod download
+
 test: 
 	go test ./... -v
 
@@ -19,4 +22,4 @@ clean:
 fmt:
 	go fmt ./...
 
-.PHONY: default test test-cover update-packages tidy clean fmt
+.PHONY: default install-deps test test-cover update-packages tidy clean fmt
