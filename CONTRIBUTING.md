@@ -110,7 +110,7 @@ We actively welcome your pull requests! However, please follow this process:
 
 4. **Install dependencies**:
    ```bash
-   go mod download
+   make install-deps
    ```
 
 5. **Verify your setup**:
@@ -158,7 +158,7 @@ We actively welcome your pull requests! However, please follow this process:
 ### Go Style Guide
 
 - Follow the official [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments)
-- Use `gofmt` to format your code (run automatically with most editors)
+- Use `gofmt` (run `make fmt`) to format your code (run automatically with most editors)
 - Follow [Effective Go](https://golang.org/doc/effective_go) principles
 - Write idiomatic Go code
 
@@ -246,7 +246,7 @@ test(image): add tests for version constraint parsing
 - **Don't end subject line with a period**
 - **Separate subject from body with a blank line**
 - **Use body to explain what and why, not how**
-- **Reference issues** in the footer (e.g., "Fixes #123")
+- **Reference issues** (e.g., "Fixes #123")
 
 ## Pull Request Process
 
@@ -293,7 +293,7 @@ Describe the tests you ran and how to reproduce them
 ### Review Process
 
 1. **Automated checks** - CI must pass before review
-2. **Maintainer review** - Tag @Sashwat-K as a reviewer
+2. **Maintainer review** - Tag @Sashwat-K and @vikas-sharma24 as a reviewer
 3. **Address feedback** - Make requested changes promptly
 4. **Approval** - At least one maintainer must approve
 5. **Merge** - Maintainers will merge your PR

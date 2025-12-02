@@ -183,7 +183,3 @@ Before merging:
 ## Acknowledgments
 
 This project exists thanks to all the contributors and maintainers, past and present. We appreciate everyone who helps make `contract-go` better!
-
----
-
-_Last updated: 2025-01-26_
