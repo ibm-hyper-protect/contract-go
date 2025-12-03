@@ -20,8 +20,8 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	enc "github.com/ibm-hyper-protect/contract-go/common/encrypt"
-	gen "github.com/ibm-hyper-protect/contract-go/common/general"
+	enc "github.com/ibm-hyper-protect/contract-go/v2/common/encrypt"
+	gen "github.com/ibm-hyper-protect/contract-go/v2/common/general"
 )
 
 const (

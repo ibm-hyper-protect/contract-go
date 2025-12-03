@@ -73,7 +73,7 @@ Learn more:
 ## Installation
 
 ```bash
-go get github.com/ibm-hyper-protect/contract-go
+go get github.com/ibm-hyper-protect/contract-go/v2
 ```
 
 ### Prerequisites
@@ -107,7 +107,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/ibm-hyper-protect/contract-go/contract"
+    "github.com/ibm-hyper-protect/contract-go/v2/contract"
 )
 
 func main() {
@@ -151,7 +151,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/ibm-hyper-protect/contract-go/image"
+    "github.com/ibm-hyper-protect/contract-go/v2/image"
 )
 
 func main() {
@@ -179,7 +179,7 @@ func main() {
 Comprehensive documentation is available at:
 
 - **[User Documentation](https://ibm-hyper-protect.github.io/contract-go)** - Detailed API reference and usage examples
-- **[Go Package Documentation](https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go)** - Generated Go docs
+- **[Go Package Documentation](https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go/v2)** - Generated Go docs
 - **[Examples](samples/)** - Sample contracts and configurations
 
 ## Supported Platforms

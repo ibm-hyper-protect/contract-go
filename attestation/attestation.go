@@ -18,8 +18,8 @@ package attestation
 import (
 	"fmt"
 
-	attest "github.com/ibm-hyper-protect/contract-go/common/decrypt"
-	gen "github.com/ibm-hyper-protect/contract-go/common/general"
+	attest "github.com/ibm-hyper-protect/contract-go/v2/common/decrypt"
+	gen "github.com/ibm-hyper-protect/contract-go/v2/common/general"
 )
 
 const (

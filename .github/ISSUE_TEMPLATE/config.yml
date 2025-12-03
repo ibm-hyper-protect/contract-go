@@ -4,7 +4,7 @@ contact_links:
     url: https://ibm-hyper-protect.github.io/contract-go
     about: Read the complete API documentation and usage guides
   - name: Go Package Documentation
-    url: https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go
+    url: https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go/v2
     about: Browse Go package documentation with examples
   - name: Security Issues
     url: https://github.com/ibm-hyper-protect/contract-go/security/advisories/new

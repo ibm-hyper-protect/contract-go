@@ -1,4 +1,4 @@
-module github.com/ibm-hyper-protect/contract-go
+module github.com/ibm-hyper-protect/contract-go/v2
 
 go 1.24.7
 

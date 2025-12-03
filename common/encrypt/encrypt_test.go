@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 
-	gen "github.com/ibm-hyper-protect/contract-go/common/general"
+	gen "github.com/ibm-hyper-protect/contract-go/v2/common/general"
 )
 
 const (
