@@ -1,3 +1,9 @@
+## [2.1.2](https://github.com/ibm-hyper-protect/contract-go/compare/v2.1.1...v2.1.2) (2025-12-03)
+
+### Bug Fixes
+
+* contract verification error ([062de65](https://github.com/ibm-hyper-protect/contract-go/commit/062de650a2151de9410de0504290bdc0439492b1))
+
 ## [2.1.1](https://github.com/ibm-hyper-protect/contract-go/compare/v2.1.0...v2.1.1) (2025-12-03)
 
 ### Bug Fixes
