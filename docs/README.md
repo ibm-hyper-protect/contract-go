@@ -1421,7 +1421,7 @@ contract.HpcrContractSignedEncrypted(
 ## Additional Resources
 
 - **Main Documentation:** [README.md](../README.md)
-- **Go Package Docs:** [pkg.go.dev](https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go)
+- **Go Package Docs:** [pkg.go.dev](https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go/v2)
 - **Examples:** [samples/](../samples/)
 - **Contributing:** [CONTRIBUTING.md](../CONTRIBUTING.md)
 - **Security:** [SECURITY.md](../SECURITY.md)
