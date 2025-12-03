@@ -1,3 +1,33 @@
+## [2.0.0](https://github.com/ibm-hyper-protect/contract-go/compare/v1.16.1...v2.0.0) (2025-12-03)
+
+### ⚠ BREAKING CHANGES
+
+* Add functionality to run go code formatter (#161)
+
+### Features
+
+* Add functionality to run go code formatter ([#161](https://github.com/ibm-hyper-protect/contract-go/issues/161)) ([4ee8c6f](https://github.com/ibm-hyper-protect/contract-go/commit/4ee8c6fa117636d8de04d0044a6d00fd58930b12))
+* add install dependencies make command ([fe26687](https://github.com/ibm-hyper-protect/contract-go/commit/fe266879007a15be7fdb1608f66923394b64394b))
+
+### Documentation
+
+* elevate quality ([f6f0243](https://github.com/ibm-hyper-protect/contract-go/commit/f6f02435196428f38911ee63ca6545d212c4c833))
+* fixed doc mistakes ([aeec17c](https://github.com/ibm-hyper-protect/contract-go/commit/aeec17ca6ac37ca7233379e7a98717bb156bb4f1))
+* some more optimisations ([7cde722](https://github.com/ibm-hyper-protect/contract-go/commit/7cde72227009b59e0a1c5a867fba9e45c92f7ff5))
+
+### Miscellaneous Chores
+
+* 2.0.0 [skip ci] ([581b5e2](https://github.com/ibm-hyper-protect/contract-go/commit/581b5e28462a3128ea8a2460cf0b890ebd5794a4)), closes [#161](https://github.com/ibm-hyper-protect/contract-go/issues/161)
+* 2.1.0 [skip ci] ([3e3d170](https://github.com/ibm-hyper-protect/contract-go/commit/3e3d170592ee7a5e4b6ad0639414961e0ea8a696))
+* fix changelog ([ea55442](https://github.com/ibm-hyper-protect/contract-go/commit/ea554423a9871943cc59a0c135574e4d0b7b9e27))
+
+### CI/CD updates
+
+* add templates for github issues ([3ca4564](https://github.com/ibm-hyper-protect/contract-go/commit/3ca4564b2c1ad501c8d758b459e31c65874541f4))
+* fix print statements ([5118569](https://github.com/ibm-hyper-protect/contract-go/commit/51185699215d9e5df91d89d2db0d0d62b4d2af95))
+* update pull request template ([e81ba41](https://github.com/ibm-hyper-protect/contract-go/commit/e81ba4101cdcf5bb478bf4530810a1ba22332ee2))
+* update pull request template ([e7cf4af](https://github.com/ibm-hyper-protect/contract-go/commit/e7cf4afcaab93fb5001df03ac7998d7fa7c66b0a))
+
 ## [1.16.1](https://github.com/ibm-hyper-protect/contract-go/compare/v1.16.0...v1.16.1) (2025-11-26)
 
 ### Bug Fixes
