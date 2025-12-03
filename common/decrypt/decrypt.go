@@ -18,8 +18,8 @@ package decrypt
 import (
 	"fmt"
 
-	enc "github.com/ibm-hyper-protect/contract-go/common/encrypt"
-	gen "github.com/ibm-hyper-protect/contract-go/common/general"
+	enc "github.com/ibm-hyper-protect/contract-go/v2/common/encrypt"
+	gen "github.com/ibm-hyper-protect/contract-go/v2/common/general"
 )
 
 // DecryptPassword - function to decrypt encrypted string with private key

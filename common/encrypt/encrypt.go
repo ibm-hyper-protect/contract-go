@@ -19,7 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	gen "github.com/ibm-hyper-protect/contract-go/common/general"
+	gen "github.com/ibm-hyper-protect/contract-go/v2/common/general"
 )
 
 const (
