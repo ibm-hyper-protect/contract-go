@@ -141,12 +141,10 @@ func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate
 		return "", "", "", fmt.Errorf("failed to fetch encryption certificate - %v", err)
 	}
 
-	status, err := gen.CheckEncryptionCertValidityForContractEncryption(encryptionCertificate)
+	_, err = gen.CheckEncryptionCertValidityForContractEncryption(encryptCertificate)
 	if err != nil {
 		return "", "", "", fmt.Errorf("Failed to encrypt contract - %v", err)
 	}
-
-	fmt.Println("Encryption Certificate validity status - ", status)
 
 	publicKey, err := enc.GeneratePublicKey(privateKey)
 	if err != nil {
