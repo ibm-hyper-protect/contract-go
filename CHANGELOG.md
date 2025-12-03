@@ -1,3 +1,17 @@
+## [2.1.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.0.0...v2.1.0) (2025-12-03)
+
+### Features
+
+* move contract-go from va to v2 ([8aae724](https://github.com/ibm-hyper-protect/contract-go/commit/8aae724b23f4891a3acb26c1e5ed7e376f43fe40))
+
+### Documentation
+
+* update documentation ([b0c34ef](https://github.com/ibm-hyper-protect/contract-go/commit/b0c34ef8a561c8dcfbc815fa5e3bcf366cd1a5b7))
+
+### CI/CD updates
+
+* update issue template ([0d46545](https://github.com/ibm-hyper-protect/contract-go/commit/0d465458d2468ec70331ccd4a7e8276c19a4fac2))
+
 ## [2.0.0](https://github.com/ibm-hyper-protect/contract-go/compare/v1.16.1...v2.0.0) (2025-12-03)
 
 ### ⚠ BREAKING CHANGES
