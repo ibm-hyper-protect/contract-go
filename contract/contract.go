@@ -17,6 +17,8 @@ package contract
 
 import (
 	"fmt"
+	"os"
+	"text/template"
 
 	"gopkg.in/yaml.v3"
 
@@ -27,6 +29,15 @@ import (
 const (
 	emptyParameterErrStatement = "required parameter is empty"
 )
+
+// HPCC initdata.toml file template.
+const tomlTemplate = `
+algorithm = "sha384"
+version = "0.1.0"
+
+[data]
+"contract.yaml" = '''{{ .Encrypted_contract }}'''
+`
 
 // HpcrText - function to generate base64 data and checksum from string
 func HpcrText(plainText string) (string, string, string, error) {
@@ -185,6 +196,78 @@ func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encrypt
 	}
 
 	return finalContract, gen.GenerateSha256(contract), gen.GenerateSha256(finalContract), nil
+}
+
+// HpccGzippedInitdata - Function to generate gzipped initdata value.
+func HpccGzippedInitdata(contract string) (string, error) {
+
+	if gen.CheckIfEmpty(contract) {
+		return "", fmt.Errorf(emptyParameterErrStatement)
+	}
+
+	tomlFile, err := generateTomlFile(contract)
+	if err != nil {
+		return "", err
+	}
+
+	_, err = os.Stat(tomlFile)
+	if err != nil {
+		return "", fmt.Errorf("failed to check the toml file")
+	}
+
+	if os.IsNotExist(err) {
+		return "", fmt.Errorf("initdata.toml file is not created")
+	}
+
+	// Read data from toml file.
+	tomlString, err := gen.ReadDataFromFile(tomlFile)
+	if err != nil {
+		return "", fmt.Errorf("failed reading initdata.toml file %v", err)
+	}
+
+	compressedBytes, err := gen.GzipInitData(tomlString)
+	if err != nil {
+		return "", fmt.Errorf("failed while gzipping initdata %v", err)
+	}
+	encodedString := gen.EncodeToBase64(compressedBytes)
+
+	err = gen.RemoveTempFile(tomlFile)
+	if err != nil {
+		return "", fmt.Errorf("failed to remove temp file - %v", err)
+	}
+
+	return encodedString, nil
+}
+
+// generateTomlFile - Function to generate initdata.toml file.
+func generateTomlFile(contract string) (string, error) {
+
+	data := struct {
+		Encrypted_contract string
+	}{
+		Encrypted_contract: contract,
+	}
+
+	tmpl, err := template.New("config").Parse(tomlTemplate)
+	if err != nil {
+		return "", err
+	}
+
+	tempTomlFile := "/tmp/initdata.toml"
+
+	file, err := os.Create(tempTomlFile)
+	if err != nil {
+		return "", err
+	}
+
+	defer file.Close()
+
+	err = tmpl.Execute(file, data)
+	if err != nil {
+		return "", err
+	}
+
+	return tempTomlFile, nil
 }
 
 // encryptWrapper - wrapper function to sign (with and without contract expiry) and encrypt contract
