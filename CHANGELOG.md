@@ -1,3 +1,9 @@
+## [2.2.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.1.2...v2.2.0) (2025-12-05)
+
+### Features
+
+* update HPVS encryption certificate to latest ([4e56922](https://github.com/ibm-hyper-protect/contract-go/commit/4e5692248a962c3475826584da8a1bfd5c9969a4))
+
 ## [2.1.2](https://github.com/ibm-hyper-protect/contract-go/compare/v2.1.1...v2.1.2) (2025-12-03)
 
 ### Bug Fixes
