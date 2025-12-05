@@ -19,7 +19,7 @@ import (
 	_ "embed"
 )
 
-//go:embed ibm-hyper-protect-container-runtime-1-0-s390x-24-encrypt.crt
+//go:embed ibm-hyper-protect-container-runtime-1-0-s390x-25-encrypt.crt
 var EncryptionCertificateHpvs string
 
 //go:embed ibm-hyper-protect-container-runtime-rhvs-1.1.1-encrypt.crt
