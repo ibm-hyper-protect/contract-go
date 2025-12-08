@@ -1,3 +1,9 @@
+## [2.3.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.2.0...v2.3.0) (2025-12-08)
+
+### Features
+
+* updated hpcr encryption certificate ([4dbab39](https://github.com/ibm-hyper-protect/contract-go/commit/4dbab39488d7046b9eb0be98ceec700ab31c441b))
+
 ## [2.2.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.1.2...v2.2.0) (2025-12-05)
 
 ### Features
