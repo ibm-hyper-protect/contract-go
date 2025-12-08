@@ -22,7 +22,7 @@ import (
 //go:embed ibm-hyper-protect-container-runtime-1-0-s390x-25-encrypt.crt
 var EncryptionCertificateHpvs string
 
-//go:embed ibm-hyper-protect-container-runtime-rhvs-1.1.1-encrypt.crt
+//go:embed ibm-hyper-protect-container-runtime-rhvs-1.1.1.1-encrypt.crt
 var EncryptionCertificateHpcrRhvs string
 
 //go:embed hpse-pipeline-rhel-ocp-custom-vm-25.10.0-encrypt.crt
