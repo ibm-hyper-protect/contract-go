@@ -277,6 +277,7 @@ Fixes #issue_number
 - [ ] New feature
 - [ ] Breaking change
 - [ ] Documentation update
+- [ ] Code refactor
 
 ## Testing
 Describe the tests you ran and how to reproduce them
