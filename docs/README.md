@@ -60,10 +60,10 @@ func HpcrGetAttestationRecords(data, privateKey string) (string, error)
 
 **Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `data` | `string` | Encrypted attestation data in the format `hyper-protect-basic.<password>.<data>` |
-| `privateKey` | `string` | RSA private key (PEM format) used to decrypt the password |
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `data` | `string` | Required | Encrypted attestation data in the format `hyper-protect-basic.<password>.<data>` |
+| `privateKey` | `string` | Required | RSA private key (PEM format) used to decrypt the password |
 
 **Returns:**
 
@@ -124,15 +124,15 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 
 **Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `versionList` | `[]string` | List of HPCR versions to download (e.g., `["1.1.14", "1.1.15"]`) |
-| `formatType` | `string` | Output format: `"json"` or `"yaml"` (defaults to `"json"` if empty) |
-| `certDownloadUrlTemplate` | `string` | Custom URL template (uses IBM Cloud default if empty) |
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `versionList` | `[]string` | Required | List of HPCR versions to download (e.g., `["1.1.14", "1.1.15"]`) |
+| `formatType` | `string` | Optional | Output format: `"json"` or `"yaml"` (defaults to `"json"` if empty) |
+| `certDownloadUrlTemplate` | `string` | Optional | Custom URL template (uses IBM Cloud default if empty) |
 
 **Default URL Template:**
 ```
-https://hpvsvpcubuntu.s3.us.cloud-object-storage.appdomain.cloud/s390x-{{.Patch}}/ibm-hyper-protect-container-runtime-{{.Major}}-{{.Minor}}-s390x-{{.Patch}}-encrypt.crt
+{% raw %}https://hpvsvpcubuntu.s3.us.cloud-object-storage.appdomain.cloud/s390x-{{.Patch}}/ibm-hyper-protect-container-runtime-{{.Major}}-{{.Minor}}-s390x-{{.Patch}}-encrypt.crt{% endraw %}
 ```
 
 **Returns:**
@@ -196,10 +196,10 @@ func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version str
 
 **Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `encryptionCertificateJson` | `string` | JSON/YAML output from `HpcrDownloadEncryptionCertificates` |
-| `version` | `string` | Specific version to extract (e.g., `"1.1.15"`) |
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `encryptionCertificateJson` | `string` | Required | JSON/YAML output from `HpcrDownloadEncryptionCertificates` |
+| `version` | `string` | Required | Specific version to extract (e.g., `"1.1.15"`) |
 
 **Returns:**
 
@@ -258,9 +258,9 @@ func HpcrValidateEncryptionCertificate(encryptionCert string) (string, error)
 
 **Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `encryptionCert` | `string` | PEM-formatted encryption certificate |
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `encryptionCert` | `string` | Required | PEM-formatted encryption certificate |
 
 **Returns:**
 
@@ -299,6 +299,11 @@ MIIDXTCCAkWgAwIBAgIJAKL...
 - Check certificate expiration dates
 - Validate certificate format and structure
 
+**Common Errors:**
+- `"failed to parse PEM block"` - Invalid certificate format
+- `"failed to parse certificate"` - Corrupted or invalid certificate data
+- `"Encryption certificate has already expired on <date>"` - Certificate has expired
+
 ---
 
 ## Image Functions
@@ -316,10 +321,10 @@ func HpcrSelectImage(imageJsonData, versionSpec string) (string, string, string,
 
 **Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `imageJsonData` | `string` | JSON array of IBM Cloud images |
-| `versionSpec` | `string` | Version constraint (e.g., `">=1.1.0"`, `"~1.1.14"`) - optional, selects latest if empty |
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `imageJsonData` | `string` | Required | JSON array of IBM Cloud images |
+| `versionSpec` | `string` | Optional | Version constraint (e.g., `">=1.1.0"`, `"~1.1.14"`) - selects latest if empty |
 
 **Supported Image Sources:**
 
@@ -426,9 +431,9 @@ func HpcrText(plainText string) (string, string, string, error)
 
 **Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `plainText` | `string` | Text data to encode |
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `plainText` | `string` | Required | Text data to encode |
 
 **Returns:**
 
@@ -470,6 +475,9 @@ func main() {
 - Prepare text data for workload configuration
 - Generate integrity checksums for verification
 
+**Common Errors:**
+- `"required parameter is empty"` - plainText parameter is missing or empty
+
 ---
 
 
@@ -486,11 +494,11 @@ func HpcrTextEncrypted(plainText, hyperProtectOs, encryptionCertificate string) 
 
 **Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `plainText` | `string` | Text to encrypt |
-| `hyperProtectOs` | `string` | Platform: `"hpvs"`, `"hpcr-rhvs"`, or `"hpcc-peerpod"` (default if empty) |
-| `encryptionCertificate` | `string` | PEM certificate (uses embedded default if empty) |
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `plainText` | `string` | Required | Text to encrypt |
+| `hyperProtectOs` | `string` | Optional | Platform: `"hpvs"`, `"hpcr-rhvs"`, or `"hpcc-peerpod"` (defaults to `"hpvs"` if empty) |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest HPVS as default if empty) |
 
 **Returns:**
 
@@ -527,6 +535,12 @@ func main() {
 }
 ```
 
+**Common Errors:**
+- `"required parameter is empty"` - plainText parameter is missing or empty
+- `"failed to generate encrypted string"` - Encryption operation failed
+- `"failed to fetch encryption certificate"` - Invalid hyperProtectOs value or certificate issue
+- `"openssl not found"` - OpenSSL not installed or not in PATH
+
 ---
 
 ### HpcrJson
@@ -542,9 +556,9 @@ func HpcrJson(plainJson string) (string, string, string, error)
 
 **Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `plainJson` | `string` | Valid JSON string |
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `plainJson` | `string` | Required | Valid JSON string |
 
 **Returns:**
 
@@ -580,6 +594,9 @@ func main() {
 }
 ```
 
+**Common Errors:**
+- `"not a JSON data"` - Invalid JSON format in plainJson parameter
+
 ---
 
 ### HpcrJsonEncrypted
@@ -595,11 +612,11 @@ func HpcrJsonEncrypted(plainJson, hyperProtectOs, encryptionCertificate string) 
 
 **Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `plainJson` | `string` | Valid JSON string to encrypt |
-| `hyperProtectOs` | `string` | Platform: `"hpvs"`, `"hpcr-rhvs"`, or `"hpcc-peerpod"` |
-| `encryptionCertificate` | `string` | PEM certificate (optional) |
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `plainJson` | `string` | Required | Valid JSON string to encrypt |
+| `hyperProtectOs` | `string` | Optional | Platform: `"hpvs"`, `"hpcr-rhvs"`, or `"hpcc-peerpod"` (defaults to `"hpvs"` if empty) |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest HPVS as default if empty) |
 
 **Returns:**
 
@@ -638,6 +655,12 @@ func main() {
 }
 ```
 
+**Common Errors:**
+- `"contract is not a JSON data"` - Invalid JSON format in plainJson parameter
+- `"failed to generate encrypted JSON"` - Encryption operation failed
+- `"failed to fetch encryption certificate"` - Invalid hyperProtectOs value or certificate issue
+- `"openssl not found"` - OpenSSL not installed or not in PATH
+
 ---
 
 ### HpcrTgz
@@ -653,9 +676,9 @@ func HpcrTgz(folderPath string) (string, string, string, error)
 
 **Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `folderPath` | `string` | Path to folder containing compose/pods files |
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `folderPath` | `string` | Required | Path to folder containing compose/pods files |
 
 **Returns:**
 
@@ -696,6 +719,12 @@ func main() {
 - `docker-compose.yaml` - Docker Compose configuration
 - `pods.yaml` - Podman play configuration
 
+**Common Errors:**
+- `"required parameter is empty"` - folderPath parameter is missing or empty
+- `"folder doesn't exists - <path>"` - Specified folder path does not exist
+- `"failed to get files and folder under path"` - Permission or access error
+- `"failed to get base64 tgz"` - Archive creation failed
+
 ---
 
 ### HpcrTgzEncrypted
@@ -711,11 +740,11 @@ func HpcrTgzEncrypted(folderPath, hyperProtectOs, encryptionCertificate string) 
 
 **Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `folderPath` | `string` | Path to folder with compose/pods files |
-| `hyperProtectOs` | `string` | Platform identifier (optional) |
-| `encryptionCertificate` | `string` | PEM certificate (optional) |
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `folderPath` | `string` | Required | Path to folder with compose/pods files |
+| `hyperProtectOs` | `string` | Optional | Platform identifier (defaults to `"hpvs"` if empty) |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest HPVS as default if empty) |
 
 **Returns:**
 
@@ -747,6 +776,13 @@ func main() {
 }
 ```
 
+**Common Errors:**
+- `"required parameter is empty"` - folderPath parameter is missing or empty
+- `"folder doesn't exists - <path>"` - Specified folder path does not exist
+- `"failed to generate encrypted tgz"` - Encryption operation failed
+- `"failed to fetch encryption certificate"` - Invalid hyperProtectOs value or certificate issue
+- `"openssl not found"` - OpenSSL not installed or not in PATH
+
 ---
 
 ### HpcrVerifyContract
@@ -762,10 +798,10 @@ func HpcrVerifyContract(contract, version string) error
 
 **Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `contract` | `string` | YAML contract to validate |
-| `version` | `string` | Platform: `"hpvs"`, `"hpcr-rhvs"`, or `"hpcc-peerpod"` (optional) |
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `contract` | `string` | Required | YAML contract to validate |
+| `version` | `string` | Optional | Platform: `"hpvs"`, `"hpcr-rhvs"`, or `"hpcc-peerpod"` (defaults to `"hpvs"` if empty) |
 
 **Returns:**
 
@@ -814,6 +850,12 @@ workload: |
 - Data types and formats
 - Platform-specific requirements
 
+**Common Errors:**
+- `"failed to convert to map"` - Invalid contract YAML structure
+- `"error fetching contract schema"` - Invalid version/platform specified
+- `"failed to parse schema"` - Internal schema parsing error
+- `"contract validation failed"` - Contract does not match the required schema
+
 ---
 
 ### HpcrContractSignedEncrypted
@@ -829,12 +871,12 @@ func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate
 
 **Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `contract` | `string` | YAML contract with `env` and `workload` sections |
-| `hyperProtectOs` | `string` | Platform: `"hpvs"`, `"hpcr-rhvs"`, or `"hpcc-peerpod"` |
-| `encryptionCertificate` | `string` | PEM certificate (optional) |
-| `privateKey` | `string` | RSA private key (PEM format) for signing |
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `contract` | `string` | Required | YAML contract with `env` and `workload` sections |
+| `hyperProtectOs` | `string` | Optional | Platform: `"hpvs"`, `"hpcr-rhvs"`, or `"hpcc-peerpod"` (defaults to `"hpvs"` if empty) |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest HPVS as default if empty) |
+| `privateKey` | `string` | Required | RSA private key (PEM format) for signing |
 
 **Returns:**
 
@@ -899,6 +941,19 @@ MIIEpAIBAAKCAQEA...
 6. Signs encrypted sections with private key
 7. Returns YAML with `workload`, `env`, and `envWorkloadSignature`
 
+**Common Errors:**
+- `"schema verification failed"` - Contract does not match required schema
+- `"required parameter is empty"` - contract or privateKey parameter is missing
+- `"failed to fetch encryption certificate"` - Invalid hyperProtectOs value or certificate issue
+- `"Failed to encrypt contract"` - Encryption certificate has expired or is invalid
+- `"failed to generate public key"` - Invalid private key format
+- `"failed to sign and encrypt contract"` - Signing or encryption operation failed
+- `"failed to unmarshal YAML"` - Invalid contract YAML format
+- `"failed to encrypt workload"` - Workload encryption failed
+- `"failed to inject signingKey to env"` - Error injecting signing key into env section
+- `"failed to encrypt env"` - Env section encryption failed
+- `"failed to sign contract"` - Signature generation failed
+
 ---
 
 ### HpcrContractSignedEncryptedContractExpiry
@@ -914,17 +969,17 @@ func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encrypt
 
 **Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `contract` | `string` | YAML contract |
-| `hyperProtectOs` | `string` | Platform identifier |
-| `encryptionCertificate` | `string` | PEM certificate (optional) |
-| `privateKey` | `string` | RSA private key for signing |
-| `cacert` | `string` | CA certificate (PEM format) |
-| `caKey` | `string` | CA private key (PEM format) |
-| `csrDataStr` | `string` | CSR parameters as JSON (use if not providing PEM) |
-| `csrPemData` | `string` | CSR in PEM format (use if not providing JSON) |
-| `expiryDays` | `int` | Number of days until contract expires |
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `contract` | `string` | Required | YAML contract |
+| `hyperProtectOs` | `string` | Optional | Platform identifier (defaults to `"hpvs"` if empty) |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest HPVS as default if empty) |
+| `privateKey` | `string` | Required | RSA private key for signing |
+| `cacert` | `string` | Required | CA certificate (PEM format) |
+| `caKey` | `string` | Required | CA private key (PEM format) |
+| `csrDataStr` | `string` | Conditionally Required* | CSR parameters as JSON (use if not providing PEM) |
+| `csrPemData` | `string` | Conditionally Required* | CSR in PEM format (use if not providing JSON) |
+| `expiryDays` | `int` | Required | Number of days until contract expires |
 
 **Note:** Either `csrDataStr` OR `csrPemData` must be provided, not both.
 
@@ -1059,6 +1114,13 @@ func main() {
 - Set appropriate expiry periods based on security policies
 - Monitor contract expiration dates
 
+**Common Errors:**
+- `"schema verification failed"` - Contract does not match required schema
+- `"required parameter is empty"` - contract, privateKey, cacert, or caKey parameter is missing
+- `"the CSR parameters and CSR PEM file are parsed together or both are nil"` - Either provide csrDataStr OR csrPemData, not both or neither
+- `"failed to generate signing certificate"` - Error creating signing certificate with CSR
+- `"failed to generate signed and encrypted contract"` - Signing or encryption operation failed
+- All errors from `HpcrContractSignedEncrypted` also apply
 
 ### HpcrVerifyNetworkConfig
 
@@ -1073,9 +1135,9 @@ func HpcrVerifyNetworkConfig(networkConfig string) error
 
 **Parameters:**
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `networkConfig` | `string` | Network configuration in YAML format |
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `networkConfig` | `string` | Required | Network configuration in YAML format |
 
 **Returns:**
 
@@ -1116,6 +1178,12 @@ func main() {
 - HPVS (Hyper Protect Virtual Servers)
 - HPCR RHVS (Hyper Protect Container Runtime for Red Hat Virtualization)
 - HPCC Peer Pod (Hyper Protect Confidential Container Peer Pods)
+
+**Common Errors:**
+- `"Invalid schema file"` - Invalid YAML format in network configuration
+- `"error unmarshelling the YAML file"` - Failed to parse YAML structure
+- `"failed to parse schema"` - Internal schema parsing error
+- `"network schema verification failed"` - Network configuration does not match the required schema
 
 ---
 

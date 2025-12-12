@@ -19,7 +19,16 @@ import (
 	gen "github.com/ibm-hyper-protect/contract-go/v2/common/general"
 )
 
-// HpcrVerifyNetworkConfig - function to verify network-config schema
+// HpcrVerifyNetworkConfig validates network configuration schema for on-premise deployments.
+// It checks the network configuration YAML against the schema for HPVS, HPCR RHVS, and
+// HPCC Peer Pod platforms to ensure all required fields and formats are correct.
+//
+// Parameters:
+//   - network_config: Network configuration in YAML format
+//
+// Returns:
+//   - nil if the network configuration is valid
+//   - Error if validation fails with details about what's wrong
 func HpcrVerifyNetworkConfig(network_config string) error {
 	return gen.VerifyNetworkSchema(network_config)
 }

@@ -22,7 +22,17 @@ import (
 	gen "github.com/ibm-hyper-protect/contract-go/v2/common/general"
 )
 
-// DecryptPassword - function to decrypt encrypted string with private key
+// DecryptPassword decrypts an encrypted password using an RSA private key.
+// It decodes the Base64-encoded encrypted data, creates temporary files for processing,
+// and uses OpenSSL to perform RSA decryption with the private key.
+//
+// Parameters:
+//   - base64EncryptedData: Base64-encoded encrypted password
+//   - privateKey: RSA private key (PEM format) for decryption
+//
+// Returns:
+//   - Decrypted password string
+//   - Error if OpenSSL is not found, Base64 decoding fails, or decryption fails
 func DecryptPassword(base64EncryptedData, privateKey string) (string, error) {
 	err := enc.OpensslCheck()
 	if err != nil {
@@ -59,7 +69,17 @@ func DecryptPassword(base64EncryptedData, privateKey string) (string, error) {
 	return result, nil
 }
 
-// DecryptWorkload - function to decrypt workload using password
+// DecryptWorkload decrypts encrypted workload data using a password.
+// It decodes the Base64-encoded encrypted workload, creates a temporary file,
+// and uses OpenSSL with AES-256-CBC and PBKDF2 to decrypt the data.
+//
+// Parameters:
+//   - password: Password for AES-256-CBC decryption
+//   - encryptedWorkload: Base64-encoded encrypted workload data
+//
+// Returns:
+//   - Decrypted workload string
+//   - Error if OpenSSL is not found, Base64 decoding fails, or decryption fails
 func DecryptWorkload(password, encryptedWorkload string) (string, error) {
 	err := enc.OpensslCheck()
 	if err != nil {

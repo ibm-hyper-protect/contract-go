@@ -72,7 +72,20 @@ const (
 	emptyParameterErrStatement = "required parameter is empty"
 )
 
-// HpcrSelectImage - function to return the latest HPVS image
+// HpcrSelectImage selects the latest HPCR image from IBM Cloud images based on version constraints.
+// It parses the image JSON data, filters for valid Hyper Protect images, and returns the latest
+// image matching the version specification using semantic versioning rules.
+//
+// Parameters:
+//   - imageJsonData: JSON array of IBM Cloud images from Terraform, IBM Cloud API, or IBM Cloud CLI
+//   - versionSpec: Semantic version constraint (e.g., ">=1.1.0", "~1.1.14") - selects latest if empty
+//
+// Returns:
+//   - Image ID from IBM Cloud
+//   - Full image name
+//   - SHA256 checksum of the image
+//   - Semantic version string (e.g., "1.1.15")
+//   - Error if no matching image found or JSON is invalid
 func HpcrSelectImage(imageJsonData, versionSpec string) (string, string, string, string, error) {
 	if gen.CheckIfEmpty(imageJsonData) {
 		return "", "", "", "", fmt.Errorf(emptyParameterErrStatement)
@@ -131,12 +144,34 @@ func HpcrSelectImage(imageJsonData, versionSpec string) (string, string, string,
 	return PickLatestImage(hyperProtectImages, versionSpec)
 }
 
-// IsCandidateImage - function to check if image JSON data belong to Hyper Protect Image
+// IsCandidateImage checks if an image is a valid Hyper Protect image.
+// It validates that the image meets all requirements: s390x architecture, available status,
+// public visibility, and matches the Hyper Protect OS and naming patterns.
+//
+// Parameters:
+//   - img: Image structure parsed from IBM Cloud image JSON
+//
+// Returns:
+//   - true if the image is a valid Hyper Protect image, false otherwise
 func IsCandidateImage(img Image) bool {
-	return img.Architecture == "s390x" && img.Status == "available" && img.Visibility == "public" && reHyperProtectOS.MatchString(img.Os) && reHyperProtectName.MatchString(img.Name)
+	return img.Architecture == "s390x" && img.Status == "available" && img.Visibility == "public" &&
+		reHyperProtectOS.MatchString(img.Os) && reHyperProtectName.MatchString(img.Name)
 }
 
-// PickLatestImage - function to pick the latest Hyper Protect Image
+// PickLatestImage selects the latest image from a list of Hyper Protect images based on version constraints.
+// It applies semantic version filtering if a version constraint is provided, then sorts the matching
+// images by version and returns the latest one.
+//
+// Parameters:
+//   - hyperProtectImages: List of ImageVersion structures containing parsed Hyper Protect images
+//   - version: Semantic version constraint (e.g., ">=1.1.0", "~1.1.14") - empty returns absolute latest
+//
+// Returns:
+//   - Image ID from IBM Cloud
+//   - Full image name
+//   - SHA256 checksum of the image
+//   - Semantic version string (e.g., "1.1.15")
+//   - Error if no matching images found or version constraint is invalid
 func PickLatestImage(hyperProtectImages []ImageVersion, version string) (string, string, string, string, error) {
 	if gen.CheckIfEmpty(hyperProtectImages) {
 		return "", "", "", "", fmt.Errorf(emptyParameterErrStatement)
