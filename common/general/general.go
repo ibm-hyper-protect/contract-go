@@ -58,7 +58,14 @@ type Contract struct {
 	WorkloadSignature string `yaml:"envWorkloadSignature"`
 }
 
-// CheckIfEmpty - function to check if given arguments are not empty
+// CheckIfEmpty checks if any of the provided values are empty strings.
+// It iterates through all provided arguments and returns true if at least one value is an empty string.
+//
+// Parameters:
+//   - values: Variable number of interface{} values to check
+//
+// Returns:
+//   - true if any value is an empty string, false otherwise
 func CheckIfEmpty(values ...interface{}) bool {
 	empty := false
 
@@ -71,9 +78,12 @@ func CheckIfEmpty(values ...interface{}) bool {
 	return empty
 }
 
-// GetOpenSSLPath check if OPENSSL_BIN is set
-// If set → returns its value
-// If not set → defaults to "openssl"
+// GetOpenSSLPath returns the path to the OpenSSL binary.
+// It checks the OPENSSL_BIN environment variable and returns its value if set.
+// If the environment variable is not set, it defaults to "openssl" which uses the system PATH.
+//
+// Returns:
+//   - Path to OpenSSL binary from OPENSSL_BIN environment variable, or "openssl" as default
 func GetOpenSSLPath() string {
 	if envPath := os.Getenv("OPENSSL_BIN"); envPath != "" {
 		return envPath
@@ -81,7 +91,18 @@ func GetOpenSSLPath() string {
 	return "openssl"
 }
 
-// ExecCommand - function to run os commands
+// ExecCommand executes a system command with optional stdin input and arguments.
+// It runs the specified command, captures stdout output, and returns the result.
+// If stdinInput is provided, it will be piped to the command's stdin.
+//
+// Parameters:
+//   - commandName: Name or path of the command to execute
+//   - stdinInput: Data to pipe to command's stdin (empty string for no stdin input)
+//   - args: Variable number of command arguments
+//
+// Returns:
+//   - Command stdout output as string
+//   - Error if command execution fails
 func ExecCommand(commandName, stdinInput string, args ...string) (string, error) {
 	cmd := exec.Command(commandName, args...)
 
@@ -113,7 +134,15 @@ func ExecCommand(commandName, stdinInput string, args ...string) (string, error)
 	return out.String(), nil
 }
 
-// ReadDataFromFile - function to read data from file
+// ReadDataFromFile reads the entire contents of a file and returns it as a string.
+// It opens the file, reads all data, and closes the file automatically.
+//
+// Parameters:
+//   - filePath: Path to the file to read
+//
+// Returns:
+//   - File contents as string
+//   - Error if file cannot be opened or read
 func ReadDataFromFile(filePath string) (string, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
@@ -129,7 +158,16 @@ func ReadDataFromFile(filePath string) (string, error) {
 	return string(content), nil
 }
 
-// CreateTempFile - function to create temp file
+// CreateTempFile creates a temporary file with the provided data.
+// It trims whitespace from the data, creates a temp file with the prefix "hpvs-",
+// writes the data to it, and returns the file path.
+//
+// Parameters:
+//   - data: String data to write to the temporary file
+//
+// Returns:
+//   - Absolute path to the created temporary file
+//   - Error if file creation or writing fails
 func CreateTempFile(data string) (string, error) {
 	trimmedData := strings.TrimSpace(data)
 	tmpFile, err := os.CreateTemp("", TempFolderNamePrefix)
@@ -148,12 +186,27 @@ func CreateTempFile(data string) (string, error) {
 	return tmpFile.Name(), nil
 }
 
-// RemoveTempFile - function to remove temp file
+// RemoveTempFile deletes a file at the specified path.
+// It is typically used to clean up temporary files created by CreateTempFile.
+//
+// Parameters:
+//   - filePath: Path to the file to delete
+//
+// Returns:
+//   - Error if file deletion fails
 func RemoveTempFile(filePath string) error {
 	return os.Remove(filePath)
 }
 
-// ListFoldersAndFiles - function to list files and folder under a folder
+// ListFoldersAndFiles lists all files and subdirectories in a directory.
+// It returns the full paths of all contents directly under the specified folder.
+//
+// Parameters:
+//   - folderPath: Path to the directory to list
+//
+// Returns:
+//   - Slice of full paths to all files and subdirectories
+//   - Error if directory cannot be read
 func ListFoldersAndFiles(folderPath string) ([]string, error) {
 	var filesFoldersList []string
 
@@ -170,19 +223,41 @@ func ListFoldersAndFiles(folderPath string) ([]string, error) {
 	return filesFoldersList, nil
 }
 
-// CheckFileFolderExists - function to check if file or folder exists
+// CheckFileFolderExists checks whether a file or directory exists at the specified path.
+// It uses os.Stat to determine existence without opening the file.
+//
+// Parameters:
+//   - folderFilePath: Path to the file or directory to check
+//
+// Returns:
+//   - true if the file or directory exists, false otherwise
 func CheckFileFolderExists(folderFilePath string) bool {
 	_, err := os.Stat(folderFilePath)
 	return !os.IsNotExist(err)
 }
 
-// IsJSON - function to check if input data is JSON or not
+// IsJSON validates whether a string contains valid JSON data.
+// It attempts to unmarshal the string and returns true if successful.
+//
+// Parameters:
+//   - str: String to validate as JSON
+//
+// Returns:
+//   - true if the string is valid JSON, false otherwise
 func IsJSON(str string) bool {
 	var js interface{}
 	return json.Unmarshal([]byte(str), &js) == nil
 }
 
-// YamlToJson - function to convert YAML to JSON
+// YamlToJson converts a YAML string to JSON format.
+// It unmarshals the YAML data and then marshals it as JSON.
+//
+// Parameters:
+//   - str: YAML string to convert
+//
+// Returns:
+//   - JSON string representation of the YAML data
+//   - Error if YAML parsing or JSON marshaling fails
 func YamlToJson(str string) (string, error) {
 	var obj interface{}
 
@@ -200,12 +275,27 @@ func YamlToJson(str string) (string, error) {
 	return string(jsonData), err
 }
 
-// EncodeToBase64 - function to encode string as base64
+// EncodeToBase64 encodes binary data to Base64 string format.
+// It uses standard Base64 encoding as defined in RFC 4648.
+//
+// Parameters:
+//   - input: Byte array to encode
+//
+// Returns:
+//   - Base64-encoded string
 func EncodeToBase64(input []byte) string {
 	return base64.StdEncoding.EncodeToString(input)
 }
 
-// DecodeBase64String - function to decode base64 string
+// DecodeBase64String decodes a Base64-encoded string to its original string form.
+// It uses standard Base64 decoding as defined in RFC 4648.
+//
+// Parameters:
+//   - base64Data: Base64-encoded string to decode
+//
+// Returns:
+//   - Decoded string
+//   - Error if Base64 decoding fails
 func DecodeBase64String(base64Data string) (string, error) {
 	decodedData, err := base64.StdEncoding.DecodeString(base64Data)
 	if err != nil {
@@ -215,7 +305,14 @@ func DecodeBase64String(base64Data string) (string, error) {
 	return string(decodedData), nil
 }
 
-// GenerateSha256 - function to generate SHA256 of a string
+// GenerateSha256 generates a SHA-256 hash of a string.
+// It returns the hash as a hexadecimal string representation.
+//
+// Parameters:
+//   - input: String to hash
+//
+// Returns:
+//   - SHA-256 hash as hexadecimal string
 func GenerateSha256(input string) string {
 	hasher := sha256.New()
 	hasher.Write([]byte(input))
@@ -225,7 +322,15 @@ func GenerateSha256(input string) string {
 	return hex.EncodeToString(hashedBytes)
 }
 
-// MapToYaml - function to convert string map to YAML
+// MapToYaml converts a map to YAML format.
+// It marshals the provided map structure into a YAML string.
+//
+// Parameters:
+//   - m: Map with string keys to convert to YAML
+//
+// Returns:
+//   - YAML string representation of the map
+//   - Error if YAML marshaling fails
 func MapToYaml(m map[string]interface{}) (string, error) {
 	// Marshal the map into a YAML string.
 	yamlBytes, err := yaml.Marshal(m)
@@ -235,7 +340,17 @@ func MapToYaml(m map[string]interface{}) (string, error) {
 	return string(yamlBytes), nil
 }
 
-// KeyValueInjector - function to inject key value pair in YAML
+// KeyValueInjector adds or updates a key-value pair in a YAML string.
+// It parses the YAML contract, injects the new key-value pair, and returns the modified YAML.
+//
+// Parameters:
+//   - contract: YAML string to modify
+//   - key: Key to add or update
+//   - value: Value to set for the key
+//
+// Returns:
+//   - Modified YAML string with the injected key-value pair
+//   - Error if YAML parsing or marshaling fails
 func KeyValueInjector(contract, key, value string) (string, error) {
 	yamlData := make(map[string]interface{})
 	if err := yaml.Unmarshal([]byte(contract), &yamlData); err != nil {
@@ -252,7 +367,15 @@ func KeyValueInjector(contract, key, value string) (string, error) {
 	return string(modifiedYAMLBytes), nil
 }
 
-// CertificateDownloader - function to download encryption certificate
+// CertificateDownloader downloads a certificate from a URL.
+// It sends an HTTP GET request to the specified URL and returns the response body.
+//
+// Parameters:
+//   - url: URL to download the certificate from
+//
+// Returns:
+//   - Certificate content as string
+//   - Error if HTTP request fails or response cannot be read
 func CertificateDownloader(url string) (string, error) {
 	// Send a GET request to the URL
 	resp, err := http.Get(url)
@@ -270,12 +393,29 @@ func CertificateDownloader(url string) (string, error) {
 	return string(body), nil
 }
 
-// GetEncryptPassWorkload - function to get encrypted password and encrypted workload from data
+// GetEncryptPassWorkload extracts the encrypted password and workload from encrypted data.
+// It splits the encrypted data string in "hyper-protect-basic.<password>.<workload>" format
+// and returns the password and workload components.
+//
+// Parameters:
+//   - encryptedData: Encrypted data in "hyper-protect-basic.<password>.<workload>" format
+//
+// Returns:
+//   - Encrypted password (Base64-encoded)
+//   - Encrypted workload (Base64-encoded)
 func GetEncryptPassWorkload(encryptedData string) (string, string) {
 	return strings.Split(encryptedData, ".")[1], strings.Split(encryptedData, ".")[2]
 }
 
-// CheckUrlExists - function to check if URL exists or not
+// CheckUrlExists verifies if a URL is accessible by sending an HTTP HEAD request.
+// It checks if the response status code is in the 2xx range (success).
+//
+// Parameters:
+//   - url: URL to check
+//
+// Returns:
+//   - true if URL returns 2xx status code, false otherwise
+//   - Error if HTTP request fails
 func CheckUrlExists(url string) (bool, error) {
 	response, err := http.Head(url)
 	if err != nil {
@@ -285,7 +425,18 @@ func CheckUrlExists(url string) (bool, error) {
 	return response.StatusCode >= 200 && response.StatusCode < 300, nil
 }
 
-// GetDataFromLatestVersion - function to get the value based on constraints
+// GetDataFromLatestVersion retrieves the latest version data matching semantic version constraints.
+// It parses JSON data containing version-keyed maps, applies version constraints,
+// and returns the certificate for the latest matching version.
+//
+// Parameters:
+//   - jsonData: JSON string containing version-to-data mappings
+//   - version: Semantic version constraint (e.g., ">=1.1.0", "~1.1.14")
+//
+// Returns:
+//   - Latest matching version string
+//   - Certificate data for the matching version
+//   - Error if JSON parsing, version constraint parsing, or no match found
 func GetDataFromLatestVersion(jsonData, version string) (string, string, error) {
 	var dataMap map[string]map[string]string
 	if err := json.Unmarshal([]byte(jsonData), &dataMap); err != nil {
@@ -322,7 +473,17 @@ func GetDataFromLatestVersion(jsonData, version string) (string, string, error) 
 	return "", "", fmt.Errorf("no matching version found for the given constraint")
 }
 
-// FetchEncryptionCertificate - function to get encryption certificate
+// FetchEncryptionCertificate retrieves the appropriate encryption certificate for a Hyper Protect platform.
+// If a custom certificate is provided, it returns that. Otherwise, it returns the embedded default
+// certificate for the specified platform version (hpvs, hpcr-rhvs, or hpcc-peerpod).
+//
+// Parameters:
+//   - version: Hyper Protect platform version ("hpvs", "hpcr-rhvs", "hpcc-peerpod") - defaults to "hpvs" if empty
+//   - encryptionCertificate: Custom encryption certificate (PEM format) - uses embedded default if empty
+//
+// Returns:
+//   - Encryption certificate in PEM format
+//   - Error if version is invalid
 func FetchEncryptionCertificate(version, encryptionCertificate string) (string, error) {
 	if version == "" {
 		version = HyperProtectOsHpvs
@@ -343,7 +504,16 @@ func FetchEncryptionCertificate(version, encryptionCertificate string) (string, 
 	}
 }
 
-// GenerateTgzBase64 - function to generate tgz and return it as base64
+// GenerateTgzBase64 creates a compressed tar.gz archive from files and folders.
+// It recursively archives all specified paths, compresses them with gzip,
+// and returns the result as a Base64-encoded string.
+//
+// Parameters:
+//   - folderFilesPath: Slice of file and folder paths to include in the archive
+//
+// Returns:
+//   - Base64-encoded tar.gz archive
+//   - Error if file reading, archiving, or compression fails
 func GenerateTgzBase64(folderFilesPath []string) (string, error) {
 	var buf bytes.Buffer
 
@@ -396,7 +566,17 @@ func GenerateTgzBase64(folderFilesPath []string) (string, error) {
 	return EncodeToBase64(buf.Bytes()), nil
 }
 
-// VerifyContractWithSchema - function to verify if contract matches schema
+// VerifyContractWithSchema validates a contract against the schema for a specific Hyper Protect platform.
+// It parses the contract YAML, retrieves the appropriate schema for the platform version,
+// and validates the contract structure against that schema.
+//
+// Parameters:
+//   - contract: Contract YAML string to validate
+//   - version: Hyper Protect platform version ("hpvs", "hpcr-rhvs", "hpcc-peerpod") - defaults to "hpvs" if empty
+//
+// Returns:
+//   - nil if contract is valid
+//   - Error if contract parsing, schema retrieval, or validation fails
 func VerifyContractWithSchema(contract, version string) error {
 	contractMap, err := stringToMap(contract)
 	if err != nil {
@@ -421,7 +601,16 @@ func VerifyContractWithSchema(contract, version string) error {
 	return nil
 }
 
-// stringToMap - function to convert string contract to Map
+// stringToMap converts a contract YAML string to a nested map structure.
+// It parses the contract YAML containing workload, env, and optional envWorkloadSignature fields,
+// unmarshals each section, and returns a structured map representation.
+//
+// Parameters:
+//   - contract: Contract YAML string with workload and env sections
+//
+// Returns:
+//   - Map with "env", "workload", and optionally "envWorkloadSignature" keys
+//   - Error if YAML unmarshaling fails
 func stringToMap(contract string) (map[any]any, error) {
 	data := Contract{}
 
@@ -452,7 +641,14 @@ func stringToMap(contract string) (map[any]any, error) {
 	return dataMap, err
 }
 
-// convertToStringkeys - function to convert any map to string map
+// convertToStringkeys recursively converts a map with any-typed keys to string-keyed maps.
+// It traverses nested map structures and converts all keys to strings for JSON schema validation.
+//
+// Parameters:
+//   - m: Map with any-typed keys to convert
+//
+// Returns:
+//   - Map with string keys and recursively converted nested maps
 func convertToStringkeys(m map[any]any) map[string]any {
 	result := map[string]any{}
 	for k, v := range m {
@@ -466,7 +662,15 @@ func convertToStringkeys(m map[any]any) map[string]any {
 	return result
 }
 
-// fetchContractSchema - function that returns contract schema according to hyper protect version
+// fetchContractSchema retrieves the embedded contract schema for a specific Hyper Protect platform.
+// It returns the appropriate JSON schema string based on the platform version.
+//
+// Parameters:
+//   - version: Hyper Protect platform version ("hpvs", "hpcr-rhvs", "hpcc-peerpod") - defaults to "hpvs" if empty
+//
+// Returns:
+//   - JSON schema string for contract validation
+//   - Error if version is invalid
 func fetchContractSchema(version string) (string, error) {
 	if version == HyperProtectOsHpvs || version == "" {
 		return sch.ContractSchemaHpvs, nil
@@ -479,7 +683,16 @@ func fetchContractSchema(version string) (string, error) {
 	}
 }
 
-// VerifyNetworkSchema - function to validates a network-config YAML file
+// VerifyNetworkSchema validates a network configuration YAML against the network schema.
+// It parses the network configuration YAML and validates it against the embedded network schema
+// for on-premise Hyper Protect deployments.
+//
+// Parameters:
+//   - Network_Config_File: Network configuration YAML string to validate
+//
+// Returns:
+//   - nil if network configuration is valid
+//   - Error if YAML parsing or schema validation fails
 func VerifyNetworkSchema(Network_Config_File string) error {
 	data, err := yamlParse(Network_Config_File)
 	if err != nil {
@@ -497,7 +710,15 @@ func VerifyNetworkSchema(Network_Config_File string) error {
 	return nil
 }
 
-// yamlParse - function to Parses and unmarshal a YAML file
+// yamlParse parses and unmarshals a YAML string into a map.
+// It validates that the input is valid YAML and not JSON format.
+//
+// Parameters:
+//   - filename: YAML string to parse (parameter name is misleading - it's actually YAML content, not a filename)
+//
+// Returns:
+//   - Parsed YAML as a string-keyed map
+//   - Error if YAML unmarshaling fails or input is JSON format
 func yamlParse(filename string) (map[string]any, error) {
 	var yamlObj map[string]any
 	if err := yaml.Unmarshal([]byte(filename), &yamlObj); err == nil {
@@ -509,7 +730,18 @@ func yamlParse(filename string) (map[string]any, error) {
 	return nil, fmt.Errorf("error unmarshelling the YAML file")
 }
 
-// CheckEncryptionCertValidity - function return downloaded encryption cert status and number of days left to expire
+// CheckEncryptionCertValidity checks the validity status of an encryption certificate.
+// It parses the certificate, calculates days until expiration, and returns status information.
+// The status is "expired" if the certificate has expired, or "valid" otherwise.
+//
+// Parameters:
+//   - encryptionCert: Encryption certificate in PEM format
+//
+// Returns:
+//   - Certificate status ("valid" or "expired")
+//   - Days until expiration (negative if expired)
+//   - Expiry date in "DD-MM-YY HH:MM:SS GMT" format
+//   - Error if PEM parsing or certificate parsing fails
 func CheckEncryptionCertValidity(encryptionCert string) (string, int, string, error) {
 	block, _ := pem.Decode([]byte(encryptionCert))
 	if block == nil {
@@ -537,7 +769,16 @@ func CheckEncryptionCertValidity(encryptionCert string) (string, int, string, er
 	}
 }
 
-// CheckEncryptionCertValidityForContractEncryption - function checks the encryption certificate used for contract encryption. It returns an error if the certificate has expired and issues a warning if the certificate is set to expire within the next six months
+// CheckEncryptionCertValidityForContractEncryption validates an encryption certificate for contract encryption.
+// It parses the certificate, checks expiration status, and returns appropriate messages.
+// Returns an error if the certificate has already expired, or a warning if it expires within 180 days.
+//
+// Parameters:
+//   - encryptionCert: Encryption certificate in PEM format
+//
+// Returns:
+//   - Status message indicating validity, warning (< 180 days), or empty string if error
+//   - Error if certificate has expired or PEM/certificate parsing fails
 func CheckEncryptionCertValidityForContractEncryption(encryptionCert string) (string, error) {
 	block, _ := pem.Decode([]byte(encryptionCert))
 	if block == nil {

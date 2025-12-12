@@ -26,7 +26,12 @@ const (
 	keylen = 32
 )
 
-// OpensslCheck - function to check if openssl exists
+// OpensslCheck verifies that OpenSSL is installed and accessible.
+// It executes the OpenSSL version command to confirm availability.
+//
+// Returns:
+//   - nil if OpenSSL is found and working
+//   - Error if OpenSSL is not found or not in PATH
 func OpensslCheck() error {
 	_, err := gen.ExecCommand(gen.GetOpenSSLPath(), "", "version")
 
@@ -37,7 +42,15 @@ func OpensslCheck() error {
 	return nil
 }
 
-// GeneratePublicKey - function to generate public key from private key
+// GeneratePublicKey extracts the public key from an RSA private key.
+// It uses OpenSSL to derive the public key in PEM format from the provided private key.
+//
+// Parameters:
+//   - privateKey: RSA private key (PEM format)
+//
+// Returns:
+//   - Public key in PEM format
+//   - Error if OpenSSL is not found or key extraction fails
 func GeneratePublicKey(privateKey string) (string, error) {
 	err := OpensslCheck()
 	if err != nil {
@@ -57,7 +70,12 @@ func GeneratePublicKey(privateKey string) (string, error) {
 	return publicKey, nil
 }
 
-// RandomPasswordGenerator - function to generate random password
+// RandomPasswordGenerator generates a cryptographically secure random password.
+// It uses OpenSSL to generate 32 bytes of random data for use as an encryption password.
+//
+// Returns:
+//   - Random password string (32 bytes)
+//   - Error if OpenSSL is not found or random generation fails
 func RandomPasswordGenerator() (string, error) {
 	err := OpensslCheck()
 	if err != nil {
@@ -72,7 +90,17 @@ func RandomPasswordGenerator() (string, error) {
 	return randomPassword, nil
 }
 
-// EncryptPassword - function to encrypt password
+// EncryptPassword encrypts a password using RSA encryption with a certificate.
+// It uses OpenSSL RSA encryption with the provided certificate and returns the result
+// as a Base64-encoded string.
+//
+// Parameters:
+//   - password: Password to encrypt
+//   - cert: Encryption certificate (PEM format)
+//
+// Returns:
+//   - Base64-encoded encrypted password
+//   - Error if OpenSSL is not found or encryption fails
 func EncryptPassword(password, cert string) (string, error) {
 	err := OpensslCheck()
 	if err != nil {
@@ -97,12 +125,30 @@ func EncryptPassword(password, cert string) (string, error) {
 	return gen.EncodeToBase64([]byte(result)), nil
 }
 
-// EncryptContract - function to encrypt contract
+// EncryptContract encrypts a contract section using AES-256-CBC encryption.
+// This is a wrapper function that calls EncryptString for contract-specific encryption.
+//
+// Parameters:
+//   - password: Password for AES-256-CBC encryption
+//   - section: Contract section to encrypt
+//
+// Returns:
+//   - Base64-encoded encrypted section
+//   - Error if encryption fails
 func EncryptContract(password, section string) (string, error) {
 	return EncryptString(password, section)
 }
 
-// EncryptString - function to encrypt string
+// EncryptString encrypts any string data using AES-256-CBC with PBKDF2.
+// It uses OpenSSL to perform the encryption and returns the result as Base64-encoded data.
+//
+// Parameters:
+//   - password: Password for AES-256-CBC encryption
+//   - section: String data to encrypt
+//
+// Returns:
+//   - Base64-encoded encrypted data
+//   - Error if OpenSSL is not found or encryption fails
 func EncryptString(password, section string) (string, error) {
 	err := OpensslCheck()
 	if err != nil {
@@ -127,12 +173,35 @@ func EncryptString(password, section string) (string, error) {
 	return gen.EncodeToBase64([]byte(result)), nil
 }
 
-// EncryptFinalStr - function to get final encrypted section
+// EncryptFinalStr formats the final encrypted section by combining the encrypted password and contract.
+// It returns a string in the format "hyper-protect-basic.<password>.<contract>" which is the
+// standard format for Hyper Protect encrypted data.
+//
+// Parameters:
+//   - encryptedPassword: Base64-encoded encrypted password
+//   - encryptedContract: Base64-encoded encrypted contract data
+//
+// Returns:
+//   - Formatted string in "hyper-protect-basic.<password>.<contract>" format
 func EncryptFinalStr(encryptedPassword, encryptedContract string) string {
 	return fmt.Sprintf("hyper-protect-basic.%s.%s", encryptedPassword, encryptedContract)
 }
 
-// CreateSigningCert - function to generate Signing Certificate
+// CreateSigningCert generates a signing certificate using a Certificate Authority (CA).
+// It can either generate a Certificate Signing Request (CSR) from the provided CSR data and private key,
+// or use an existing CSR in PEM format. The certificate is signed by the CA and returned as Base64-encoded data.
+//
+// Parameters:
+//   - privateKey: RSA private key (PEM format) for generating CSR (ignored if csrPemData is provided)
+//   - cacert: CA certificate (PEM format) used to sign the certificate
+//   - cakey: CA private key (PEM format) used to sign the certificate
+//   - csrData: JSON string with CSR fields (country, state, location, org, unit, domain, mail) - ignored if csrPemData is provided
+//   - csrPemData: Existing CSR in PEM format (if empty, generates new CSR from csrData and privateKey)
+//   - expiryDays: Number of days until certificate expiration
+//
+// Returns:
+//   - Base64-encoded signing certificate
+//   - Error if OpenSSL is not found, CSR generation fails, or certificate signing fails
 func CreateSigningCert(privateKey, cacert, cakey, csrData, csrPemData string, expiryDays int) (string, error) {
 	err := OpensslCheck()
 	if err != nil {
@@ -197,7 +266,18 @@ func CreateSigningCert(privateKey, cacert, cakey, csrData, csrPemData string, ex
 	return gen.EncodeToBase64([]byte(signingCert)), nil
 }
 
-// CreateCert - function to create signing certificate
+// CreateCert creates an X.509 certificate by signing a CSR with a Certificate Authority.
+// It uses OpenSSL to generate a certificate from the CSR, signed by the provided CA certificate and key.
+//
+// Parameters:
+//   - csrPath: File path to the Certificate Signing Request (PEM format)
+//   - caCertPath: File path to the CA certificate (PEM format)
+//   - caKeyPath: File path to the CA private key (PEM format)
+//   - expiryDays: Number of days until certificate expiration
+//
+// Returns:
+//   - Signed certificate in PEM format
+//   - Error if OpenSSL execution fails or certificate generation fails
 func CreateCert(csrPath, caCertPath, caKeyPath string, expiryDays int) (string, error) {
 	signingCert, err := gen.ExecCommand(gen.GetOpenSSLPath(), "", "x509", "-req", "-in", csrPath, "-CA", caCertPath, "-CAkey", caKeyPath, "-CAcreateserial", "-days", fmt.Sprintf("%d", expiryDays))
 	if err != nil {
@@ -207,7 +287,18 @@ func CreateCert(csrPath, caCertPath, caKeyPath string, expiryDays int) (string, 
 	return signingCert, nil
 }
 
-// SignContract - function to sign encrypted contract
+// SignContract creates a digital signature for an encrypted contract using an RSA private key.
+// It combines the encrypted workload and environment sections, then generates a SHA-256 signature
+// using the private key. The signature is returned as Base64-encoded data.
+//
+// Parameters:
+//   - encryptedWorkload: Encrypted workload section of the contract
+//   - encryptedEnv: Encrypted environment section of the contract
+//   - privateKey: RSA private key (PEM format) used to sign the contract
+//
+// Returns:
+//   - Base64-encoded SHA-256 signature of the combined contract sections
+//   - Error if OpenSSL is not found or signing fails
 func SignContract(encryptedWorkload, encryptedEnv, privateKey string) (string, error) {
 	err := OpensslCheck()
 	if err != nil {
@@ -234,7 +325,18 @@ func SignContract(encryptedWorkload, encryptedEnv, privateKey string) (string, e
 	return gen.EncodeToBase64([]byte(workloadEnvSignature)), nil
 }
 
-// GenFinalSignedContract - function to generate the final contract
+// GenFinalSignedContract assembles the final signed contract in YAML format.
+// It combines the encrypted workload, environment, and signature into a structured contract
+// that can be deployed to Hyper Protect services.
+//
+// Parameters:
+//   - workload: Encrypted workload section (Base64-encoded)
+//   - env: Encrypted environment section (Base64-encoded)
+//   - workloadEnvSig: Base64-encoded signature of the workload and environment
+//
+// Returns:
+//   - Final contract in YAML format with workload, env, and envWorkloadSignature fields
+//   - Error if YAML conversion fails
 func GenFinalSignedContract(workload, env, workloadEnvSig string) (string, error) {
 	contract := map[string]interface{}{
 		"workload":             workload,
