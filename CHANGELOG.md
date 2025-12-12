@@ -1,3 +1,20 @@
+## [2.5.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.4.0...v2.5.0) (2025-12-12)
+
+### Features
+
+* add detailed comments for functions ([b47c8b9](https://github.com/ibm-hyper-protect/contract-go/commit/b47c8b9681765ded8f6503e68e7d47e2ba78f8ed))
+* add proper function description for most functions ([27df507](https://github.com/ibm-hyper-protect/contract-go/commit/27df507cbc2923f9310e2b6d19cf6ba4fd96ea2a))
+
+### Documentation
+
+* fix url templete error ([092a148](https://github.com/ibm-hyper-protect/contract-go/commit/092a148fe5f4c7f8dc1be49e404d31a055413f5f))
+* update user documentation with details of required and optional parameters and common errors ([5aa3f8f](https://github.com/ibm-hyper-protect/contract-go/commit/5aa3f8f5fb4c66a53db0c4f11d2bacf95a996593))
+
+### Miscellaneous Chores
+
+* review comments ([2432a7c](https://github.com/ibm-hyper-protect/contract-go/commit/2432a7c426591c9681a8cc1fdcfdb5ffd25330a8))
+* update makefile with help ([a647d17](https://github.com/ibm-hyper-protect/contract-go/commit/a647d17f3043865bc4903a3ee6d69e087fcb596d))
+
 ## [2.4.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.3.1...v2.4.0) (2025-12-12)
 
 ### Features
