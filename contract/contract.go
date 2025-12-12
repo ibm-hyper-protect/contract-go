@@ -312,7 +312,7 @@ func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encrypt
 //
 // Parameters:
 //   - contract: YAML contract string with env and workload sections
-//   - hyperProtectOs: Target platform - "hpvs", "hpcr-rhvs", or "hpcc-peerpod"
+//   - hyperProtectOs: Target platform - "hpvs", "hpcr-rhvs", or "hpcc-peerpod" (default: hpvs)
 //   - encryptionCertificate: PEM certificate for encryption (optional)
 //   - privateKey: RSA private key (PEM format) for signing
 //   - publicKey: Public key or signing certificate (PEM format)
@@ -372,7 +372,7 @@ func encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey,
 //
 // Parameters:
 //   - stringText: String data to encrypt (text, JSON, or Base64-encoded TGZ)
-//   - hyperProtectOs: Target platform - "hpvs", "hpcr-rhvs", or "hpcc-peerpod"
+//   - hyperProtectOs: Target platform - "hpvs", "hpcr-rhvs", or "hpcc-peerpod" (default: hpvs)
 //   - encryptionCertificate: PEM certificate for encryption (optional)
 //
 // Returns:

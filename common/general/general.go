@@ -249,8 +249,8 @@ func IsJSON(str string) bool {
 	return json.Unmarshal([]byte(str), &js) == nil
 }
 
-// YamlToJson converts a YAML string to JSON format.
-// It unmarshals the YAML data and then marshals it as JSON.
+// YamlToJson converts a YAML string to JSON.
+// It unmarshals the YAML data and then marshals it as JSON string.
 //
 // Parameters:
 //   - str: YAML string to convert
@@ -714,20 +714,20 @@ func VerifyNetworkSchema(Network_Config_File string) error {
 // It validates that the input is valid YAML and not JSON format.
 //
 // Parameters:
-//   - filename: YAML string to parse (parameter name is misleading - it's actually YAML content, not a filename)
+//   - data: YAML string to parse
 //
 // Returns:
 //   - Parsed YAML as a string-keyed map
 //   - Error if YAML unmarshaling fails or input is JSON format
-func yamlParse(filename string) (map[string]any, error) {
+func yamlParse(data string) (map[string]any, error) {
 	var yamlObj map[string]any
-	if err := yaml.Unmarshal([]byte(filename), &yamlObj); err == nil {
-		if json.Valid([]byte(filename)) {
-			return nil, fmt.Errorf("error unmarshelling the YAML file")
+	if err := yaml.Unmarshal([]byte(data), &yamlObj); err == nil {
+		if json.Valid([]byte(data)) {
+			return nil, fmt.Errorf("error unmarshalling the YAML data")
 		}
 		return yamlObj, nil
 	}
-	return nil, fmt.Errorf("error unmarshelling the YAML file")
+	return nil, fmt.Errorf("error unmarshalling the YAML data")
 }
 
 // CheckEncryptionCertValidity checks the validity status of an encryption certificate.
