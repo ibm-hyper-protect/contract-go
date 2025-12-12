@@ -1,3 +1,9 @@
+## [2.4.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.3.1...v2.4.0) (2025-12-12)
+
+### Features
+
+* added refactor flag in PR description ([037f455](https://github.com/ibm-hyper-protect/contract-go/commit/037f4555797a33d5a67093b51897af4d2c7c5416))
+
 ## [2.3.1](https://github.com/ibm-hyper-protect/contract-go/compare/v2.3.0...v2.3.1) (2025-12-12)
 
 ### Bug Fixes
