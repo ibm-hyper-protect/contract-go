@@ -1,3 +1,13 @@
+## [2.3.1](https://github.com/ibm-hyper-protect/contract-go/compare/v2.3.0...v2.3.1) (2025-12-12)
+
+### Bug Fixes
+
+* **deps:** update go dependencies ([#152](https://github.com/ibm-hyper-protect/contract-go/issues/152)) ([3833889](https://github.com/ibm-hyper-protect/contract-go/commit/3833889c3bceab8e0fc4cdf9b88dc0bc8d46f1e2))
+
+### Miscellaneous Chores
+
+* **deps:** update docker.io/library/hello-world docker digest to d4aaab6 ([#172](https://github.com/ibm-hyper-protect/contract-go/issues/172)) ([1ec0e5c](https://github.com/ibm-hyper-protect/contract-go/commit/1ec0e5cc7ef23113880fa832e374185ff7b41c57))
+
 ## [2.3.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.2.0...v2.3.0) (2025-12-08)
 
 ### Features
