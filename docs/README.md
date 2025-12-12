@@ -132,7 +132,7 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 
 **Default URL Template:**
 ```
-https://hpvsvpcubuntu.s3.us.cloud-object-storage.appdomain.cloud/s390x-{{.Patch}}/ibm-hyper-protect-container-runtime-{{.Major}}-{{.Minor}}-s390x-{{.Patch}}-encrypt.crt
+{% raw %}https://hpvsvpcubuntu.s3.us.cloud-object-storage.appdomain.cloud/s390x-{{.Patch}}/ibm-hyper-protect-container-runtime-{{.Major}}-{{.Minor}}-s390x-{{.Patch}}-encrypt.crt{% endraw %}
 ```
 
 **Returns:**
