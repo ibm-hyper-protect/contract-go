@@ -28,7 +28,18 @@ const (
 	emptyParameterErrStatement = "required parameter is empty"
 )
 
-// HpcrText - function to generate base64 data and checksum from string
+// HpcrText generates Base64-encoded representation of plain text with integrity checksums.
+// It encodes the provided text and returns both the encoded data and SHA256 checksums
+// for verification purposes.
+//
+// Parameters:
+//   - plainText: Text data to encode
+//
+// Returns:
+//   - Base64-encoded text
+//   - SHA256 hash of the original text
+//   - SHA256 hash of the Base64-encoded data
+//   - Error if plainText is empty
 func HpcrText(plainText string) (string, string, string, error) {
 	if gen.CheckIfEmpty(plainText) {
 		return "", "", "", fmt.Errorf(emptyParameterErrStatement)
@@ -39,7 +50,18 @@ func HpcrText(plainText string) (string, string, string, error) {
 	return hpcrTextStr, gen.GenerateSha256(plainText), gen.GenerateSha256(hpcrTextStr), nil
 }
 
-// HpcrJson - function to generate base64 data and checksum from JSON string
+// HpcrJson generates Base64-encoded representation of JSON data with integrity checksums.
+// It validates the JSON format, encodes it, and returns the encoded data along with
+// SHA256 checksums for verification.
+//
+// Parameters:
+//   - plainJson: Valid JSON string to encode
+//
+// Returns:
+//   - Base64-encoded JSON
+//   - SHA256 hash of the original JSON
+//   - SHA256 hash of the Base64-encoded data
+//   - Error if JSON is invalid
 func HpcrJson(plainJson string) (string, string, string, error) {
 	if !gen.IsJSON(plainJson) {
 		return "", "", "", fmt.Errorf("not a JSON data")
@@ -50,7 +72,20 @@ func HpcrJson(plainJson string) (string, string, string, error) {
 	return hpcrJsonStr, gen.GenerateSha256(plainJson), gen.GenerateSha256(hpcrJsonStr), nil
 }
 
-// HpcrTextEncrypted - function to generate encrypted Hyper protect data and SHA256 from plain text
+// HpcrTextEncrypted encrypts plain text using the Hyper Protect encryption format.
+// It generates a random password, encrypts the text, and returns the encrypted data
+// in the format "hyper-protect-basic.<password>.<data>" along with checksums.
+//
+// Parameters:
+//   - plainText: Text to encrypt
+//   - hyperProtectOs: Target platform - "hpvs", "hpcr-rhvs", or "hpcc-peerpod" (defaults to "hpvs" if empty)
+//   - encryptionCertificate: PEM certificate for encryption (uses embedded default if empty)
+//
+// Returns:
+//   - Encrypted data in format "hyper-protect-basic.<password>.<data>"
+//   - SHA256 hash of the original text
+//   - SHA256 hash of the encrypted output
+//   - Error if encryption fails
 func HpcrTextEncrypted(plainText, hyperProtectOs, encryptionCertificate string) (string, string, string, error) {
 	if gen.CheckIfEmpty(plainText) {
 		return "", "", "", fmt.Errorf(emptyParameterErrStatement)
@@ -64,7 +99,20 @@ func HpcrTextEncrypted(plainText, hyperProtectOs, encryptionCertificate string) 
 	return hpcrTextEncryptedStr, gen.GenerateSha256(plainText), gen.GenerateSha256(hpcrTextEncryptedStr), nil
 }
 
-// HpcrJsonEncrypted - function to generate encrypted hyper protect data and SHA256 from plain JSON data
+// HpcrJsonEncrypted encrypts JSON data using the Hyper Protect encryption format.
+// It validates the JSON, generates a random password, encrypts the data, and returns
+// the encrypted output in the Hyper Protect format along with checksums.
+//
+// Parameters:
+//   - plainJson: Valid JSON string to encrypt
+//   - hyperProtectOs: Target platform - "hpvs", "hpcr-rhvs", or "hpcc-peerpod" (defaults to "hpvs" if empty)
+//   - encryptionCertificate: PEM certificate for encryption (uses embedded default if empty)
+//
+// Returns:
+//   - Encrypted JSON in format "hyper-protect-basic.<password>.<data>"
+//   - SHA256 hash of the original JSON
+//   - SHA256 hash of the encrypted output
+//   - Error if JSON is invalid or encryption fails
 func HpcrJsonEncrypted(plainJson, hyperProtectOs, encryptionCertificate string) (string, string, string, error) {
 	if !gen.IsJSON(plainJson) {
 		return "", "", "", fmt.Errorf("contract is not a JSON data")
@@ -78,7 +126,18 @@ func HpcrJsonEncrypted(plainJson, hyperProtectOs, encryptionCertificate string) 
 	return hpcrJsonEncrypted, gen.GenerateSha256(plainJson), gen.GenerateSha256(hpcrJsonEncrypted), nil
 }
 
-// HpcrTgz - function to generate base64 of tar.tgz which was prepared from docker compose/podman files
+// HpcrTgz creates a Base64-encoded TGZ archive from a directory containing docker-compose.yaml or pods.yaml.
+// It reads all files in the specified folder, creates a tar.gz archive, encodes it to Base64,
+// and returns the encoded archive along with checksums.
+//
+// Parameters:
+//   - folderPath: Path to folder containing docker-compose.yaml or pods.yaml files
+//
+// Returns:
+//   - Base64-encoded tar.gz archive
+//   - SHA256 hash of the folder path
+//   - SHA256 hash of the Base64-encoded TGZ
+//   - Error if folder doesn't exist or archive creation fails
 func HpcrTgz(folderPath string) (string, string, string, error) {
 	if gen.CheckIfEmpty(folderPath) {
 		return "", "", "", fmt.Errorf(emptyParameterErrStatement)
@@ -101,7 +160,20 @@ func HpcrTgz(folderPath string) (string, string, string, error) {
 	return tgzBase64, gen.GenerateSha256(folderPath), gen.GenerateSha256(tgzBase64), nil
 }
 
-// HpcrTgzEncrypted - function to generate encrypted tgz
+// HpcrTgzEncrypted creates an encrypted Base64 TGZ archive from a directory.
+// It first creates a Base64-encoded tar.gz archive from the folder, then encrypts it
+// using the Hyper Protect encryption format.
+//
+// Parameters:
+//   - folderPath: Path to folder containing docker-compose.yaml or pods.yaml files
+//   - hyperProtectOs: Target platform - "hpvs", "hpcr-rhvs", or "hpcc-peerpod" (defaults to "hpvs" if empty)
+//   - encryptionCertificate: PEM certificate for encryption (uses embedded default if empty)
+//
+// Returns:
+//   - Encrypted TGZ in format "hyper-protect-basic.<password>.<data>"
+//   - SHA256 hash of the folder path
+//   - SHA256 hash of the encrypted output
+//   - Error if folder is invalid or encryption fails
 func HpcrTgzEncrypted(folderPath, hyperProtectOs, encryptionCertificate string) (string, string, string, error) {
 	if gen.CheckIfEmpty(folderPath) {
 		return "", "", "", fmt.Errorf(emptyParameterErrStatement)
@@ -120,12 +192,36 @@ func HpcrTgzEncrypted(folderPath, hyperProtectOs, encryptionCertificate string) 
 	return hpcrTgzEncryptedStr, gen.GenerateSha256(folderPath), gen.GenerateSha256(hpcrTgzEncryptedStr), nil
 }
 
-// HpcrVerifyContract - function to verify contract schema
+// HpcrVerifyContract validates a contract against the JSON schema for the specified Hyper Protect platform.
+// It checks the contract structure, required fields, data types, and platform-specific requirements
+// to ensure the contract is valid before encryption and deployment.
+//
+// Parameters:
+//   - contract: YAML contract string to validate
+//   - version: Platform identifier - "hpvs", "hpcr-rhvs", or "hpcc-peerpod" (defaults to "hpvs" if empty)
+//
+// Returns:
+//   - nil if contract is valid
+//   - Error if validation fails with details about what's wrong
 func HpcrVerifyContract(contract, version string) error {
 	return gen.VerifyContractWithSchema(contract, version)
 }
 
-// HpcrContractSignedEncrypted - function to generate Signed and Encrypted contract
+// HpcrContractSignedEncrypted generates a signed and encrypted contract ready for deployment to Hyper Protect services.
+// It validates the contract schema, generates a public key from the private key, encrypts the workload
+// and environment sections, injects the signing key, and signs the encrypted sections with the private key.
+//
+// Parameters:
+//   - contract: YAML contract string with env and workload sections
+//   - hyperProtectOs: Target platform - "hpvs", "hpcr-rhvs", or "hpcc-peerpod" (defaults to "hpvs" if empty)
+//   - encryptionCertificate: PEM certificate for encryption (uses embedded default if empty)
+//   - privateKey: RSA private key (PEM format) for signing the contract
+//
+// Returns:
+//   - Signed and encrypted contract YAML with workload, env, and envWorkloadSignature
+//   - SHA256 hash of the original contract
+//   - SHA256 hash of the final signed contract
+//   - Error if validation, encryption, or signing fails
 func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate, privateKey string) (string, string, string, error) {
 	err := HpcrVerifyContract(contract, hyperProtectOs)
 	if err != nil {
@@ -159,7 +255,28 @@ func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate
 	return signedEncryptContract, gen.GenerateSha256(contract), gen.GenerateSha256(signedEncryptContract), nil
 }
 
-// HpcrContractSignedEncryptedContractExpiry - function to generate sign with contract expiry enabled and encrypt contract (with CSR parameters and CSR file)
+// HpcrContractSignedEncryptedContractExpiry generates a signed and encrypted contract with time-based expiration.
+// It creates a signing certificate with expiration using a Certificate Authority, then signs and encrypts
+// the contract. This is used for production deployments requiring time-limited contracts.
+//
+// Parameters:
+//   - contract: YAML contract string with env and workload sections
+//   - hyperProtectOs: Target platform - "hpvs", "hpcr-rhvs", or "hpcc-peerpod" (defaults to "hpvs" if empty)
+//   - encryptionCertificate: PEM certificate for encryption (uses embedded default if empty)
+//   - privateKey: RSA private key (PEM format) for signing the contract
+//   - cacert: CA certificate (PEM format) for creating the signing certificate
+//   - caKey: CA private key (PEM format) for signing the certificate
+//   - csrDataStr: CSR parameters as JSON string (use if not providing csrPemData)
+//   - csrPemData: CSR in PEM format (use if not providing csrDataStr)
+//   - expiryDays: Number of days until the contract expires
+//
+// Note: Either csrDataStr OR csrPemData must be provided, but not both.
+//
+// Returns:
+//   - Signed and encrypted contract YAML with time-limited signature
+//   - SHA256 hash of the original contract
+//   - SHA256 hash of the final signed contract
+//   - Error if validation, CSR generation, or signing fails
 func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encryptionCertificate, privateKey, cacert, caKey, csrDataStr, csrPemData string, expiryDays int) (string, string, string, error) {
 	err := HpcrVerifyContract(contract, hyperProtectOs)
 	if err != nil {
@@ -187,7 +304,22 @@ func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encrypt
 	return finalContract, gen.GenerateSha256(contract), gen.GenerateSha256(finalContract), nil
 }
 
-// encryptWrapper - wrapper function to sign (with and without contract expiry) and encrypt contract
+// encryptWrapper is a helper function that signs and encrypts a contract.
+// It handles both regular signing and signing with contract expiry by accepting a publicKey
+// parameter that can be either a regular public key or a time-limited signing certificate.
+// The function encrypts the workload and env sections separately, injects the signing key,
+// and creates a signature over the encrypted sections.
+//
+// Parameters:
+//   - contract: YAML contract string with env and workload sections
+//   - hyperProtectOs: Target platform - "hpvs", "hpcr-rhvs", or "hpcc-peerpod"
+//   - encryptionCertificate: PEM certificate for encryption (optional)
+//   - privateKey: RSA private key (PEM format) for signing
+//   - publicKey: Public key or signing certificate (PEM format)
+//
+// Returns:
+//   - Final contract YAML with encrypted workload, env, and envWorkloadSignature
+//   - Error if encryption or signing fails
 func encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey, publicKey string) (string, error) {
 	if gen.CheckIfEmpty(contract, privateKey, publicKey) {
 		return "", fmt.Errorf(emptyParameterErrStatement)
@@ -233,7 +365,19 @@ func encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey,
 	return finalContract, nil
 }
 
-// encrypter - function to generate encrypted hyper protect data from plain string
+// encrypter is a helper function that encrypts any string data using the Hyper Protect encryption format.
+// It generates a random password, encrypts it with the encryption certificate, encrypts the data
+// with the password, and returns the result in the format "hyper-protect-basic.<password>.<data>".
+// This function is used internally by all encryption functions (HpcrTextEncrypted, HpcrJsonEncrypted, etc.).
+//
+// Parameters:
+//   - stringText: String data to encrypt (text, JSON, or Base64-encoded TGZ)
+//   - hyperProtectOs: Target platform - "hpvs", "hpcr-rhvs", or "hpcc-peerpod"
+//   - encryptionCertificate: PEM certificate for encryption (optional)
+//
+// Returns:
+//   - Encrypted string in format "hyper-protect-basic.<password>.<data>"
+//   - Error if encryption fails or certificate is invalid
 func encrypter(stringText, hyperProtectOs, encryptionCertificate string) (string, error) {
 	if gen.CheckIfEmpty(stringText) {
 		return "", fmt.Errorf(emptyParameterErrStatement)
