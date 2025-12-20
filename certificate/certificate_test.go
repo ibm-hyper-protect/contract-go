@@ -66,7 +66,7 @@ func TestDownloadEncryptionCertificates(t *testing.T) {
 
 // Testcase to check if DownloadEncryptionCertificates() is throwing error if no version is provided
 func TestDownloadEncryptionCertificatesWithoutVersion(t *testing.T) {
-	_, err := HpcrDownloadEncryptionCertificates([]string{}, "", "")
+	_, err := HpcrDownloadEncryptionCertificates([]string{}, "yaml", "")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "required parameter is missing")
 }
