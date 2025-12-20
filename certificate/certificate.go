@@ -82,7 +82,7 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 		formatType = defaultFormat
 	}
 
-	if gen.CheckIfEmpty(versionList) {
+	if len(versionList) == 0 {
 		return "", fmt.Errorf(missingParameterErrStatement)
 	}
 
