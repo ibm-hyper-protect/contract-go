@@ -1,3 +1,11 @@
+## [2.5.1](https://github.com/ibm-hyper-protect/contract-go/compare/v2.5.0...v2.5.1) (2025-12-22)
+
+### Bug Fixes
+
+* add testcase to check error if version is empty ([93eadda](https://github.com/ibm-hyper-protect/contract-go/commit/93eaddacacda9be971700c12151069267352a785))
+* dummy commit ([89723f1](https://github.com/ibm-hyper-protect/contract-go/commit/89723f14406c822f7237584902855b721bd7a0a4))
+* throwing error if passing no version flag in download-certificate command ([ecea4c0](https://github.com/ibm-hyper-protect/contract-go/commit/ecea4c07196bb42c86fbbab38840d62b23ea7bde))
+
 ## [2.5.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.4.0...v2.5.0) (2025-12-12)
 
 ### Features
