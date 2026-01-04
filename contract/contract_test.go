@@ -17,7 +17,6 @@ package contract
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"testing"
 
@@ -200,11 +199,10 @@ func TestHpcrVerifyContract(t *testing.T) {
 
 // Testcase to check if HpcrContractSignedEncrypted() is able to generate
 func TestHpcrContractSignedEncrypted(t *testing.T) {
-	encryption_cert := "../encryption/ibm-hyper-protect-container-runtime-1-0-s390x-24-encrypt.crt"
+	encryption_cert := "../encryption/ibm-hyper-protect-container-runtime-1-0-s390x-25-encrypt.crt"
 	data, err := os.ReadFile(encryption_cert)
 	if err != nil {
-		fmt.Println("Error reading file:", err)
-		return
+		t.Errorf("Error reading file: - %v", err)
 	}
 	contract, privateKey, _, _, _, err := common(t.Name())
 	if err != nil {
