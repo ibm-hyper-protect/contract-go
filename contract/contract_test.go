@@ -298,7 +298,7 @@ func TestHpccGzippedInitdata(t *testing.T) {
 
 	inputData, err := gen.ReadDataFromFile(sampleSignedEncryptedContract)
 	if err != nil {
-		t.Errorf("failed to read content form encrypted contract - %v", err)
+		t.Errorf("failed to read content from encrypted contract - %v", err)
 	}
 
 	encodedString, inputCheckSum, _, err := HpccGzippedInitdata(inputData)

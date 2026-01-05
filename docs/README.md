@@ -1177,7 +1177,7 @@ func main() {
 - HPCC Peer Pod (Hyper Protect Confidential Container Peer Pods)'
 
 **Common Errors:**
-- `"failed while parsing the template toml"` - Error while pasrsing the template initdata toml file
+- `"failed while parsing the template toml"` - Error while parsing the template initdata toml file
 - `"failed while creating initdata.toml"` - Failed while replacing encrypted contract in initdata.toml file
 - `"failed while gzipping initdata"` - Failed while compressing the content of inidata.toml file
 
