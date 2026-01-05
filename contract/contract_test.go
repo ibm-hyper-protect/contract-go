@@ -58,6 +58,11 @@ const (
 	sampleContractExpiryDays = 365
 
 	sampleHyperProtectOsVersion = "hpvs"
+
+	// HPCC Initdata
+	sampleSignedEncryptedContract              = "../samples/hpcc/signed-encrypt-hpcc.yaml"
+	sampleGzippedInidata                       = "../samples/hpcc/gzipped-initdata"
+	sampleSingedEncryptedContractInputChecksum = "1b6ee574d6061896c23fad0711d1a89b8d9b7748506ab089201db1335605daea"
 )
 
 var (
@@ -283,4 +288,35 @@ func TestEncrypter(t *testing.T) {
 	}
 
 	assert.Contains(t, result, hpcrEncryptPrefix)
+}
+
+// Testcase to check HpccInitdata() is able to gzip data.
+func TestHpccInitdata(t *testing.T) {
+	if !gen.CheckFileFolderExists(sampleSignedEncryptedContract) {
+		t.Errorf("failed, file does not exits on defined path")
+	}
+
+	inputData, err := gen.ReadDataFromFile(sampleSignedEncryptedContract)
+	if err != nil {
+		t.Errorf("failed to read content from encrypted contract - %v", err)
+	}
+
+	encodedString, inputCheckSum, _, err := HpccInitdata(inputData)
+	if err != nil {
+		t.Errorf("failed to gzipped encoded initdata - %v", err)
+	}
+
+	expectedGzippedInitdata, err := gen.ReadDataFromFile(sampleGzippedInidata)
+	if err != nil {
+		t.Errorf("failed to read gzipped-initdata file - %v", err)
+	}
+
+	assert.Equal(t, expectedGzippedInitdata, encodedString, "Encoded gzipped initdata string does not match with expected gzipped initdata")
+	assert.Equal(t, sampleSingedEncryptedContractInputChecksum, inputCheckSum, "Checksum does not match with expected input checksum of encrypted contract")
+}
+
+// Testcase to check HpccInitdata() is able to handle empty contract case.
+func TestHpccInitdataEmptyContract(t *testing.T) {
+	_, _, _, err := HpccInitdata("")
+	assert.EqualError(t, err, emptyParameterErrStatement)
 }

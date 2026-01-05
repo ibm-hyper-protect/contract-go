@@ -1122,6 +1122,66 @@ func main() {
 - `"failed to generate signed and encrypted contract"` - Signing or encryption operation failed
 - All errors from `HpcrContractSignedEncrypted` also apply
 
+### HpccInitdata
+
+Generates gzipped and encoded initdata string.
+
+**Package:** `github.com/ibm-hyper-protect/contract-go/v2/contract`
+
+**Signature:**
+```go
+func HpccInitdata(contract string) (string, string, string, error)
+```
+
+**Parameters:**
+
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `contract`| `string`| `Required`| Yaml contract |
+
+**Returns:**
+
+| Return | Type | Description |
+|--------|------|-------------|
+| Gzipped & Encoded String  | `string` | Initdata String gzipped and encoded |
+| Input Checksum | `string` | SHA256 of original contract |
+| Output Checksum | `string` | SHA256 of gzipped & encoded initdata string |
+| Error | `error` | Error if validation, zipping or encoding fails |
+
+**Example:**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+)
+
+func main() {
+    contractYAML := `...your contract...`
+
+    encodedString, _, _, err := contract.HpccInitdata(
+       contractYAML
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("Gzipped & Encoded initdata string is generated!\n")
+}
+```
+**Supported Platforms:**
+- HPCC Peer Pod (Hyper Protect Confidential Container Peer Pods)'
+
+**Common Errors:**
+- `"failed while parsing the template toml"` - Error while parsing the template initdata toml file
+- `"failed while creating initdata.toml"` - Failed while replacing encrypted contract in initdata.toml file
+- `"failed while gzipping initdata"` - Failed while compressing the content of inidata.toml file
+
+
 ### HpcrVerifyNetworkConfig
 
 Validates network configuration schema for on-premise deployments of HPVS and HPCR RHVS.
