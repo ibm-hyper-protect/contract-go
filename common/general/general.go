@@ -807,3 +807,29 @@ func CheckEncryptionCertValidityForContractEncryption(encryptionCert string) (st
 			daysLeft, cert.NotAfter.Format("02-01-06 15:04:05")), nil
 	}
 }
+
+// GzipInitData creates gzipped string from initdata.toml string
+// It creates zipped bytes from the input string
+//
+// Parameters:
+// - tomlString: String formatted from the initdata.toml file
+//
+// Returns:
+// - Array of gzipped bytes
+// - Error if validation or gzipping fails
+func GzipInitData(tomlString string) ([]byte, error) {
+	var buf bytes.Buffer
+	gzipWriter := gzip.NewWriter(&buf)
+
+	_, err := gzipWriter.Write([]byte(tomlString))
+	if err != nil {
+		return nil, err
+	}
+
+	err = gzipWriter.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}

@@ -16,7 +16,9 @@
 package contract
 
 import (
+	"bytes"
 	"fmt"
+	"text/template"
 
 	"gopkg.in/yaml.v3"
 
@@ -27,6 +29,15 @@ import (
 const (
 	emptyParameterErrStatement = "required parameter is empty"
 )
+
+// HPCC initdata.toml file template.
+const tomlTemplate = `
+algorithm = "sha384"
+version = "0.1.0"
+
+[data]
+"contract.yaml" = '''{{ . }}'''
+`
 
 // HpcrText generates Base64-encoded representation of plain text with integrity checksums.
 // It encodes the provided text and returns both the encoded data and SHA256 checksums
@@ -302,6 +313,46 @@ func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encrypt
 	}
 
 	return finalContract, gen.GenerateSha256(contract), gen.GenerateSha256(finalContract), nil
+}
+
+// HpccGzippedInitdata generates a gzipped and encoded initdata string.
+// It creates the initdata.toml based on tomltemplate and gzip the initdata.toml content to compress data.
+// It encode the compressed content in base64.
+//
+// Parameters:
+// - contract: Encrypted and singed contract string with env, workload section
+//
+// Returns:
+//   - Gzipped & Encoded initdata string
+//   - SHA256 hash of the original contract
+//   - SHA256 hash of the gzipped and encoded initdata string
+//   - Error if validation, gzip or encoding fails
+func HpccGzippedInitdata(contract string) (string, string, string, error) {
+
+	var buf bytes.Buffer
+
+	if gen.CheckIfEmpty(contract) {
+		return "", "", "", fmt.Errorf(emptyParameterErrStatement)
+	}
+
+	tmpl, err := template.New("toml").Parse(tomlTemplate)
+	if err != nil {
+		return "", "", "", fmt.Errorf("failed while parsing the template toml %v", err)
+	}
+
+	err = tmpl.Execute(&buf, contract)
+	if err != nil {
+		return "", "", "", fmt.Errorf("failed while creating initdata.toml %v", err)
+	}
+	inidataString := buf.String()
+
+	compressedBytes, err := gen.GzipInitData(inidataString)
+	if err != nil {
+		return "", "", "", fmt.Errorf("failed while gzipping initdata %v", err)
+	}
+
+	encodedString := gen.EncodeToBase64(compressedBytes)
+	return encodedString, gen.GenerateSha256(contract), gen.GenerateSha256(encodedString), nil
 }
 
 // encryptWrapper is a helper function that signs and encrypts a contract.
