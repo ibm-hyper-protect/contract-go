@@ -315,7 +315,7 @@ func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encrypt
 	return finalContract, gen.GenerateSha256(contract), gen.GenerateSha256(finalContract), nil
 }
 
-// HpccGzippedInitdata generates a gzipped and encoded initdata string.
+// HpccInitdata generates a gzipped and encoded initdata string.
 // It creates the initdata.toml based on tomltemplate and gzip the initdata.toml content to compress data.
 // It encode the compressed content in base64.
 //
@@ -327,7 +327,7 @@ func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encrypt
 //   - SHA256 hash of the original contract
 //   - SHA256 hash of the gzipped and encoded initdata string
 //   - Error if validation, gzip or encoding fails
-func HpccGzippedInitdata(contract string) (string, string, string, error) {
+func HpccInitdata(contract string) (string, string, string, error) {
 
 	var buf bytes.Buffer
 

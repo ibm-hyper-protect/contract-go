@@ -16,7 +16,10 @@
 package general
 
 import (
+	"bytes"
+	"compress/gzip"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -463,4 +466,22 @@ func TestCheckExpiredEncryptionCertValidityDuringContractEncryption(t *testing.T
 	}
 	_, err = CheckEncryptionCertValidityForContractEncryption(string(data))
 	assert.Contains(t, err.Error(), "Encryption certificate has already expired")
+}
+
+// Testcase to gzip the initdata string
+func TestGzipInitData(t *testing.T) {
+	compressedData, err := GzipInitData(sampleStringData)
+
+	reader, err := gzip.NewReader(bytes.NewReader(compressedData))
+	if err != nil {
+		t.Fatalf("failed to create gzip reader: %v", err)
+	}
+	defer reader.Close()
+
+	decompressed, err := io.ReadAll(reader)
+	if err != nil {
+		t.Fatalf("failed to read decompressed data: %v", err)
+	}
+
+	assert.Equal(t, sampleStringData, string(decompressed), "Decompressed data does not match with original string")
 }

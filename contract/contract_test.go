@@ -290,8 +290,8 @@ func TestEncrypter(t *testing.T) {
 	assert.Contains(t, result, hpcrEncryptPrefix)
 }
 
-// Testcase to check HpccGzippedInitdata() is able to gzip data.
-func TestHpccGzippedInitdata(t *testing.T) {
+// Testcase to check HpccInitdata() is able to gzip data.
+func TestHpccInitdata(t *testing.T) {
 	if !gen.CheckFileFolderExists(sampleSignedEncryptedContract) {
 		t.Errorf("failed, file does not exits on defined path")
 	}
@@ -301,7 +301,7 @@ func TestHpccGzippedInitdata(t *testing.T) {
 		t.Errorf("failed to read content from encrypted contract - %v", err)
 	}
 
-	encodedString, inputCheckSum, _, err := HpccGzippedInitdata(inputData)
+	encodedString, inputCheckSum, _, err := HpccInitdata(inputData)
 	if err != nil {
 		t.Errorf("failed to gzipped encoded initdata - %v", err)
 	}
@@ -315,8 +315,8 @@ func TestHpccGzippedInitdata(t *testing.T) {
 	assert.Equal(t, sampleSingedEncryptedContractInputChecksum, inputCheckSum, "Checksum does not match with expected input checksum of encrypted contract")
 }
 
-// Testcase to check HpccGzippedInitdata() is able to handle empty contract case.
-func TestHpccGzippedInitdataEmptyContract(t *testing.T) {
-	_, _, _, err := HpccGzippedInitdata("")
+// Testcase to check HpccInitdata() is able to handle empty contract case.
+func TestHpccInitdataEmptyContract(t *testing.T) {
+	_, _, _, err := HpccInitdata("")
 	assert.EqualError(t, err, emptyParameterErrStatement)
 }

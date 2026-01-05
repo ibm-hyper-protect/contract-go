@@ -1122,7 +1122,7 @@ func main() {
 - `"failed to generate signed and encrypted contract"` - Signing or encryption operation failed
 - All errors from `HpcrContractSignedEncrypted` also apply
 
-### HpccGzippedInitdata
+### HpccInitdata
 
 Generates gzipped and encoded initdata string.
 
@@ -1130,7 +1130,7 @@ Generates gzipped and encoded initdata string.
 
 **Signature:**
 ```go
-func HpccGzippedInitdata(contract string) (string, string, string, error)
+func HpccInitdata(contract string) (string, string, string, error)
 ```
 
 **Parameters:**
@@ -1163,7 +1163,7 @@ import (
 func main() {
     contractYAML := `...your contract...`
 
-    encodedString, _, _, err := contract.HpccGzippedInitdata(
+    encodedString, _, _, err := contract.HpccInitdata(
        contractYAML
     )
     if err != nil {
