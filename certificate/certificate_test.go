@@ -37,8 +37,9 @@ var (
 			"expiry_days": "2"
 		}
 	}`
-	sampleEncryptionCertVersions = []string{"1.0.20", "1.0.21", "1.0.22"}
-	sampleCertDownloadTemplate   = "https://hpvsvpcubuntu.s3.us.cloud-object-storage.appdomain.cloud/s390x-{{.Patch}}/ibm-hyper-protect-container-runtime-{{.Major}}-{{.Minor}}-s390x-{{.Patch}}-encrypt.crt"
+	sampleEncryptionCertVersions       = []string{"1.0.20", "1.0.21", "1.0.22"}
+	sampleInvalidEncryptionCertVersion = []string{"abc", "xy.z"}
+	sampleCertDownloadTemplate         = "https://hpvsvpcubuntu.s3.us.cloud-object-storage.appdomain.cloud/s390x-{{.Patch}}/ibm-hyper-protect-container-runtime-{{.Major}}-{{.Minor}}-s390x-{{.Patch}}-encrypt.crt"
 )
 
 // Testcase to check if GetEncryptionCertificateFromJson() gets encryption certificate as per version constraint
@@ -77,6 +78,13 @@ func TestDownloadEncryptionCertificatesYaml(t *testing.T) {
 	if err != nil {
 		t.Errorf("failed to download HPCR encryption certificates - %v", err)
 	}
+}
+
+// Testcase to check if DownloadEncryptionCertificates() is throwing error if version format is not correct
+func TestDownloadEncryptionCertificatesWithInvalidVersionFormat(t *testing.T) {
+	_, err := HpcrDownloadEncryptionCertificates(sampleInvalidEncryptionCertVersion, "", "")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid version format: 'abc'. Expected comma-separated versions, e.g., 1.0.21 or 1.0.21,1.0.22")
 }
 
 // Testcase to check both DownloadEncryptionCertificates() and GetEncryptionCertificateFromJson() together
