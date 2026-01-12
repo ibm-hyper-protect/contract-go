@@ -53,7 +53,7 @@ Learn more:
   - Validate expiry of encryption certificate
 
 - **Contract Generation**
-  - Generate Base64-encoded data from text, JSON, and docker compose / podman play archives
+  - Generate Base64-encoded data from text, JSON, initdata annotation and docker compose / podman play archives
   - Create encrypted and signed contracts
   - Support contract expiry with CSR (Certificate Signing Request)
   - Validate contract schemas
