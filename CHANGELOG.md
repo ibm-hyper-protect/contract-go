@@ -1,3 +1,15 @@
+## [2.6.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.5.1...v2.6.0) (2026-01-12)
+
+### Features
+
+* Added New TestCase for GzipInitdata function ([b0ab41b](https://github.com/ibm-hyper-protect/contract-go/commit/b0ab41b54940e17fbd0c926ddf683b59857ca5fe))
+* Initdata Support for HPCC Peerpod ([755d3da](https://github.com/ibm-hyper-protect/contract-go/commit/755d3da9d65858e454efc16dac558e1299178505))
+* Resloved the review comments ([58d562a](https://github.com/ibm-hyper-protect/contract-go/commit/58d562ab81f63228c60582f85eccdec4c55747ee))
+
+### Tests
+
+* fixing TestHpcrContractSignedEncrypted testcase ([6a6ae27](https://github.com/ibm-hyper-protect/contract-go/commit/6a6ae272c8c829c8c155bec10fb63c3d1e6479e3))
+
 ## [2.5.1](https://github.com/ibm-hyper-protect/contract-go/compare/v2.5.0...v2.5.1) (2025-12-22)
 
 ### Bug Fixes
