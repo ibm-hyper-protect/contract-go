@@ -1,3 +1,10 @@
+## [2.6.1](https://github.com/ibm-hyper-protect/contract-go/compare/v2.6.0...v2.6.1) (2026-01-12)
+
+### Bug Fixes
+
+* fix of download certificate input invalid format issue ([eaf30f0](https://github.com/ibm-hyper-protect/contract-go/commit/eaf30f0e42a3f858ee7d314bdd76d6ebe8acaef1))
+* update doc ([db80b7e](https://github.com/ibm-hyper-protect/contract-go/commit/db80b7ed12505cacb26bc363c10afa58ff145eee))
+
 ## [2.6.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.5.1...v2.6.0) (2026-01-12)
 
 ### Features
