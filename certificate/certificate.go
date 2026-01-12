@@ -90,13 +90,14 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 
 	for _, version := range versionList {
 		verSpec := strings.Split(version, ".")
-
+		if !strings.Contains(version, ".") || len(verSpec) != 3 {
+			return "", fmt.Errorf("invalid version format: '%s'. Expected comma-separated versions, e.g., 1.0.21 or 1.0.21,1.0.22", version)
+		}
 		urlTemplate := template.New("url")
 		urlTemplate, err := urlTemplate.Parse(certDownloadUrlTemplate)
 		if err != nil {
 			return "", fmt.Errorf("failed to create url template - %v", err)
 		}
-
 		builder := &strings.Builder{}
 		err = urlTemplate.Execute(builder, CertSpec{verSpec[0], verSpec[1], verSpec[2]})
 		if err != nil {
