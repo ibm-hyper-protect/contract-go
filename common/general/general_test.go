@@ -259,14 +259,14 @@ func TestCheckUrlExists(t *testing.T) {
 // Testcase to check if GetDataFromLatestVersion() is able to fetch latest version of encryption certificate
 func TestGetDataFromLatestVersion(t *testing.T) {
 	versionConstraints := ">= 1.0.0, <= 3.5.10"
-	m := make(map[string]interface{})
-	json.Unmarshal([]byte(sampleCertificateJson), &m)
+	var data map[string]map[string]interface{}
+	json.Unmarshal([]byte(sampleCertificateJson), &data)
 	key, cert_info, err := GetDataFromLatestVersion(sampleCertificateJson, versionConstraints)
 	if err != nil {
 		t.Errorf("failed to get encryption certificate - %v", err)
 	}
 	assert.Equal(t, key, "3.5.10")
-	assert.Equal(t, cert_info, m[key])
+	assert.Equal(t, cert_info, data[key])
 }
 
 // Testcase to check if FetchEncryptionCertificate() fetches encryption certificate for HPVS
