@@ -112,7 +112,7 @@ func EncryptPassword(password, cert string) (string, error) {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
 
-	result, err := gen.ExecCommand(gen.GetOpenSSLPath(), password, "rsautl", "-encrypt", "-inkey", encryptCertPath, "-certin")
+	result, err := gen.ExecCommand(gen.GetOpenSSLPath(), password, "pkeyutl", "-encrypt", "-inkey", encryptCertPath, "-certin", "-pkeyopt", "rsa_padding_mode:pkcs1")
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
 	}
