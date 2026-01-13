@@ -60,7 +60,7 @@ func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version str
 
 	latestVersion, cert_info, err := gen.GetDataFromLatestVersion(encryptionCertificateJson, version)
 	if err != nil {
-		return "", "", "", "", "", fmt.Errorf("failed to get Latest Version - %v", err)
+		return "", "", "", "", "", fmt.Errorf("failed to get latest version - %v", err)
 	}
 	return latestVersion, cert_info["cert"], cert_info["expiry_date"], cert_info["expiry_days"], cert_info["status"], nil
 }
