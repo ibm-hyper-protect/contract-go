@@ -46,13 +46,16 @@ var (
 func TestGetEncryptionCertificateFromJson(t *testing.T) {
 	version := "> 1.0.0"
 
-	key, value, err := HpcrGetEncryptionCertificateFromJson(sampleJsonData, version)
+	key, cert, expiry_date, expiry_days, status, err := HpcrGetEncryptionCertificateFromJson(sampleJsonData, version)
 	if err != nil {
 		t.Errorf("failed to get encryption certificate from JSON - %v", err)
 	}
 
 	assert.Equal(t, key, "4.0.0")
-	assert.Equal(t, value, "data2")
+	assert.Equal(t, cert, "data2")
+	assert.Equal(t, expiry_date, "26-02-26 12:27:33 GMT")
+	assert.Equal(t, expiry_days, "2")
+	assert.Equal(t, status, "test2")
 }
 
 // Testcase to check if DownloadEncryptionCertificates() is able to download encryption certificates as per constraint
@@ -96,7 +99,7 @@ func TestCombined(t *testing.T) {
 
 	version := "> 1.0.20"
 
-	key, _, err := HpcrGetEncryptionCertificateFromJson(certs, version)
+	key, _, _, _, _, err := HpcrGetEncryptionCertificateFromJson(certs, version)
 	if err != nil {
 		t.Errorf("failed to get encryption certificate from JSON - %v", err)
 	}
