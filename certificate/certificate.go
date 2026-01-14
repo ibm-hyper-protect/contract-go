@@ -52,9 +52,9 @@ type CertSpec struct {
 // Returns:
 //   - Version string of the extracted certificate
 //   - PEM-formatted encryption certificate
-//   - Expiry date of encryption certificate
-//   - Expiry days of encryption certificate
-//   - Status of Encryption certificate
+//   - Expiry date of the encryption certificate
+//   - Expiry days of the encryption certificate
+//   - Status of the Encryption certificate
 //   - Error if version not found or data is invalid
 func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version string) (string, string, string, string, string, error) {
 	if gen.CheckIfEmpty(encryptionCertificateJson, version) {
