@@ -90,8 +90,8 @@ func RandomPasswordGenerator() (string, error) {
 	return randomPassword, nil
 }
 
-// EncryptPassword encrypts a password using RSA encryption with a certificate.
-// It uses OpenSSL RSA encryption with the provided certificate and returns the result
+// EncryptPassword encrypts a password using OpenSSL PKEYUTL encryption with a certificate.
+// It uses OpenSSL PKEYUTL encryption (PKCS#1 v1.5 padding) with the provided certificate and returns the result
 // as a Base64-encoded string.
 //
 // Parameters:
