@@ -427,7 +427,7 @@ func CheckUrlExists(url string) (bool, error) {
 
 // GetDataFromLatestVersion retrieves the latest version data matching semantic version constraints.
 // It parses JSON data containing version-keyed maps, applies version constraints,
-// and returns the certificate for the latest matching version.
+// and returns the certificate info for the latest matching version.
 //
 // Parameters:
 //   - jsonData: JSON string containing version-to-data mappings
@@ -435,17 +435,17 @@ func CheckUrlExists(url string) (bool, error) {
 //
 // Returns:
 //   - Latest matching version string
-//   - Certificate data for the matching version
+//   - Certificate data info for the matching version
 //   - Error if JSON parsing, version constraint parsing, or no match found
-func GetDataFromLatestVersion(jsonData, version string) (string, string, error) {
+func GetDataFromLatestVersion(jsonData, version string) (string, map[string]string, error) {
 	var dataMap map[string]map[string]string
 	if err := json.Unmarshal([]byte(jsonData), &dataMap); err != nil {
-		return "", "", fmt.Errorf("error unmarshaling JSON data - %v", err)
+		return "", nil, fmt.Errorf("error unmarshaling JSON data - %v", err)
 	}
 
 	targetConstraint, err := semver.NewConstraint(version)
 	if err != nil {
-		return "", "", fmt.Errorf("error parsing target version constraint - %v", err)
+		return "", nil, fmt.Errorf("error parsing target version constraint - %v", err)
 	}
 
 	var matchingVersions []*semver.Version
@@ -453,7 +453,7 @@ func GetDataFromLatestVersion(jsonData, version string) (string, string, error) 
 	for versionStr := range dataMap {
 		version, err := semver.NewVersion(versionStr)
 		if err != nil {
-			return "", "", fmt.Errorf("error parsing version - %v", err)
+			return "", nil, fmt.Errorf("error parsing version - %v", err)
 		}
 
 		if targetConstraint.Check(version) {
@@ -466,11 +466,11 @@ func GetDataFromLatestVersion(jsonData, version string) (string, string, error) 
 	// Get the latest version and its corresponding data
 	if len(matchingVersions) > 0 {
 		latestVersion := matchingVersions[0]
-		return latestVersion.String(), dataMap[latestVersion.String()]["cert"], nil
+		return latestVersion.String(), dataMap[latestVersion.String()], nil
 	}
 
 	// No matching version found
-	return "", "", fmt.Errorf("no matching version found for the given constraint")
+	return "", nil, fmt.Errorf("no matching version found for the given constraint")
 }
 
 // FetchEncryptionCertificate retrieves the appropriate encryption certificate for a Hyper Protect platform.

@@ -18,6 +18,7 @@ package general
 import (
 	"bytes"
 	"compress/gzip"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -259,13 +260,18 @@ func TestCheckUrlExists(t *testing.T) {
 func TestGetDataFromLatestVersion(t *testing.T) {
 	versionConstraints := ">= 1.0.0, <= 3.5.10"
 
-	key, value, err := GetDataFromLatestVersion(sampleCertificateJson, versionConstraints)
-	if err != nil {
-		t.Errorf("failed to get encryption certificate - %v", err)
+	var data map[string]map[string]string
+	if err := json.Unmarshal([]byte(sampleCertificateJson), &data); err != nil {
+		t.Fatalf("bad certificate JSON: %v", err)
 	}
 
-	assert.Equal(t, key, "3.5.10")
-	assert.Equal(t, value, "data4")
+	key, certInfo, err := GetDataFromLatestVersion(sampleCertificateJson, versionConstraints)
+	if err != nil {
+		t.Fatalf("failed to get encryption certificate - %v", err)
+	}
+
+	assert.Equal(t, "3.5.10", key)
+	assert.Equal(t, data[key], certInfo)
 }
 
 // Testcase to check if FetchEncryptionCertificate() fetches encryption certificate for HPVS
