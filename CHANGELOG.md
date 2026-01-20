@@ -1,3 +1,13 @@
+## [2.7.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.6.1...v2.7.0) (2026-01-20)
+
+### Features
+
+* add support to get expiry dates of encryption certificates ([d000761](https://github.com/ibm-hyper-protect/contract-go/commit/d000761b891bae33d4ea51e665bb14c3c5570951))
+
+### Miscellaneous Chores
+
+* **deps:** update docker.io/library/hello-world docker digest to 05813ae ([#182](https://github.com/ibm-hyper-protect/contract-go/issues/182)) ([66ac549](https://github.com/ibm-hyper-protect/contract-go/commit/66ac549ffbef56b4aaf99fe5b5e9b6e72bd772af))
+
 ## [2.6.1](https://github.com/ibm-hyper-protect/contract-go/compare/v2.6.0...v2.6.1) (2026-01-12)
 
 ### Bug Fixes
