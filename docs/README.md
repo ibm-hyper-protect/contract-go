@@ -191,7 +191,7 @@ Extracts a specific version's encryption certificate from the output of `HpcrDow
 
 **Signature:**
 ```go
-func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version string) (string, string, error)
+func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version string) (string, string, string, string, string, error)
 ```
 
 **Parameters:**
@@ -207,6 +207,9 @@ func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version str
 |--------|------|-------------|
 | Version | `string` | The requested version number |
 | Certificate | `string` | PEM-formatted encryption certificate |
+| Expiry date |  `string` | Expiry date of encryption certificate |
+| Expiry Days | `string` | Expiry days of encryption certificate |
+| Status | `string` | Status of encryption certificate |
 | Error | `error` | Error if version not found or JSON invalid |
 
 **Example:**
@@ -229,13 +232,16 @@ func main() {
     }
 
     // Extract specific version
-    version, cert, err := certificate.HpcrGetEncryptionCertificateFromJson(certsJSON, "1.1.15")
+    version, cert, expiry_date, expiry_days, status, err := certificate.HpcrGetEncryptionCertificateFromJson(certsJSON, "1.1.15")
     if err != nil {
         log.Fatalf("Failed to get certificate: %v", err)
     }
 
     fmt.Printf("Version: %s\n", version)
     fmt.Printf("Certificate:\n%s\n", cert)
+    fmt.Printf("Expiry date:\n%s\n", expiry_date)
+    fmt.Printf("Expiry days:\n%s\n", expiry_days)
+    fmt.Printf("status:\n%s\n", status)
 }
 ```
 

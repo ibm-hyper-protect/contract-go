@@ -52,13 +52,20 @@ type CertSpec struct {
 // Returns:
 //   - Version string of the extracted certificate
 //   - PEM-formatted encryption certificate
+//   - Expiry date of the encryption certificate
+//   - Expiry days of the encryption certificate
+//   - Status of the Encryption certificate
 //   - Error if version not found or data is invalid
-func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version string) (string, string, error) {
+func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version string) (string, string, string, string, string, error) {
 	if gen.CheckIfEmpty(encryptionCertificateJson, version) {
-		return "", "", fmt.Errorf(missingParameterErrStatement)
+		return "", "", "", "", "", fmt.Errorf(missingParameterErrStatement)
 	}
 
-	return gen.GetDataFromLatestVersion(encryptionCertificateJson, version)
+	latestVersion, certInfo, err := gen.GetDataFromLatestVersion(encryptionCertificateJson, version)
+	if err != nil {
+		return "", "", "", "", "", fmt.Errorf("failed to get latest version - %v", err)
+	}
+	return latestVersion, certInfo["cert"], certInfo["expiry_date"], certInfo["expiry_days"], certInfo["status"], nil
 }
 
 // HpcrDownloadEncryptionCertificates downloads encryption certificates for specified HPCR versions from IBM Cloud.
