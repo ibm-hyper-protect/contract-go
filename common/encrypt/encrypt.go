@@ -90,8 +90,8 @@ func RandomPasswordGenerator() (string, error) {
 	return randomPassword, nil
 }
 
-// EncryptPassword encrypts a password using RSA encryption with a certificate.
-// It uses OpenSSL RSA encryption with the provided certificate and returns the result
+// EncryptPassword encrypts a password using OpenSSL PKEYUTL encryption with a certificate.
+// It uses OpenSSL PKEYUTL encryption (PKCS#1 v1.5 padding) with the provided certificate and returns the result
 // as a Base64-encoded string.
 //
 // Parameters:
@@ -112,7 +112,7 @@ func EncryptPassword(password, cert string) (string, error) {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
 
-	result, err := gen.ExecCommand(gen.GetOpenSSLPath(), password, "rsautl", "-encrypt", "-inkey", encryptCertPath, "-certin")
+	result, err := gen.ExecCommand(gen.GetOpenSSLPath(), password, "pkeyutl", "-encrypt", "-inkey", encryptCertPath, "-certin", "-pkeyopt", "rsa_padding_mode:pkcs1")
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
 	}
