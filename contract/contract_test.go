@@ -48,8 +48,7 @@ const (
 	simpleContractPath          = "../samples/simple_contract.yaml"
 	simpleContractInputChecksum = "7ef5b4c59544adc2ccdf86432ae0f652907009d0fe759743a0771a75bf88941c"
 
-	attestPubKeyContractPath          = "../samples/attest_pub_key_contract.yaml"
-	attestPubKeyContractInputChecksum = "67fb401db11bae9bd74abf71da5d1e52ccc9b20980d7b6b0f0cf64af26db638d"
+	attestPubKeyContractPath = "../samples/attest_pub_key_contract.yaml"
 
 	samplePrivateKeyPath = "../samples/encrypt/private.pem"
 	samplePublicKeyPath  = "../samples/encrypt/public.pem"
