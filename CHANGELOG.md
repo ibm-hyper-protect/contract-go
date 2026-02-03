@@ -1,3 +1,21 @@
+## [2.8.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.7.0...v2.8.0) (2026-02-03)
+
+### Features
+
+* add support for attestation public key ([9a5cd17](https://github.com/ibm-hyper-protect/contract-go/commit/9a5cd174a7402a32542798f98d131412422aa1bf))
+* update go version and node versionm ([2bb0780](https://github.com/ibm-hyper-protect/contract-go/commit/2bb07806ce41df539a5c4ff5377dc6051bbc98e7))
+
+### Documentation
+
+* update README and user documentation ([94267ac](https://github.com/ibm-hyper-protect/contract-go/commit/94267ac5ce6bc9ca325bfae8831ff8f41c6528a6))
+
+### Miscellaneous Chores
+
+* remove fmt from tests ([0c0a72c](https://github.com/ibm-hyper-protect/contract-go/commit/0c0a72ca35124a329ebf4d8094a246289a4cf3e1))
+* review comments ([208afbc](https://github.com/ibm-hyper-protect/contract-go/commit/208afbc388b941ea2b50752d951dac6aba996fb4))
+* review comments ([7de8bda](https://github.com/ibm-hyper-protect/contract-go/commit/7de8bda78ef61ee93786c8c829be175577cd7477))
+* review comments ([d3fc77d](https://github.com/ibm-hyper-protect/contract-go/commit/d3fc77d657ffacdf1cc2ff40a3acfb70a81792b4))
+
 ## [2.7.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.6.1...v2.7.0) (2026-01-20)
 
 ### Features
