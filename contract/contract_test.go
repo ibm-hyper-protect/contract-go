@@ -17,7 +17,6 @@ package contract
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"testing"
 
@@ -305,8 +304,6 @@ func TestEncryptWrapperAttestPubKey(t *testing.T) {
 	if err != nil {
 		t.Errorf("failed to sign and encrypt contract - %v", err)
 	}
-
-	fmt.Println(result)
 
 	assert.NotEmpty(t, result)
 }
