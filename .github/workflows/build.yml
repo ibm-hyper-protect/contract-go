@@ -17,8 +17,8 @@ on:
 env:
   # Currently no way to detect automatically
   DEFAULT_BRANCH: main
-  GO_VERSION: 1.24.7 # renovate: datasource=golang-version depName=golang
-  NODE_VERSION: 20
+  GO_VERSION: 1.25.6 # renovate: datasource=golang-version depName=golang
+  NODE_VERSION: 25.5.0
 
 jobs:
   commit-lint:
