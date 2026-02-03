@@ -319,8 +319,14 @@ func TestSignContract(t *testing.T) {
 
 // Testcase to check if GenFinalSignedContract() is able to generate signed contract
 func TestGenFinalSignedContract(t *testing.T) {
-	_, err := GenFinalSignedContract("test1", "test2", "test3")
-	if err != nil {
-		t.Errorf("failed to generate final signed and encrypted contract - %v", err)
-	}
+	_, err := GenFinalSignedContract("test1", "test2", "test3", "")
+
+	assert.NoError(t, err, "failed to generate final signed and encrypted contract")
+}
+
+// Testcase to check if GenFinalSignedContract() is able to generate signed contract with attestation public key
+func TestGenFinalSignedContractAttest(t *testing.T) {
+	_, err := GenFinalSignedContract("test1", "test2", "test3", "test4")
+
+	assert.NoError(t, err, "failed to generate final signed and encrypted contract")
 }

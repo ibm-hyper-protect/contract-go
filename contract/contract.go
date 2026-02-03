@@ -408,7 +408,9 @@ func encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey,
 		return "", fmt.Errorf("failed to sign contract - %v", err)
 	}
 
-	finalContract, err := enc.GenFinalSignedContract(encryptedWorkload, encryptedEnv, workloadEnvSignature)
+	attestationPublicKey, _ := contractMap["attestationPublicKey"].(string)
+
+	finalContract, err := enc.GenFinalSignedContract(encryptedWorkload, encryptedEnv, workloadEnvSignature, attestationPublicKey)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate final contract - %v", err)
 	}

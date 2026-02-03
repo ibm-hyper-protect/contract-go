@@ -48,6 +48,8 @@ const (
 	simpleContractPath          = "../samples/simple_contract.yaml"
 	simpleContractInputChecksum = "7ef5b4c59544adc2ccdf86432ae0f652907009d0fe759743a0771a75bf88941c"
 
+	attestPubKeyContractPath = "../samples/attest_pub_key_contract.yaml"
+
 	samplePrivateKeyPath = "../samples/encrypt/private.pem"
 	samplePublicKeyPath  = "../samples/encrypt/public.pem"
 
@@ -79,9 +81,19 @@ var (
 
 // common - common function to pull data from files
 func common(testType string) (string, string, string, string, string, error) {
-	contract, err := gen.ReadDataFromFile(simpleContractPath)
-	if err != nil {
-		return "", "", "", "", "", err
+	var contract string
+	var err error
+
+	if testType == "TestEncryptWrapperAttestPubKey" {
+		contract, err = gen.ReadDataFromFile(attestPubKeyContractPath)
+		if err != nil {
+			return "", "", "", "", "", err
+		}
+	} else {
+		contract, err = gen.ReadDataFromFile(simpleContractPath)
+		if err != nil {
+			return "", "", "", "", "", err
+		}
 	}
 
 	privateKey, err := gen.ReadDataFromFile(samplePrivateKeyPath)
@@ -93,7 +105,7 @@ func common(testType string) (string, string, string, string, string, error) {
 		return contract, "", "", "", "", nil
 	} else if testType == "TestHpcrContractSignedEncrypted" {
 		return contract, privateKey, "", "", "", nil
-	} else if testType == "TestEncryptWrapper" {
+	} else if testType == "TestEncryptWrapper" || testType == "TestEncryptWrapperAttestPubKey" {
 		publicKey, err := gen.ReadDataFromFile(samplePublicKeyPath)
 		if err != nil {
 			return "", "", "", "", "", err
@@ -268,6 +280,21 @@ func TestHpcrContractSignedEncryptedContractExpiryCsrPem(t *testing.T) {
 // Testcase to check if encryptWrapper() is able to sign and encrypt a contract
 func TestEncryptWrapper(t *testing.T) {
 	contract, privateKey, publicKey, _, _, err := common("TestEncryptWrapper")
+	if err != nil {
+		t.Errorf("failed to get contract, private key and public key - %v", err)
+	}
+
+	result, err := encryptWrapper(contract, sampleHyperProtectOsVersion, "", privateKey, publicKey)
+	if err != nil {
+		t.Errorf("failed to sign and encrypt contract - %v", err)
+	}
+
+	assert.NotEmpty(t, result)
+}
+
+// Testcase to check if encryptWrapper() is able to sign and encrypt a contract with attestation public key
+func TestEncryptWrapperAttestPubKey(t *testing.T) {
+	contract, privateKey, publicKey, _, _, err := common("TestEncryptWrapperAttestPubKey")
 	if err != nil {
 		t.Errorf("failed to get contract, private key and public key - %v", err)
 	}

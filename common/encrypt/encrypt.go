@@ -332,16 +332,21 @@ func SignContract(encryptedWorkload, encryptedEnv, privateKey string) (string, e
 // Parameters:
 //   - workload: Encrypted workload section (Base64-encoded)
 //   - env: Encrypted environment section (Base64-encoded)
-//   - workloadEnvSig: Base64-encoded signature of the workload and environment
+//   - workloadEnvSignature: Base64-encoded signature of the workload and environment
+//   - attestationPublicKey: plain text or Base64-encoded attestation public key
 //
 // Returns:
-//   - Final contract in YAML format with workload, env, and envWorkloadSignature fields
+//   - Final contract in YAML format with workload, env, envWorkloadSignature and attestationPublicKey (optional) fields
 //   - Error if YAML conversion fails
-func GenFinalSignedContract(workload, env, workloadEnvSig string) (string, error) {
+func GenFinalSignedContract(workload, env, workloadEnvSignature, attestationPublicKey string) (string, error) {
 	contract := map[string]interface{}{
 		"workload":             workload,
 		"env":                  env,
-		"envWorkloadSignature": workloadEnvSig,
+		"envWorkloadSignature": workloadEnvSignature,
+	}
+
+	if attestationPublicKey != "" {
+		contract["attestationPublicKey"] = attestationPublicKey
 	}
 
 	finalContract, err := gen.MapToYaml(contract)
