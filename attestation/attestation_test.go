@@ -48,3 +48,37 @@ func TestHpcrGetAttestationRecords(t *testing.T) {
 
 	assert.Contains(t, result, sampleAttestationRecordKey)
 }
+
+// Testcase to check HpcrVerifySignatureAttestationRecords parameter validation
+func TestHpcrVerifySignatureAttestationRecords_ParameterValidation(t *testing.T) {
+	// Test with empty attestation records
+	err := HpcrVerifySignatureAttestationRecords("", []byte("signature"), "cert")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "required parameter is missing")
+
+	// Test with empty signature
+	err = HpcrVerifySignatureAttestationRecords("records", []byte(""), "cert")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "required parameter is missing")
+
+	// Test with empty certificate
+	err = HpcrVerifySignatureAttestationRecords("records", []byte("signature"), "")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "required parameter is missing")
+}
+
+// Testcase to check HpcrVerifySignatureAttestationRecords with invalid certificate
+func TestHpcrVerifySignatureAttestationRecords_InvalidCertificate(t *testing.T) {
+	// Test with invalid PEM format
+	err := HpcrVerifySignatureAttestationRecords("records", []byte("signature"), "invalid-cert")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to parse PEM block")
+
+	// Test with valid PEM but invalid certificate
+	invalidCert := `-----BEGIN CERTIFICATE-----
+invalid-certificate-data
+-----END CERTIFICATE-----`
+	err = HpcrVerifySignatureAttestationRecords("records", []byte("signature"), invalidCert)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to parse PEM block from attestation certificate")
+}

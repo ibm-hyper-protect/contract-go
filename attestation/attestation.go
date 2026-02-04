@@ -16,6 +16,11 @@
 package attestation
 
 import (
+	"crypto"
+	"crypto/rsa"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 
 	attest "github.com/ibm-hyper-protect/contract-go/v2/common/decrypt"
@@ -54,4 +59,54 @@ func HpcrGetAttestationRecords(data, privateKey string) (string, error) {
 	}
 
 	return attestationRecords, nil
+}
+
+// HpcrVerifySignatureAttestationRecords verifies the signature of decrypted attestation records
+// against an IBM attestation certificate. This ensures the attestation records have not been
+// modified and were signed by IBM.
+//
+// The function expects the attestation records to be in decrypted form (output from
+// HpcrGetAttestationRecords). The signature should be the binary content of the
+// se-signature.bin file.
+//
+// Parameters:
+//   - attestationRecords: Decrypted attestation records content (se-checksums.txt)
+//   - signature: Binary signature data (se-signature.bin content)
+//   - attestationCert: IBM attestation certificate in PEM format
+//
+// Returns:
+//   - nil if signature verification succeeds
+//   - Error if verification fails or parameters are invalid
+func HpcrVerifySignatureAttestationRecords(attestationRecords string, signature []byte, attestationCert string) error {
+	if gen.CheckIfEmpty(attestationRecords, attestationCert) || len(signature) == 0 {
+		return fmt.Errorf(missingParameterErrStatement)
+	}
+
+	// Parse the attestation certificate to extract the public key
+	block, _ := pem.Decode([]byte(attestationCert))
+	if block == nil {
+		return fmt.Errorf("failed to parse PEM block from attestation certificate")
+	}
+
+	cert, err := x509.ParseCertificate(block.Bytes)
+	if err != nil {
+		return fmt.Errorf("failed to parse attestation certificate: %v", err)
+	}
+
+	// Ensure the certificate contains an RSA public key
+	rsaPublicKey, ok := cert.PublicKey.(*rsa.PublicKey)
+	if !ok {
+		return fmt.Errorf("attestation certificate does not contain a valid RSA public key")
+	}
+
+	// Create SHA256 hash of the attestation records
+	hashed := sha256.Sum256([]byte(attestationRecords))
+
+	// Verify the signature using PKCS#1 v1.5 padding (default for OpenSSL)
+	err = rsa.VerifyPKCS1v15(rsaPublicKey, crypto.SHA256, hashed[:], signature)
+	if err != nil {
+		return fmt.Errorf("signature verification failed: %v", err)
+	}
+
+	return nil
 }
