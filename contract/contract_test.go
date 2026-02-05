@@ -17,7 +17,6 @@ package contract
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"testing"
 
@@ -221,8 +220,6 @@ func TestHpcrVerifyContractAttestPubKey(t *testing.T) {
 	if err != nil {
 		t.Errorf("failed to get contract - %v", err)
 	}
-
-	fmt.Println(contract)
 
 	err = HpcrVerifyContract(contract, "")
 	if err != nil {
