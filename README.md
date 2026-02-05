@@ -57,6 +57,7 @@ Learn more:
   - Create encrypted and signed contracts
   - Support contract expiry with CSR (Certificate Signing Request)
   - Validate contract schemas
+  - Decrypt encrypted text in Hyper Protect format
 
 - **Archive Management**
   - Generate Base64 tar archives of `docker-compose.yaml` or `pods.yaml`
