@@ -128,7 +128,7 @@ func DecryptText(data, privateKey string) (string, error) {
 
 	decryptedData, err := DecryptWorkload(password, encodedEncryptedData)
 	if err != nil {
-		return "", fmt.Errorf("failed to decrypt attestation records - %v", err)
+		return "", fmt.Errorf("failed to decrypt text - %v", err)
 	}
 
 	return decryptedData, nil

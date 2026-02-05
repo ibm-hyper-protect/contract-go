@@ -42,5 +42,10 @@ func HpcrGetAttestationRecords(data, privateKey string) (string, error) {
 		return "", fmt.Errorf(missingParameterErrStatement)
 	}
 
-	return decrypt.DecryptText(data, privateKey)
+	decryptedText, err := decrypt.DecryptText(data, privateKey)
+	if err != nil {
+		return "", fmt.Errorf("failed to decrypt attestation records - %v", err)
+	}
+
+	return decryptedText, nil
 }

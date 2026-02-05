@@ -486,7 +486,6 @@ func main() {
 
 ---
 
-
 ### HpcrTextEncrypted
 
 Encrypts plain text using the Hyper Protect encryption format.
@@ -602,6 +601,75 @@ func main() {
 
 **Common Errors:**
 - `"not a JSON data"` - Invalid JSON format in plainJson parameter
+
+---
+
+### HpcrTextDecrypted
+
+Decrypts the data encrypted using Hyper Protect encrypted format
+
+**Package:** `github.com/ibm-hyper-protect/contract-go/v2/contract`
+
+**Signature:**
+```go
+func HpcrTextDecrypted(encryptedText, privateKey) (string, string, string, error)
+```
+
+**Parameters:**
+
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `encryptedText` | `string` | Required | Text to decrypt |
+| `privateKey` | `string` | Required | Private key to decrypt the text |
+
+**Returns:**
+
+| Return | Type | Description |
+|--------|------|-------------|
+| decrypted Data | `string` | Decrypt text in format `hyper-protect-basic.<password>.<data>` |
+| Input Checksum | `string` | SHA256 of encrypted text |
+| Output Checksum | `string` | SHA256 of decrypted output |
+| Error | `error` | Error if decryption fails |
+
+**Example:**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+)
+
+func main() {
+    text := "sensitive data"
+    cert := ```....your certificate...```
+    privateKey := ```...your private key...```
+
+    // Use default certificate
+    encrypted, _, _, err := contract.HpcrTextEncrypted(text, "", cert)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("Encrypted: %s\n", encrypted)
+
+    decrypted, inputHash, outputHash, err := contract.HpcrTextDecrypted(encrypted, privateKey)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("Decrypted: %s\n", decrypted)
+    fmt.Printf("Input checksum: %s\n", inputHash)
+    fmt.Printf("Output checksum: %s\n", outputHash)
+}
+```
+
+**Common Errors:**
+- `"required parameter is empty"` - encryptedText parameter is missing or empty
+- `"openssl not found"` - OpenSSL not installed or not in PATH
+- `failed to decrypt text` - failed to decrypt the encrypted text
 
 ---
 
