@@ -61,7 +61,12 @@ const (
 
 	sampleHyperProtectOsVersion = "hpvs"
 
-	// HPCC Initdata
+	encryptedTextPath  = "../samples/decrypt/encrypt.txt"
+	encryptedTextSha   = "df5aa6560eea14e80831fd16b7a4771cc12630912c136fcdb3dda9a1b2d3a23f"
+	textPrivateKeyPath = "../samples/decrypt/private.key"
+	decryptedText      = "hello-world"
+	decryptedTextSha   = "afa27b44d43b02a9fea41d13cedc2e4016cfcf87c5dbf990e593669aa8ce286d"
+
 	sampleSignedEncryptedContract              = "../samples/hpcc/signed-encrypt-hpcc.yaml"
 	sampleGzippedInidata                       = "../samples/hpcc/gzipped-initdata"
 	sampleSingedEncryptedContractInputChecksum = "1b6ee574d6061896c23fad0711d1a89b8d9b7748506ab089201db1335605daea"
@@ -328,6 +333,28 @@ func TestEncrypter(t *testing.T) {
 	}
 
 	assert.Contains(t, result, hpcrEncryptPrefix)
+}
+
+// Testcase to check if HpcrTextDecrypted() is able to decrypt and generate SHA256 for encrypted string
+func TestHpcrTextDecrypted(t *testing.T) {
+	encryptedString, err := gen.ReadDataFromFile(encryptedTextPath)
+	if err != nil {
+		t.Errorf("failed to read encrypted data - %v", err)
+	}
+
+	privateKey, err := gen.ReadDataFromFile(textPrivateKeyPath)
+	if err != nil {
+		t.Errorf("failed to read private key - %v", err)
+	}
+
+	result, inputSha, outputSha, err := HpcrTextDecrypted(encryptedString, privateKey)
+	if err != nil {
+		t.Errorf("failed to decrypt text - %v", result)
+	}
+
+	assert.Equal(t, result, decryptedText)
+	assert.Equal(t, inputSha, encryptedTextSha)
+	assert.Equal(t, outputSha, decryptedTextSha)
 }
 
 // Testcase to check HpccInitdata() is able to gzip data.

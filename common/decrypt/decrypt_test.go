@@ -28,6 +28,10 @@ const (
 	encryptedChecksumPath      = "../../samples/attestation/se-checksums.txt.enc"
 	privateKeyPath             = "../../samples/attestation/private.pem"
 	sampleAttestationRecordKey = "baseimage"
+
+	encryptedTextPath  = "../../samples/decrypt/encrypt.txt"
+	textPrivateKeyPath = "../../samples/decrypt/private.key"
+	decryptedText      = "hello-world"
 )
 
 // Testcase to check if DecryptPassword() is able to decrypt password
@@ -76,4 +80,23 @@ func TestDecryptWorkload(t *testing.T) {
 	}
 
 	assert.Contains(t, result, sampleAttestationRecordKey)
+}
+
+func TestDecryptText(t *testing.T) {
+	encryptedString, err := gen.ReadDataFromFile(encryptedTextPath)
+	if err != nil {
+		t.Errorf("failed to read encrypted data - %v", err)
+	}
+
+	privateKey, err := gen.ReadDataFromFile(textPrivateKeyPath)
+	if err != nil {
+		t.Errorf("failed to read private key - %v", err)
+	}
+
+	result, err := DecryptText(encryptedString, privateKey)
+	if err != nil {
+		t.Errorf("failed to decrypt text - %v", result)
+	}
+
+	assert.Equal(t, result, decryptedText)
 }
