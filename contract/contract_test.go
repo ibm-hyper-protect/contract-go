@@ -17,6 +17,7 @@ package contract
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"testing"
 
@@ -84,7 +85,7 @@ func common(testType string) (string, string, string, string, string, error) {
 	var contract string
 	var err error
 
-	if testType == "TestEncryptWrapperAttestPubKey" {
+	if testType == "TestEncryptWrapperAttestPubKey" || testType == "TestHpcrVerifyContractAttestPubKey" {
 		contract, err = gen.ReadDataFromFile(attestPubKeyContractPath)
 		if err != nil {
 			return "", "", "", "", "", err
@@ -101,7 +102,7 @@ func common(testType string) (string, string, string, string, string, error) {
 		return "", "", "", "", "", err
 	}
 
-	if testType == "TestHpcrVerifyContract" {
+	if testType == "TestHpcrVerifyContract" || testType == "TestHpcrVerifyContractAttestPubKey" {
 		return contract, "", "", "", "", nil
 	} else if testType == "TestHpcrContractSignedEncrypted" {
 		return contract, privateKey, "", "", "", nil
@@ -207,6 +208,21 @@ func TestHpcrVerifyContract(t *testing.T) {
 	if err != nil {
 		t.Errorf("failed to get contract - %v", err)
 	}
+
+	err = HpcrVerifyContract(contract, "")
+	if err != nil {
+		t.Errorf("failed to verify contract schema - %v", err)
+	}
+}
+
+// Testcase to check if HpcrVerifyContract() is able to validate contract schema with attestation public key
+func TestHpcrVerifyContractAttestPubKey(t *testing.T) {
+	contract, _, _, _, _, err := common(t.Name())
+	if err != nil {
+		t.Errorf("failed to get contract - %v", err)
+	}
+
+	fmt.Println(contract)
 
 	err = HpcrVerifyContract(contract, "")
 	if err != nil {
