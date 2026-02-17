@@ -1,3 +1,13 @@
+## [2.9.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.8.0...v2.9.0) (2026-02-17)
+
+### Features
+
+* Add support to encrypt attestationPublicKey ([51b3fda](https://github.com/ibm-hyper-protect/contract-go/commit/51b3fda0f114e5fda8f394711f1bab01c94f842a))
+
+### Miscellaneous Chores
+
+* **deps:** update docker.io/library/hello-world docker digest to ef54e83 ([#190](https://github.com/ibm-hyper-protect/contract-go/issues/190)) ([3045b62](https://github.com/ibm-hyper-protect/contract-go/commit/3045b62e5e9e012ff27f964937c9aae23c1db4cf))
+
 ## [2.8.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.7.0...v2.8.0) (2026-02-03)
 
 ### Features
