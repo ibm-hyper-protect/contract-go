@@ -612,7 +612,7 @@ Decrypts the data encrypted using Hyper Protect encrypted format
 
 **Signature:**
 ```go
-func HpcrTextDecrypted(encryptedText, privateKey) (string, string, string, error)
+func HpcrTextDecrypted(encryptedText, privateKey string) (string, string, string, error)
 ```
 
 **Parameters:**
@@ -667,7 +667,7 @@ func main() {
 ```
 
 **Common Errors:**
-- `"required parameter is empty"` - encryptedText parameter is missing or empty
+- `"required parameter is empty"` - encryptedText or privateKey or both parameter(s) are missing or empty
 - `"openssl not found"` - OpenSSL not installed or not in PATH
 - `failed to decrypt text` - failed to decrypt the encrypted text
 

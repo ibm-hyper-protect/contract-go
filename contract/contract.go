@@ -130,7 +130,7 @@ func HpcrTextDecrypted(encryptedText, privateKey string) (string, string, string
 
 	decryptedText, err := dec.DecryptText(encryptedText, privateKey)
 	if err != nil {
-		return "", "", "", fmt.Errorf("failed to decrypt string - %v", err)
+		return "", "", "", fmt.Errorf("failed to decrypt text - %v", err)
 	}
 
 	return decryptedText, gen.GenerateSha256(encryptedText), gen.GenerateSha256(decryptedText), nil
