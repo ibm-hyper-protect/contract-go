@@ -409,8 +409,15 @@ func encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey,
 	}
 
 	attestationPublicKey, _ := contractMap["attestationPublicKey"].(string)
+	var encryptedAttestationPublicKey string
+	if attestationPublicKey != "" {
+		encryptedAttestationPublicKey, err = encrypter(attestationPublicKey, hyperProtectOs, encryptCertificate)
+		if err != nil {
+			return "", fmt.Errorf("failed to encrypt attestationPublicKey - %v", err)
+		}
+	}
 
-	finalContract, err := enc.GenFinalSignedContract(encryptedWorkload, encryptedEnv, workloadEnvSignature, attestationPublicKey)
+	finalContract, err := enc.GenFinalSignedContract(encryptedWorkload, encryptedEnv, workloadEnvSignature, encryptedAttestationPublicKey)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate final contract - %v", err)
 	}

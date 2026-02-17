@@ -289,6 +289,10 @@ func TestEncryptWrapper(t *testing.T) {
 		t.Errorf("failed to sign and encrypt contract - %v", err)
 	}
 
+	assert.NotContains(t, result, "attestationPublicKey: hyper-protect-basic.")
+	assert.Contains(t, result, "env: hyper-protect-basic.")
+	assert.Contains(t, result, "envWorkloadSignature:")
+	assert.Contains(t, result, "workload: hyper-protect-basic.")
 	assert.NotEmpty(t, result)
 }
 
@@ -304,6 +308,10 @@ func TestEncryptWrapperAttestPubKey(t *testing.T) {
 		t.Errorf("failed to sign and encrypt contract - %v", err)
 	}
 
+	assert.Contains(t, result, "attestationPublicKey: hyper-protect-basic.")
+	assert.Contains(t, result, "env: hyper-protect-basic.")
+	assert.Contains(t, result, "envWorkloadSignature:")
+	assert.Contains(t, result, "workload: hyper-protect-basic.")
 	assert.NotEmpty(t, result)
 }
 
