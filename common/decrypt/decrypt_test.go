@@ -28,6 +28,11 @@ const (
 	encryptedChecksumPath      = "../../samples/attestation/se-checksums.txt.enc"
 	privateKeyPath             = "../../samples/attestation/private.pem"
 	sampleAttestationRecordKey = "baseimage"
+
+	encryptedTextPath        = "../../samples/decrypt/encrypt.txt"
+	invalidEncryptedTextPath = "../../samples/decrypt/encrypt.invalid.txt"
+	textPrivateKeyPath       = "../../samples/decrypt/private.key"
+	decryptedText            = "hello-world"
 )
 
 // Testcase to check if DecryptPassword() is able to decrypt password

@@ -1,3 +1,20 @@
+## [2.10.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.9.0...v2.10.0) (2026-02-17)
+
+### Features
+
+* add support to decrypt string ([b535592](https://github.com/ibm-hyper-protect/contract-go/commit/b5355925e7d0beb7a4a6540b5e39969d00a23e8e))
+* add testcase for contract with attestation public key ([76d4e67](https://github.com/ibm-hyper-protect/contract-go/commit/76d4e67c5a286994fdfcd952780834639adefc76))
+* add testcases for decrypt ([a03995f](https://github.com/ibm-hyper-protect/contract-go/commit/a03995f4de79fdfe16526441e4af568fa064a69f))
+
+### Documentation
+
+* update README and user documentation ([142a5d0](https://github.com/ibm-hyper-protect/contract-go/commit/142a5d0f41044500d4fd8220dbf5219a0158f659))
+
+### Miscellaneous Chores
+
+* remove fmt from testcases ([a9b6e10](https://github.com/ibm-hyper-protect/contract-go/commit/a9b6e1007850b0ec8f37842440b14f6478a5346e))
+* review comments ([03e54e8](https://github.com/ibm-hyper-protect/contract-go/commit/03e54e8f37f2717434c6a7bb2c30938a55ed338c))
+
 ## [2.9.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.8.0...v2.9.0) (2026-02-17)
 
 ### Features
