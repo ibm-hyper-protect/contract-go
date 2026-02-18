@@ -77,7 +77,7 @@ func TestHpcrGetAttestationRecordsDecryptWorkloadFailure(t *testing.T) {
 		t.Errorf("failed to read encrypted checksum - %v", err)
 	}
 
-	// Use valid encrypted password but corrupt the encrypted data part
+	// Use valid encrypted password but corrupt the encrypted data
 	parts := strings.Split(encChecksum, ".")
 	corruptedData := parts[0] + "." + parts[1] + ".invalid-base64-data!@#"
 
