@@ -491,3 +491,124 @@ func TestGzipInitData(t *testing.T) {
 
 	assert.Equal(t, sampleStringData, string(decompressed), "Decompressed data does not match with original string")
 }
+
+// Testcase to check if YamlToJson() can convert YAML string to JSON
+func TestYamlToJson(t *testing.T) {
+	yamlStr := `
+name: test
+version: 1.0
+enabled: true
+`
+	jsonStr, err := YamlToJson(yamlStr)
+	if err != nil {
+		t.Errorf("failed to convert YAML to JSON - %v", err)
+	}
+
+	assert.NotEmpty(t, jsonStr)
+	assert.Contains(t, jsonStr, "test")
+	assert.Contains(t, jsonStr, "1")
+
+	// Verify it's valid JSON
+	var result map[string]interface{}
+	err = json.Unmarshal([]byte(jsonStr), &result)
+	if err != nil {
+		t.Errorf("output is not valid JSON - %v", err)
+	}
+
+	assert.Equal(t, "test", result["name"])
+	assert.Equal(t, float64(1), result["version"])
+	assert.Equal(t, true, result["enabled"])
+}
+
+// Testcase to check if YamlToJson() handles complex YAML
+func TestYamlToJsonComplexYaml(t *testing.T) {
+	complexYaml := `
+name: test
+nested:
+  key1: value1
+  key2: value2
+list:
+  - item1
+  - item2
+`
+	jsonStr, err := YamlToJson(complexYaml)
+	if err != nil {
+		t.Errorf("failed to convert complex YAML to JSON - %v", err)
+	}
+
+	assert.NotEmpty(t, jsonStr)
+	assert.Contains(t, jsonStr, "nested")
+	assert.Contains(t, jsonStr, "list")
+}
+
+// Testcase to check if YamlToJson() handles empty string
+func TestYamlToJsonEmptyString(t *testing.T) {
+	jsonStr, err := YamlToJson("")
+	if err != nil {
+		t.Errorf("failed to convert empty YAML - %v", err)
+	}
+
+	assert.Equal(t, "null", jsonStr)
+}
+
+// Testcase to check if DecodeBase64String() handles invalid base64
+func TestDecodeBase64StringInvalid(t *testing.T) {
+	_, err := DecodeBase64String("invalid-base64-!@#$%")
+	assert.Error(t, err)
+}
+
+// Testcase to check if KeyValueInjector() handles invalid YAML
+func TestKeyValueInjectorInvalidYaml(t *testing.T) {
+	invalidYaml := "not: valid: yaml: structure"
+	_, err := KeyValueInjector(invalidYaml, "key", "value")
+	assert.Error(t, err)
+}
+
+// Testcase to check if FetchEncryptionCertificate() handles invalid hyperProtectOs
+func TestFetchEncryptionCertificateInvalidOs(t *testing.T) {
+	_, err := FetchEncryptionCertificate("invalid-os", "")
+	assert.Error(t, err)
+}
+
+// Testcase to check if MapToYaml() handles empty map
+func TestMapToYamlEmptyMap(t *testing.T) {
+	emptyMap := make(map[string]interface{})
+	_, err := MapToYaml(emptyMap)
+	assert.NoError(t, err)
+}
+
+// Testcase to check if MapToYaml() handles valid map
+func TestMapToYamlSuccess(t *testing.T) {
+	testMap := map[string]interface{}{
+		"key1": "value1",
+		"key2": 123,
+	}
+	result, err := MapToYaml(testMap)
+	assert.NoError(t, err)
+	assert.Contains(t, result, "key1")
+	assert.Contains(t, result, "value1")
+}
+
+// Testcase to check if CheckUrlExists() handles invalid URL
+func TestCheckUrlExistsInvalidUrl(t *testing.T) {
+	_, err := CheckUrlExists("not-a-valid-url")
+	assert.Error(t, err)
+}
+
+// Testcase to check if GetDataFromLatestVersion() handles empty URL
+func TestGetDataFromLatestVersionEmptyUrl(t *testing.T) {
+	_, _, err := GetDataFromLatestVersion("", "")
+	assert.Error(t, err)
+}
+
+// Testcase to check if CheckEncryptionCertValidity() handles invalid certificate
+func TestCheckEncryptionCertValidityInvalid(t *testing.T) {
+	_, _, _, err := CheckEncryptionCertValidity("invalid-certificate")
+	assert.Error(t, err)
+}
+
+// Testcase to check if CheckEncryptionCertValidityForContractEncryption() handles invalid certificate
+func TestCheckEncryptionCertValidityForContractEncryptionInvalid(t *testing.T) {
+	_, err := CheckEncryptionCertValidityForContractEncryption("invalid-certificate")
+	assert.Error(t, err)
+}
