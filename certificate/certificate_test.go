@@ -116,3 +116,21 @@ func TestHpcrDownloadEncryptionCertificates(t *testing.T) {
 	_, err = HpcrValidateEncryptionCertificate(encryptionCert)
 	assert.NoError(t, err)
 }
+
+// Testcase to check if HpcrGetEncryptionCertificateFromJson() handles empty parameters
+func TestHpcrGetEncryptionCertificateFromJsonEmptyJson(t *testing.T) {
+	_, _, _, _, _, err := HpcrGetEncryptionCertificateFromJson("", "")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), missingParameterErrStatement)
+}
+
+// Testcase to check if HpcrDownloadEncryptionCertificates() handles YAML format
+func TestHpcrDownloadEncryptionCertificatesYamlFormat(t *testing.T) {
+	result, err := HpcrDownloadEncryptionCertificates(sampleEncryptionCertVersions, "yaml", sampleCertDownloadTemplate)
+	if err != nil {
+		t.Errorf("failed to download certificates in YAML format - %v", err)
+	}
+
+	assert.NotEmpty(t, result)
+	assert.Contains(t, result, "1.0.20")
+}
