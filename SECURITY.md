@@ -144,7 +144,7 @@ Only modify the certificate download URL if you're using a trusted mirror or tes
 
 This library performs cryptographic operations including:
 
-- **RSA encryption/decryption** - Using OpenSSL
+- **RSA encryption/decryption** - Using OpenSSL pkeyutl (PKCS#1 v1.5)
 - **AES-256-CBC encryption** - For contract data
 - **SHA-256 hashing** - For integrity checking
 - **Digital signatures** - For contract signing
