@@ -6,7 +6,10 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/ibm-hyper-protect/contract-go.svg)](https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go/v2)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-> **Note:** The offering name has been changed from **Hyper Protect Virtual Servers (HPVS)** to **IBM Confidential Computing Container Runtime (CCCR)**.
+> **Note:** The offering names have been changed:
+> - **Hyper Protect Virtual Servers (HPVS)** → **IBM Confidential Computing Container Runtime (CCCR)**
+> - **Hyper Protect Container Runtime for Red Hat Virtualization (HPCR-RHVS)** → **IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCCRV)**
+> - **Hyper Protect Confidential Container (HPCC)** → **IBM Confidential Computing Containers for Red Hat OpenShift Container Platform**
 
 A Go library for automating the provisioning and management of IBM Hyper Protect confidential computing workloads.
 
