@@ -6,6 +6,8 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/ibm-hyper-protect/contract-go.svg)](https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go/v2)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
+> **Note:** The offering name has been changed from **Hyper Protect Virtual Servers (HPVS)** to **IBM Confidential Computing Container Runtime (CCCR)**.
+
 A Go library for automating the provisioning and management of IBM Hyper Protect confidential computing workloads.
 
 ## Table of Contents
@@ -26,9 +28,9 @@ A Go library for automating the provisioning and management of IBM Hyper Protect
 
 The `contract-go` library automates the provisioning of IBM Hyper Protect confidential computing solutions:
 
-- **Hyper Protect Virtual Servers (HPVS)** - Secure virtual servers on IBM Cloud
-- **Hyper Protect Container Runtime (HPCR)** for RedHat Virtualization (RHVS)
-- **Hyper Protect Confidential Container (HPCC)** for Red Hat OpenShift Peer Pods
+- **IBM Confidential Computing Container Runtime (CCCR)** - Secure virtual servers on IBM Cloud
+- **IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCCRV)**
+- **IBM Confidential Computing Containers for Red Hat OpenShift Container Platform (HPCC)**
 
 This library provides cryptographic operations, contract generation, validation, and management capabilities for deploying workloads in secure enclaves on IBM LinuxONE.
 
@@ -39,8 +41,8 @@ IBM Hyper Protect services provide confidential computing capabilities that prot
 Learn more:
 
 - [Confidential computing with LinuxONE](https://cloud.ibm.com/docs/vpc?topic=vpc-about-se)
-- [IBM Hyper Protect Virtual Servers](https://www.ibm.com/docs/en/hpvs/2.2.x)
-- [IBM Hyper Protect Confidential Container for Red Hat OpenShift](https://www.ibm.com/docs/en/hpcc/1.1.x)
+- [IBM Confidential Computing Container Runtime (CCCR)](https://www.ibm.com/docs/en/hpvs/2.2.x)
+- [IBM Confidential Computing Containers for Red Hat OpenShift Container Platform](https://www.ibm.com/docs/en/hpcc/1.1.x)
 
 ## Features
 
@@ -48,7 +50,7 @@ Learn more:
   - Decrypt encrypted attestation records
 
 - **Certificate Operations**
-  - Download HPVS encryption certificates from IBM Cloud
+  - Download CCCR encryption certificates from IBM Cloud
   - Extract specific encryption certificates by version
   - Validate expiry of encryption certificate
 
@@ -64,12 +66,12 @@ Learn more:
   - Support encrypted base64 tar generation
 
 - **Image Selection**
-  - Retrieve latest HPVS image details from IBM Cloud API
+  - Retrieve latest CCCR image details from IBM Cloud API
   - Filter images by semantic versioning
 
 - **Network Validation**
   - Validate network-config schemas for on-premise deployments
-  - Support HPVS, HPCR RHVS, and HPCC Peer Pod configurations
+  - Support CCCR, CCCRV, and IBM Confidential Computing Containers for Red Hat OpenShift Container Platform configurations
 
 ## Installation
 
@@ -130,7 +132,7 @@ attestationPublicKey: LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQ0lqQU5CZ2txaGtpRz
     // Generate signed and encrypted contract
     signedContract, inputHash, outputHash, err := contract.HpcrContractSignedEncrypted(
         contractYAML,
-        "hpvs",              // Hyper Protect OS type
+        "hpvs",              // Hyper Protect OS type (CCCR)
         "",                  // Use default encryption certificate
         privateKey,          // Your RSA private key
     )
@@ -188,9 +190,9 @@ Comprehensive documentation is available at:
 
 | Platform | Description | Support Status |
 |----------|-------------|----------------|
-| HPVS | Hyper Protect Virtual Servers | Supported |
-| HPCR-RHVS | Hyper Protect Container Runtime for Red Hat Virtualization | Supported |
-| HPCC-PeerPod | Hyper Protect Confidential Container Peer Pods | Supported |
+| CCCR | IBM Confidential Computing Container Runtime | Supported |
+| CCCRV | IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions | Supported |
+| IBM Confidential Computing Containers for Red Hat OpenShift Container Platform | IBM Confidential Computing Containers for Red Hat OpenShift Container Platform | Supported |
 
 ## Examples
 
@@ -210,8 +212,8 @@ This library is used by several tools in the IBM Hyper Protect ecosystem:
 | [contract-cli](https://github.com/ibm-hyper-protect/contract-cli) | CLI tool for generating Hyper Protect contracts |
 | [terraform-provider-hpcr](https://github.com/ibm-hyper-protect/terraform-provider-hpcr) | Terraform provider for Hyper Protect contracts |
 | [k8s-operator-hpcr](https://github.com/ibm-hyper-protect/k8s-operator-hpcr) | Kubernetes operator for contract management |
-| [linuxone-vsi-automation-samples](https://github.com/ibm-hyper-protect/linuxone-vsi-automation-samples) | Terraform examples for HPVS and HPCR RHVS |
-| [hyper-protect-virtual-server-samples](https://github.com/ibm-hyper-protect/hyper-protect-virtual-server-samples) | HPVS feature samples and scripts |
+| [linuxone-vsi-automation-samples](https://github.com/ibm-hyper-protect/linuxone-vsi-automation-samples) | Terraform examples for CCCR and CCCRV |
+| [hyper-protect-virtual-server-samples](https://github.com/ibm-hyper-protect/hyper-protect-virtual-server-samples) | CCCR feature samples and scripts |
 
 ## Contributing
 
