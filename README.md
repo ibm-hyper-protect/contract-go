@@ -195,7 +195,7 @@ Comprehensive documentation is available at:
 |----------|-------------|----------------|
 | CCCR | IBM Confidential Computing Container Runtime | Supported |
 | CCCRV | IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions | Supported |
-| IBM Confidential Computing Containers for Red Hat OpenShift Container Platform | IBM Confidential Computing Containers for Red Hat OpenShift Container Platform | Supported |
+| IBM Confidential Computing Containers for Red Hat OpenShift Container Platform (Peer Pods) | IBM Confidential Computing Containers for Red Hat OpenShift Container Platform | Supported |
 
 ## Examples
 
