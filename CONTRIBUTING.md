@@ -34,7 +34,7 @@ We use GitHub issue templates to ensure we collect all necessary information. To
    - Expected vs actual behavior
    - Code samples demonstrating the issue
    - Environment details (Go version, OS, OpenSSL version, etc.)
-   - Target platform (HPVS, HPCR-RHVS, HPCC-PeerPod)
+   - Target platform (CCCR, CCCRV, IBM Confidential Computing Containers for Red Hat OpenShift Container Platform)
 
 **Important**: For security vulnerabilities, **do NOT create a public issue**. Instead, report them via [GitHub Security Advisories](https://github.com/ibm-hyper-protect/contract-go/security/advisories/new) or follow our [Security Policy](SECURITY.md).
 
