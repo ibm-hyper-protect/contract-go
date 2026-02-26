@@ -319,10 +319,344 @@ func TestSignContract(t *testing.T) {
 
 // Testcase to check if GenFinalSignedContract() is able to generate signed contract
 func TestGenFinalSignedContract(t *testing.T) {
-	_, err := GenFinalSignedContract("test1", "test2", "test3")
+	_, err := GenFinalSignedContract("test1", "test2", "test3", "")
+
+	assert.NoError(t, err, "failed to generate final signed and encrypted contract")
+}
+
+// Testcase to check if GenFinalSignedContract() is able to generate signed contract with attestation public key
+func TestGenFinalSignedContractAttest(t *testing.T) {
+	_, err := GenFinalSignedContract("test1", "test2", "test3", "test4")
+
+	assert.NoError(t, err, "failed to generate final signed and encrypted contract")
+}
+
+// Testcase to check if GeneratePublicKey() handles invalid private key
+func TestGeneratePublicKeyInvalidPrivateKey(t *testing.T) {
+	_, err := GeneratePublicKey("invalid-private-key")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to execute openssl command")
+}
+
+// Testcase to check if EncryptPassword() handles invalid certificate
+func TestEncryptPasswordInvalidCertificate(t *testing.T) {
+	_, err := EncryptPassword("password123", "invalid-certificate")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to execute openssl command")
+}
+
+// Testcase to check if SignContract() handles invalid private key
+func TestSignContractInvalidPrivateKey(t *testing.T) {
+	contract, err := gen.ReadDataFromFile(simpleContractPath)
 	if err != nil {
-		t.Errorf("failed to generate final signed and encrypted contract - %v", err)
+		t.Errorf("failed to read contract - %v", err)
 	}
+
+	_, err = SignContract(contract, "", "invalid-private-key")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to execute openssl command")
+}
+
+// Testcase to check if RandomPasswordGenerator() works correctly
+func TestRandomPasswordGeneratorSuccess(t *testing.T) {
+	password, err := RandomPasswordGenerator()
+	assert.NoError(t, err)
+	assert.NotEmpty(t, password)
+}
+
+// Testcase to check if EncryptPassword() handles empty certificate
+func TestEncryptPasswordEmptyCertificate(t *testing.T) {
+	_, err := EncryptPassword("password123", "")
+	assert.Error(t, err)
+}
+
+// Testcase to check if CreateSigningCert() handles invalid CA certificate
+func TestCreateSigningCertInvalidCaCert(t *testing.T) {
+	privateKey, err := gen.ReadDataFromFile(samplePrivateKeyPath)
+	if err != nil {
+		t.Errorf("failed to read private key - %v", err)
+	}
+
+	caKey, err := gen.ReadDataFromFile(sampleCaKeyPath)
+	if err != nil {
+		t.Errorf("failed to read CA key - %v", err)
+	}
+
+	csrParams := map[string]interface{}{
+		"country":  sampleCsrCountry,
+		"state":    sampleCsrState,
+		"location": sampleCsrLocation,
+		"org":      sampleCsrOrg,
+		"unit":     sampleCsrUnit,
+		"domain":   sampleCsrDomain,
+		"mail":     sampleCsrMailId,
+	}
+
+	csrParamsJson, _ := json.Marshal(csrParams)
+
+	_, err = CreateSigningCert(privateKey, "invalid-ca-cert", caKey, string(csrParamsJson), "", sampleExpiryDays)
+	assert.Error(t, err)
+}
+
+// Testcase to check if CreateSigningCert() handles invalid CA key
+func TestCreateSigningCertInvalidCaKey(t *testing.T) {
+	privateKey, err := gen.ReadDataFromFile(samplePrivateKeyPath)
+	if err != nil {
+		t.Errorf("failed to read private key - %v", err)
+	}
+
+	caCert, err := gen.ReadDataFromFile(sampleCaCertPath)
+	if err != nil {
+		t.Errorf("failed to read CA certificate - %v", err)
+	}
+
+	csrParams := map[string]interface{}{
+		"country":  sampleCsrCountry,
+		"state":    sampleCsrState,
+		"location": sampleCsrLocation,
+		"org":      sampleCsrOrg,
+		"unit":     sampleCsrUnit,
+		"domain":   sampleCsrDomain,
+		"mail":     sampleCsrMailId,
+	}
+
+	csrParamsJson, _ := json.Marshal(csrParams)
+
+	_, err = CreateSigningCert(privateKey, caCert, "invalid-ca-key", string(csrParamsJson), "", sampleExpiryDays)
+	assert.Error(t, err)
+}
+
+// Testcase to check if CreateCert() handles invalid private key
+func TestCreateCertInvalidPrivateKey(t *testing.T) {
+	csrParams := map[string]interface{}{
+		"country":  sampleCsrCountry,
+		"state":    sampleCsrState,
+		"location": sampleCsrLocation,
+		"org":      sampleCsrOrg,
+		"unit":     sampleCsrUnit,
+		"domain":   sampleCsrDomain,
+		"mail":     sampleCsrMailId,
+	}
+
+	csrParamsJson, _ := json.Marshal(csrParams)
+
+	_, err := CreateCert("invalid-private-key", string(csrParamsJson), "", sampleExpiryDays)
+	assert.Error(t, err)
+}
+
+// Testcase to check if EncryptContract() works correctly
+func TestEncryptContractSuccess(t *testing.T) {
+	password := "testpassword123"
+	contract := "test contract data"
+
+	result, err := EncryptContract(password, contract)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+}
+
+// Testcase to check if EncryptFinalStr() works correctly
+func TestEncryptFinalStrSuccess(t *testing.T) {
+	encryptedPassword := "encryptedpass"
+	encryptedContract := "encryptedcontract"
+
+	result := EncryptFinalStr(encryptedPassword, encryptedContract)
+	assert.NotEmpty(t, result)
+	assert.Contains(t, result, "hyper-protect-basic")
+	assert.Contains(t, result, encryptedPassword)
+	assert.Contains(t, result, encryptedContract)
+}
+
+// Testcase to check if EncryptString() works with valid inputs
+func TestEncryptStringValidInputs(t *testing.T) {
+	password := "testpassword123"
+	section := "test section data"
+
+	result, err := EncryptString(password, section)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+}
+
+// Testcase to check if OpensslCheck() works correctly
+func TestOpensslCheckSuccess(t *testing.T) {
+	err := OpensslCheck()
+	assert.NoError(t, err)
+}
+
+// Testcase to check if EncryptString() handles empty password
+func TestEncryptStringEmptyPassword(t *testing.T) {
+	section := "test section data"
+
+	_, err := EncryptString("", section)
+	// Empty password causes OpenSSL to fail
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to execute openssl command")
+}
+
+// Testcase to check if EncryptString() handles empty section
+func TestEncryptStringEmptySection(t *testing.T) {
+	password := "testpassword123"
+
+	result, err := EncryptString(password, "")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+}
+
+// Testcase to check if EncryptPassword() handles empty password
+func TestEncryptPasswordEmptyPassword(t *testing.T) {
+	encryptCertificate, err := gen.CertificateDownloader(certificateUrl)
+	if err != nil {
+		t.Errorf("failed to get encryption certificate - %v", err)
+	}
+
+	result, err := EncryptPassword("", encryptCertificate)
+	// Empty password is valid for RSA encryption
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+}
+
+// Testcase to check if SignContract() handles empty workload
+func TestSignContractEmptyWorkload(t *testing.T) {
+	privateKey, err := gen.ReadDataFromFile(samplePrivateKeyPath)
+	if err != nil {
+		t.Errorf("failed to read private key - %v", err)
+	}
+
+	result, err := SignContract("", "test-env", privateKey)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+}
+
+// Testcase to check if SignContract() handles empty env
+func TestSignContractEmptyEnv(t *testing.T) {
+	privateKey, err := gen.ReadDataFromFile(samplePrivateKeyPath)
+	if err != nil {
+		t.Errorf("failed to read private key - %v", err)
+	}
+
+	result, err := SignContract("test-workload", "", privateKey)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+}
+
+// Testcase to check if SignContract() handles empty private key
+func TestSignContractEmptyPrivateKey(t *testing.T) {
+	_, err := SignContract("test-workload", "test-env", "")
+	assert.Error(t, err)
+}
+
+// Testcase to check if CreateSigningCert() handles invalid JSON in csrData
+func TestCreateSigningCertInvalidJSON(t *testing.T) {
+	privateKey, err := gen.ReadDataFromFile(samplePrivateKeyPath)
+	if err != nil {
+		t.Errorf("failed to read private key - %v", err)
+	}
+
+	cacert, err := gen.ReadDataFromFile(sampleCaCertPath)
+	if err != nil {
+		t.Errorf("failed to read CA certificate - %v", err)
+	}
+
+	caKey, err := gen.ReadDataFromFile(sampleCaKeyPath)
+	if err != nil {
+		t.Errorf("failed to read CA key - %v", err)
+	}
+
+	_, err = CreateSigningCert(privateKey, cacert, caKey, "invalid-json", "", sampleExpiryDays)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to unmarshal JSON")
+}
+
+// Testcase to check if CreateSigningCert() handles invalid private key
+func TestCreateSigningCertInvalidPrivateKey(t *testing.T) {
+	cacert, err := gen.ReadDataFromFile(sampleCaCertPath)
+	if err != nil {
+		t.Errorf("failed to read CA certificate - %v", err)
+	}
+
+	caKey, err := gen.ReadDataFromFile(sampleCaKeyPath)
+	if err != nil {
+		t.Errorf("failed to read CA key - %v", err)
+	}
+
+	csrParams := map[string]interface{}{
+		"country":  sampleCsrCountry,
+		"state":    sampleCsrState,
+		"location": sampleCsrLocation,
+		"org":      sampleCsrOrg,
+		"unit":     sampleCsrUnit,
+		"domain":   sampleCsrDomain,
+		"mail":     sampleCsrMailId,
+	}
+
+	csrParamsJson, _ := json.Marshal(csrParams)
+
+	_, err = CreateSigningCert("invalid-private-key", cacert, caKey, string(csrParamsJson), "", sampleExpiryDays)
+	assert.Error(t, err)
+}
+
+// Testcase to check if CreateSigningCert() handles invalid CSR PEM data
+func TestCreateSigningCertInvalidCsrPem(t *testing.T) {
+	privateKey, err := gen.ReadDataFromFile(samplePrivateKeyPath)
+	if err != nil {
+		t.Errorf("failed to read private key - %v", err)
+	}
+
+	cacert, err := gen.ReadDataFromFile(sampleCaCertPath)
+	if err != nil {
+		t.Errorf("failed to read CA certificate - %v", err)
+	}
+
+	caKey, err := gen.ReadDataFromFile(sampleCaKeyPath)
+	if err != nil {
+		t.Errorf("failed to read CA key - %v", err)
+	}
+
+	_, err = CreateSigningCert(privateKey, cacert, caKey, "", "invalid-csr-pem", sampleExpiryDays)
+	assert.Error(t, err)
+}
+
+// Testcase to check if GenFinalSignedContract() handles empty workload
+func TestGenFinalSignedContractEmptyWorkload(t *testing.T) {
+	result, err := GenFinalSignedContract("", "test-env", "test-signature", "")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+}
+
+// Testcase to check if GenFinalSignedContract() handles empty env
+func TestGenFinalSignedContractEmptyEnv(t *testing.T) {
+	result, err := GenFinalSignedContract("test-workload", "", "test-signature", "")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+}
+
+// Testcase to check if GenFinalSignedContract() handles empty signature
+func TestGenFinalSignedContractEmptySignature(t *testing.T) {
+	result, err := GenFinalSignedContract("test-workload", "test-env", "", "")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+}
+
+// Testcase to check if EncryptContract() handles empty password
+func TestEncryptContractEmptyPassword(t *testing.T) {
+	contract := "test contract data"
+
+	_, err := EncryptContract("", contract)
+	assert.Error(t, err)
+}
+
+// Testcase to check if EncryptContract() handles empty contract
+func TestEncryptContractEmptyContract(t *testing.T) {
+	password := "testpassword123"
+
+	result, err := EncryptContract(password, "")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+}
+
+// Testcase to check if GeneratePublicKey() handles empty private key
+func TestGeneratePublicKeyEmptyPrivateKey(t *testing.T) {
+	_, err := GeneratePublicKey("")
+	assert.Error(t, err)
 }
 
 // Testcase to check if ExtractPublicKeyFromCert() is able to extract public key from certificate

@@ -108,3 +108,28 @@ func DecryptWorkload(password, encryptedWorkload string) (string, error) {
 
 	return result, nil
 }
+
+// DecryptText decrypts encrypted data in hyper-protect-basic.<encrypted-password>.<encrypted-data>
+//
+// Parameters:
+//   - data: hyper-protect-basic.<encrypted-password>.<encrypted-data>
+//   - privateKey: Private key to decrypt the data
+//
+// Returns:
+//   - Decrypted data
+//   - Error if OpenSSL is not found, Base64 decoding fails, or decryption fails
+func DecryptText(data, privateKey string) (string, error) {
+	encodedEncryptedPassword, encodedEncryptedData := gen.GetEncryptPassWorkload(data)
+
+	password, err := DecryptPassword(encodedEncryptedPassword, privateKey)
+	if err != nil {
+		return "", fmt.Errorf("failed to decrypt password - %v", err)
+	}
+
+	decryptedData, err := DecryptWorkload(password, encodedEncryptedData)
+	if err != nil {
+		return "", fmt.Errorf("failed to decrypt text - %v", err)
+	}
+
+	return decryptedData, nil
+}

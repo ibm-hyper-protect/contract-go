@@ -22,6 +22,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	dec "github.com/ibm-hyper-protect/contract-go/v2/common/decrypt"
 	enc "github.com/ibm-hyper-protect/contract-go/v2/common/encrypt"
 	gen "github.com/ibm-hyper-protect/contract-go/v2/common/general"
 )
@@ -108,6 +109,31 @@ func HpcrTextEncrypted(plainText, hyperProtectOs, encryptionCertificate string) 
 	}
 
 	return hpcrTextEncryptedStr, gen.GenerateSha256(plainText), gen.GenerateSha256(hpcrTextEncryptedStr), nil
+}
+
+// HpcrTextDecrypted decrypts hyper protect encrypted data
+// It decrypts the text encrypted in format hyper-protect-basic
+//
+// Parameters:
+//   - encryptedText: Encrypted text
+//   - privateKey: Private key to decrypt the text
+//
+// Returns:
+//   - Decrypted text
+//   - SHA256 hash of the encrypted text
+//   - SHA256 hash of the decrypted output
+//   - Error if decryption fails
+func HpcrTextDecrypted(encryptedText, privateKey string) (string, string, string, error) {
+	if gen.CheckIfEmpty(encryptedText, privateKey) {
+		return "", "", "", fmt.Errorf(emptyParameterErrStatement)
+	}
+
+	decryptedText, err := dec.DecryptText(encryptedText, privateKey)
+	if err != nil {
+		return "", "", "", fmt.Errorf("failed to decrypt text - %v", err)
+	}
+
+	return decryptedText, gen.GenerateSha256(encryptedText), gen.GenerateSha256(decryptedText), nil
 }
 
 // HpcrJsonEncrypted encrypts JSON data using the Hyper Protect encryption format.
@@ -408,7 +434,16 @@ func encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey,
 		return "", fmt.Errorf("failed to sign contract - %v", err)
 	}
 
-	finalContract, err := enc.GenFinalSignedContract(encryptedWorkload, encryptedEnv, workloadEnvSignature)
+	attestationPublicKey, _ := contractMap["attestationPublicKey"].(string)
+	var encryptedAttestationPublicKey string
+	if attestationPublicKey != "" {
+		encryptedAttestationPublicKey, err = encrypter(attestationPublicKey, hyperProtectOs, encryptCertificate)
+		if err != nil {
+			return "", fmt.Errorf("failed to encrypt attestationPublicKey - %v", err)
+		}
+	}
+
+	finalContract, err := enc.GenFinalSignedContract(encryptedWorkload, encryptedEnv, workloadEnvSignature, encryptedAttestationPublicKey)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate final contract - %v", err)
 	}
