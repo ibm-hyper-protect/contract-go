@@ -351,3 +351,83 @@ func GenFinalSignedContract(workload, env, workloadEnvSig string) (string, error
 
 	return finalContract, nil
 }
+
+// ExtractPublicKeyFromCert extracts the public key from an X.509 certificate.
+// It uses OpenSSL to extract the RSA public key in PEM format from the provided certificate.
+//
+// Parameters:
+//   - cert: X.509 certificate in PEM format
+//
+// Returns:
+//   - Public key in PEM format
+//   - Error if OpenSSL is not found or key extraction fails
+func ExtractPublicKeyFromCert(cert string) (string, error) {
+	err := OpensslCheck()
+	if err != nil {
+		return "", fmt.Errorf("openssl not found - %v", err)
+	}
+
+	certPath, err := gen.CreateTempFile(cert)
+	if err != nil {
+		return "", fmt.Errorf("failed to create temp file - %v", err)
+	}
+
+	publicKey, err := gen.ExecCommand(gen.GetOpenSSLPath(), "", "x509", "-in", certPath, "-pubkey", "-noout")
+	if err != nil {
+		return "", fmt.Errorf("failed to execute openssl command - %v", err)
+	}
+
+	err = gen.RemoveTempFile(certPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to remove temp file - %v", err)
+	}
+
+	return publicKey, nil
+}
+
+// VerifySignature verifies a digital signature against data using a public key.
+// It uses OpenSSL to verify the SHA-256 signature with the provided public key.
+//
+// Parameters:
+//   - data: Original data that was signed
+//   - signature: Binary signature data to verify
+//   - publicKey: RSA public key in PEM format
+//
+// Returns:
+//   - nil if signature verification succeeds
+//   - Error if OpenSSL is not found or verification fails
+func VerifySignature(data string, signature []byte, publicKey string) error {
+	err := OpensslCheck()
+	if err != nil {
+		return fmt.Errorf("openssl not found - %v", err)
+	}
+
+	dataPath, err := gen.CreateTempFile(data)
+	if err != nil {
+		return fmt.Errorf("failed to create temp file for data - %v", err)
+	}
+
+	signaturePath, err := gen.CreateTempFile(string(signature))
+	if err != nil {
+		return fmt.Errorf("failed to create temp file for signature - %v", err)
+	}
+
+	publicKeyPath, err := gen.CreateTempFile(publicKey)
+	if err != nil {
+		return fmt.Errorf("failed to create temp file for public key - %v", err)
+	}
+
+	_, err = gen.ExecCommand(gen.GetOpenSSLPath(), "", "dgst", "-sha256", "-verify", publicKeyPath, "-signature", signaturePath, dataPath)
+	if err != nil {
+		return err
+	}
+
+	for _, path := range []string{dataPath, signaturePath, publicKeyPath} {
+		err := gen.RemoveTempFile(path)
+		if err != nil {
+			return fmt.Errorf("failed to remove temp file - %v", err)
+		}
+	}
+
+	return nil
+}
