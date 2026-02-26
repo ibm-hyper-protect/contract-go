@@ -18,7 +18,7 @@ package attestation
 import (
 	"fmt"
 
-	attest "github.com/ibm-hyper-protect/contract-go/v2/common/decrypt"
+	decrypt "github.com/ibm-hyper-protect/contract-go/v2/common/decrypt"
 	enc "github.com/ibm-hyper-protect/contract-go/v2/common/encrypt"
 	gen "github.com/ibm-hyper-protect/contract-go/v2/common/general"
 )
@@ -44,12 +44,12 @@ func HpcrGetAttestationRecords(data, privateKey string) (string, error) {
 	}
 	encodedEncryptedPassword, encodedEncryptedData := gen.GetEncryptPassWorkload(data)
 
-	password, err := attest.DecryptPassword(encodedEncryptedPassword, privateKey)
+	password, err := decrypt.DecryptPassword(encodedEncryptedPassword, privateKey)
 	if err != nil {
 		return "", fmt.Errorf("failed to decrypt password - %v", err)
 	}
 
-	attestationRecords, err := attest.DecryptWorkload(password, encodedEncryptedData)
+	attestationRecords, err := decrypt.DecryptWorkload(password, encodedEncryptedData)
 	if err != nil {
 		return "", fmt.Errorf("failed to decrypt attestation records - %v", err)
 	}
