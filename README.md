@@ -51,6 +51,7 @@ Learn more:
 
 - **Attestation Management**
   - Decrypt encrypted attestation records
+  - Verify signature of attestation records against IBM certificates
 
 - **Certificate Operations**
   - Download CCCR encryption certificates from IBM Cloud

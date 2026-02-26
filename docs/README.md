@@ -114,6 +114,97 @@ MIIEpAIBAAKCAQEA...
 
 ---
 
+### HpcrVerifySignatureAttestationRecords
+
+Verifies the signature of decrypted attestation records against an IBM attestation certificate to ensure authenticity and integrity.
+
+**Package:** `github.com/ibm-hyper-protect/contract-go/v2/attestation`
+
+**Signature:**
+```go
+func HpcrVerifySignatureAttestationRecords(attestationRecords string, signature []byte, attestationCert string) error
+```
+
+**Parameters:**
+
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `attestationRecords` | `string` | Required | Decrypted attestation records content (se-checksums.txt) |
+| `signature` | `[]byte` | Required | Binary signature data (se-signature.bin content) |
+| `attestationCert` | `string` | Required | IBM attestation certificate in PEM format |
+
+**Returns:**
+
+| Return | Type | Description |
+|--------|------|-------------|
+| Error | `error` | `nil` if signature verification succeeds, error if verification fails |
+
+**Example:**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/attestation"
+)
+
+func main() {
+    // First, decrypt attestation records
+    encryptedData := "hyper-protect-basic.aBcD123..." // From HPVS
+    privateKey := `-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEA...
+-----END RSA PRIVATE KEY-----`
+
+    records, err := attestation.HpcrGetAttestationRecords(encryptedData, privateKey)
+    if err != nil {
+        log.Fatalf("Failed to decrypt attestation: %v", err)
+    }
+
+    // Read signature file (se-signature.bin)
+    signatureData, err := os.ReadFile("se-signature.bin")
+    if err != nil {
+        log.Fatalf("Failed to read signature file: %v", err)
+    }
+
+    // Read IBM attestation certificate
+    certData, err := os.ReadFile("ibm-attestation-cert.pem")
+    if err != nil {
+        log.Fatalf("Failed to read attestation certificate: %v", err)
+    }
+
+    // Verify signature
+    err = attestation.HpcrVerifySignatureAttestationRecords(
+        records,
+        signatureData,
+        string(certData),
+    )
+    if err != nil {
+        log.Fatalf("Signature verification failed: %v", err)
+    }
+
+    fmt.Println("✓ Attestation records signature verified successfully!")
+    fmt.Printf("Attestation records are authentic and unmodified.\n")
+}
+```
+
+**Use Cases:**
+- Verify attestation records have not been tampered with
+- Confirm attestation records were signed by IBM
+- Validate the integrity of attestation data before processing
+- Ensure secure boot measurements are authentic
+
+**Common Errors:**
+- `"required parameter is missing"` - One or more parameters are empty or signature is nil
+- `"failed to parse PEM block from attestation certificate"` - Invalid certificate format
+- `"failed to parse attestation certificate"` - Corrupted certificate data
+- `"attestation certificate does not contain a valid RSA public key"` - Certificate doesn't have RSA key
+- `"signature verification failed"` - Signature doesn't match records or certificate is invalid
+
+---
+
 ## Certificate Functions
 
 ### HpcrDownloadEncryptionCertificates

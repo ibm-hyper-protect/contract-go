@@ -658,3 +658,79 @@ func TestGeneratePublicKeyEmptyPrivateKey(t *testing.T) {
 	_, err := GeneratePublicKey("")
 	assert.Error(t, err)
 }
+
+// Testcase to check if ExtractPublicKeyFromCert() is able to extract public key from certificate
+func TestExtractPublicKeyFromCert(t *testing.T) {
+	cacert, err := gen.ReadDataFromFile(sampleCaCertPath)
+	if err != nil {
+		t.Errorf("failed to get CA certificate - %v", err)
+	}
+
+	publicKey, err := ExtractPublicKeyFromCert(cacert)
+	if err != nil {
+		t.Errorf("failed to extract public key from certificate - %v", err)
+	}
+
+	assert.NotEmpty(t, publicKey, "Public key did not get extracted")
+	assert.Contains(t, publicKey, "BEGIN PUBLIC KEY")
+	assert.Contains(t, publicKey, "END PUBLIC KEY")
+}
+
+// Testcase to check if VerifySignature() is able to verify signature
+func TestVerifySignature(t *testing.T) {
+	// Create test data
+	testData := "test data for signature verification"
+
+	// Read private key to create signature
+	privateKey, err := gen.ReadDataFromFile(samplePrivateKeyPath)
+	if err != nil {
+		t.Errorf("failed to get private key - %v", err)
+	}
+
+	// Create signature using OpenSSL
+	privateKeyPath, err := gen.CreateTempFile(privateKey)
+	if err != nil {
+		t.Errorf("failed to create temp file - %v", err)
+	}
+
+	signature, err := gen.ExecCommand(gen.GetOpenSSLPath(), testData, "dgst", "-sha256", "-sign", privateKeyPath)
+	if err != nil {
+		t.Errorf("failed to create signature - %v", err)
+	}
+
+	err = gen.RemoveTempFile(privateKeyPath)
+	if err != nil {
+		t.Errorf("failed to remove temp file - %v", err)
+	}
+
+	// Generate public key from private key
+	publicKey, err := GeneratePublicKey(privateKey)
+	if err != nil {
+		t.Errorf("failed to generate public key - %v", err)
+	}
+
+	// Verify signature
+	err = VerifySignature(testData, []byte(signature), publicKey)
+	if err != nil {
+		t.Errorf("signature verification failed - %v", err)
+	}
+}
+
+// Testcase to check if VerifySignature() fails with invalid signature
+func TestVerifySignature_InvalidSignature(t *testing.T) {
+	testData := "test data"
+	invalidSignature := []byte("invalid signature")
+
+	privateKey, err := gen.ReadDataFromFile(samplePrivateKeyPath)
+	if err != nil {
+		t.Errorf("failed to get private key - %v", err)
+	}
+
+	publicKey, err := GeneratePublicKey(privateKey)
+	if err != nil {
+		t.Errorf("failed to generate public key - %v", err)
+	}
+
+	err = VerifySignature(testData, invalidSignature, publicKey)
+	assert.Error(t, err, "Expected verification to fail with invalid signature")
+}
