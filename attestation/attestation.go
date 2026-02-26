@@ -42,14 +42,8 @@ func HpcrGetAttestationRecords(data, privateKey string) (string, error) {
 	if gen.CheckIfEmpty(data, privateKey) {
 		return "", fmt.Errorf(missingParameterErrStatement)
 	}
-	encodedEncryptedPassword, encodedEncryptedData := gen.GetEncryptPassWorkload(data)
 
-	password, err := decrypt.DecryptPassword(encodedEncryptedPassword, privateKey)
-	if err != nil {
-		return "", fmt.Errorf("failed to decrypt password - %v", err)
-	}
-
-	attestationRecords, err := decrypt.DecryptWorkload(password, encodedEncryptedData)
+	attestationRecords, err := decrypt.DecryptText(data, privateKey)
 	if err != nil {
 		return "", fmt.Errorf("failed to decrypt attestation records - %v", err)
 	}
