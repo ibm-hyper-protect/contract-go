@@ -6,8 +6,8 @@ We release patches for security vulnerabilities for the following versions:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.x.x   | :white_check_mark: |
-| < 1.0   | :x:                |
+| 2.x.x   | :white_check_mark: |
+| < 2.0   | :x:                |
 
 We recommend always using the latest release to ensure you have the latest security updates.
 
@@ -30,7 +30,7 @@ The `contract-go` team takes security vulnerabilities seriously. We appreciate y
 
 **Or, report via email:**
 
-Contact the project maintainers listed in [MAINTAINERS.md](MAINTAINERS.md) directly with details about the vulnerability.
+Contact the Security maintainers listed in [MAINTAINERS.md](MAINTAINERS.md) directly with details about the vulnerability.
 
 ### What to Include in Your Report
 
