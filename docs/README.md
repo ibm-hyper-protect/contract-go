@@ -1,10 +1,5 @@
 # Hyper Protect Contract Go Library - API Documentation
 
-> **Note:** The offering names have been changed:
-> - **Hyper Protect Virtual Servers (HPVS)** → **IBM Confidential Computing Container Runtime (CCCR)**
-> - **Hyper Protect Container Runtime for Red Hat Virtualization (HPCR-RHVS)** → **IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCCRV)**
-> - **Hyper Protect Confidential Container (HPCC)** → **IBM Confidential Computing Containers for Red Hat OpenShift Container Platform**
-
 ## Introduction
 
 The `contract-go` library provides a comprehensive API for working with IBM Hyper Protect services. This documentation covers all available functions, their parameters, return values, and usage examples.
@@ -89,7 +84,7 @@ import (
 )
 
 func main() {
-    // Encrypted attestation data received from CCCR
+    // Encrypted attestation data received from HPVS
     encryptedData := "hyper-protect-basic.aBcD123..."
 
     // Your RSA private key
@@ -118,7 +113,7 @@ MIIEpAIBAAKCAQEA...
 
 ### HpcrDownloadEncryptionCertificates
 
-Downloads encryption certificates for specified CCCR versions from IBM Cloud.
+Downloads encryption certificates for specified HPVS versions from IBM Cloud.
 
 **Package:** `github.com/ibm-hyper-protect/contract-go/v2/certificate`
 
@@ -508,7 +503,7 @@ func HpcrTextEncrypted(plainText, hyperProtectOs, encryptionCertificate string) 
 |-----------|------|-------------------|-------------|
 | `plainText` | `string` | Required | Text to encrypt |
 | `hyperProtectOs` | `string` | Optional | Platform: `"hpvs"`, `"hpcr-rhvs"`, or `"hpcc-peerpod"` (defaults to `"hpvs"` if empty) |
-| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest CCCR as default if empty) |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest HPVS as default if empty) |
 
 **Returns:**
 
@@ -695,7 +690,7 @@ func HpcrJsonEncrypted(plainJson, hyperProtectOs, encryptionCertificate string) 
 |-----------|------|-------------------|-------------|
 | `plainJson` | `string` | Required | Valid JSON string to encrypt |
 | `hyperProtectOs` | `string` | Optional | Platform: `"hpvs"`, `"hpcr-rhvs"`, or `"hpcc-peerpod"` (defaults to `"hpvs"` if empty) |
-| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest CCCR as default if empty) |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest HPVS as default if empty) |
 
 **Returns:**
 
@@ -823,7 +818,7 @@ func HpcrTgzEncrypted(folderPath, hyperProtectOs, encryptionCertificate string) 
 |-----------|------|-------------------|-------------|
 | `folderPath` | `string` | Required | Path to folder with compose/pods files |
 | `hyperProtectOs` | `string` | Optional | Platform identifier (defaults to `"hpvs"` if empty) |
-| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest CCCR as default if empty) |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest HPVS as default if empty) |
 
 **Returns:**
 
@@ -913,7 +908,7 @@ workload: |
     archive: ZGF0YQ==
 `
 
-    // Validate for CCCR
+    // Validate for HPVS
     err := contract.HpcrVerifyContract(contractYAML, "hpvs")
     if err != nil {
         log.Fatalf("Contract validation failed: %v", err)
@@ -954,7 +949,7 @@ func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate
 |-----------|------|-------------------|-------------|
 | `contract` | `string` | Required | YAML contract with `env` and `workload` sections |
 | `hyperProtectOs` | `string` | Optional | Platform: `"hpvs"`, `"hpcr-rhvs"`, or `"hpcc-peerpod"` (defaults to `"hpvs"` if empty) |
-| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest CCCR as default if empty) |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest HPVS as default if empty) |
 | `privateKey` | `string` | Required | RSA private key (PEM format) for signing |
 
 **Returns:**
@@ -1098,7 +1093,7 @@ func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encrypt
 |-----------|------|-------------------|-------------|
 | `contract` | `string` | Required | YAML contract |
 | `hyperProtectOs` | `string` | Optional | Platform identifier (defaults to `"hpvs"` if empty) |
-| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest CCCR as default if empty) |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest HPVS as default if empty) |
 | `privateKey` | `string` | Required | RSA private key for signing |
 | `cacert` | `string` | Required | CA certificate (PEM format) |
 | `caKey` | `string` | Required | CA private key (PEM format) |
@@ -1309,7 +1304,7 @@ func main() {
 
 ### HpcrVerifyNetworkConfig
 
-Validates network configuration schema for on-premise deployments of CCCR and CCCRV.
+Validates network configuration schema for on-premise deployments of HPVS and HPCR RHVS.
 
 **Package:** `github.com/ibm-hyper-protect/contract-go/v2/network`
 
@@ -1360,9 +1355,9 @@ func main() {
 ```
 
 **Supported Platforms:**
-- CCCR (IBM Confidential Computing Container Runtime)
-- CCCRV (IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions)
-- IBM Confidential Computing Containers for Red Hat OpenShift Container Platform
+- HPVS (Hyper Protect Virtual Servers)
+- HPCR RHVS (Hyper Protect Container Runtime for Red Hat Virtualization)
+- HPCC Peer Pod (Hyper Protect Confidential Container Peer Pods)
 
 **Common Errors:**
 - `"Invalid schema file"` - Invalid YAML format in network configuration
@@ -1376,7 +1371,7 @@ func main() {
 
 ### Pattern 1: Complete Contract Workflow
 
-Generate and deploy a signed, encrypted contract for CCCR:
+Generate and deploy a signed, encrypted contract for HPVS:
 
 ```go
 package main
@@ -1649,9 +1644,9 @@ The library supports three Hyper Protect platforms:
 
 ```go
 const (
-    HyperProtectOsHpvs     = "hpvs"         // CCCR - IBM Confidential Computing Container Runtime
-    HyperProtectOsHpcrRhvs = "hpcr-rhvs"    // CCCRV - IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions
-    HyperProtectConfidentialContainerPeerPods = "hpcc-peerpod" // IBM Confidential Computing Containers for Red Hat OpenShift Container Platform
+    HyperProtectOsHpvs     = "hpvs"         // Hyper Protect Virtual Servers
+    HyperProtectOsHpcrRhvs = "hpcr-rhvs"    // HPCR for Red Hat Virtualization
+    HyperProtectConfidentialContainerPeerPods = "hpcc-peerpod" // HPCC Peer Pods
 )
 ```
 
@@ -1682,8 +1677,8 @@ contract.HpcrContractSignedEncrypted(
 ### IBM Hyper Protect Documentation
 
 - [Confidential Computing with LinuxONE](https://cloud.ibm.com/docs/vpc?topic=vpc-about-se)
-- [IBM Confidential Computing Container Runtime (CCCR)](https://www.ibm.com/docs/en/hpvs/2.2.x)
-- [IBM Confidential Computing Containers for Red Hat OpenShift Container Platform](https://www.ibm.com/docs/en/hpcc/1.1.x)
+- [IBM Hyper Protect Virtual Servers](https://www.ibm.com/docs/en/hpvs/2.2.x)
+- [IBM Hyper Protect Confidential Container](https://www.ibm.com/docs/en/hpcc/1.1.x)
 
 ### Related Projects
 
