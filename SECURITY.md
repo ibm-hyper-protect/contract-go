@@ -6,8 +6,8 @@ We release patches for security vulnerabilities for the following versions:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.x.x   | :white_check_mark: |
-| < 1.0   | :x:                |
+| 2.x.x   | :white_check_mark: |
+| < 2.0   | :x:                |
 
 We recommend always using the latest release to ensure you have the latest security updates.
 
@@ -30,7 +30,7 @@ The `contract-go` team takes security vulnerabilities seriously. We appreciate y
 
 **Or, report via email:**
 
-Contact the project maintainers listed in [MAINTAINERS.md](MAINTAINERS.md) directly with details about the vulnerability.
+Contact the Security maintainers listed in [MAINTAINERS.md](MAINTAINERS.md) directly with details about the vulnerability.
 
 ### What to Include in Your Report
 
@@ -48,13 +48,9 @@ To help us understand and address the issue quickly, please include:
 When you report a security vulnerability, here's what will happen:
 
 1. **Acknowledgment** - We will acknowledge receipt of your vulnerability report within 3 business days
-
 2. **Initial Assessment** - We will investigate and confirm the vulnerability within 5 business days
-
 3. **Updates** - We will keep you informed about our progress addressing the issue
-
 4. **Fix Development** - We will develop and test a fix for the vulnerability
-
 5. **Release** - We will:
    - Release a patched version
    - Publish a security advisory
@@ -80,20 +76,16 @@ When using `contract-go`, we recommend:
 1. **Keep Dependencies Updated**
    - Regularly update to the latest version of `contract-go`
    - Monitor security advisories for this project
-
 2. **Protect Sensitive Data**
    - Never commit private keys, certificates, or credentials to version control
    - Use environment variables or secure vaults for sensitive configuration
    - Ensure encryption certificates are obtained from trusted sources
-
 3. **Validate Input**
    - Always validate contract schemas before processing
    - Use the provided validation functions (`HpcrVerifyContract`, `HpcrVerifyNetworkConfig`)
-
 4. **Secure OpenSSL**
    - Use a recent, patched version of OpenSSL
    - Keep OpenSSL updated with the latest security patches
-
 5. **Network Security**
    - Use HTTPS when downloading encryption certificates
    - Verify certificate downloads from trusted IBM Cloud endpoints
@@ -103,15 +95,12 @@ When using `contract-go`, we recommend:
 1. **Code Review**
    - All code changes require review before merging
    - Pay special attention to cryptographic operations
-
 2. **Dependency Management**
    - Regularly audit dependencies for known vulnerabilities
    - Keep dependencies up to date
-
 3. **Testing**
    - Write tests that cover security-relevant code paths
    - Test error handling and edge cases
-
 4. **Secrets in Tests**
    - Never use real credentials in test code
    - Use mock data and test fixtures

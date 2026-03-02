@@ -8,6 +8,7 @@ This document lists the maintainers of the `contract-go` project, their roles, a
 |-----------|---------------|---------------|-------|-------------|
 | Sashwat K | [@Sashwat-K](https://github.com/Sashwat-K) | Lead Maintainer | Sashwat.K@ibm.com | Overall project direction, releases, core features |
 | Vikas Sharma | [@vikas-sharma24](https://github.com/vikas-sharma24) | Maintainer | Vikas.Sharma24@ibm.com | Releases and core features |
+| Lokesh Puthalapattu | [@Lokesh-Puthalapattu](https://github.com/Lokesh-Puthalapattu) | Security Lead | lokesh.puthalapattu@ibm.com | Overall Security |
 
 ## Roles and Responsibilities
 
