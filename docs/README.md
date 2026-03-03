@@ -117,7 +117,7 @@ Verifies the signature of decrypted attestation records against an IBM attestati
 
 **Signature:**
 ```go
-func HpcrVerifySignatureAttestationRecords(attestationRecords string, signature []byte, attestationCert string) error
+func HpcrVerifySignatureAttestationRecords(attestationRecords, signature, attestationCert string) error
 ```
 
 **Parameters:**
@@ -125,7 +125,7 @@ func HpcrVerifySignatureAttestationRecords(attestationRecords string, signature 
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
 | `attestationRecords` | `string` | Required | Decrypted attestation records content (se-checksums.txt) |
-| `signature` | `[]byte` | Required | Binary signature data (se-signature.bin content) |
+| `signature` | `string` | Required | Binary signature data (se-signature.bin content) |
 | `attestationCert` | `string` | Required | IBM attestation certificate in PEM format |
 
 **Returns:**
@@ -155,33 +155,30 @@ MIIEpAIBAAKCAQEA...
 
     records, err := attestation.HpcrGetAttestationRecords(encryptedData, privateKey)
     if err != nil {
-        log.Fatalf("Failed to decrypt attestation: %v", err)
+        log.Fatalf("failed to decrypt attestation records - %v", err)
     }
 
     // Read signature file (se-signature.bin)
     signatureData, err := os.ReadFile("se-signature.bin")
     if err != nil {
-        log.Fatalf("Failed to read signature file: %v", err)
+        log.Fatalf("failed to read signature file - %v", err)
     }
 
     // Read IBM attestation certificate
     certData, err := os.ReadFile("ibm-attestation-cert.pem")
     if err != nil {
-        log.Fatalf("Failed to read attestation certificate: %v", err)
+        log.Fatalf("failed to read attestation certificate - %v", err)
     }
 
     // Verify signature
     err = attestation.HpcrVerifySignatureAttestationRecords(
         records,
         signatureData,
-        string(certData),
+        certData,
     )
     if err != nil {
-        log.Fatalf("Signature verification failed: %v", err)
+        log.Fatalf("signature verification failed - %v", err)
     }
-
-    fmt.Println("✓ Attestation records signature verified successfully!")
-    fmt.Printf("Attestation records are authentic and unmodified.\n")
 }
 ```
 
@@ -196,7 +193,7 @@ MIIEpAIBAAKCAQEA...
 - `"failed to parse PEM block from attestation certificate"` - Invalid certificate format
 - `"failed to parse attestation certificate"` - Corrupted certificate data
 - `"attestation certificate does not contain a valid RSA public key"` - Certificate doesn't have RSA key
-- `"signature verification failed"` - Signature doesn't match records or certificate is invalid
+- `"signature verification failed"` - signature verification fails or parameters are invalid
 
 ---
 
