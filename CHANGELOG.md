@@ -1,3 +1,29 @@
+## [2.11.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.10.0...v2.11.0) (2026-03-03)
+
+### Features
+
+* fix signature verification for attestation records flow ([#200](https://github.com/ibm-hyper-protect/contract-go/issues/200)) ([44b26be](https://github.com/ibm-hyper-protect/contract-go/commit/44b26be8e54354972288a6e7d3975b2ab6c65461))
+
+### Documentation
+
+* added peer pods in readme file ([1aa4131](https://github.com/ibm-hyper-protect/contract-go/commit/1aa4131176532557e56bd9632df079f1977e27cf))
+* change offering name to CCCR ([f714492](https://github.com/ibm-hyper-protect/contract-go/commit/f714492af762fd00d1135af115584649c925f8ad))
+* Fix formatting for default URL template in README ([bce0c9f](https://github.com/ibm-hyper-protect/contract-go/commit/bce0c9fdd903eac3bf1135278539a756e1ad4524))
+* resolving review commit ([5ed801e](https://github.com/ibm-hyper-protect/contract-go/commit/5ed801e09a265d988d955ec6a8ec764cf6bc24c1))
+* update Security doc ([1ef3e1b](https://github.com/ibm-hyper-protect/contract-go/commit/1ef3e1b93bfb0fe8d981913b04e68d31ab2b4dbb))
+
+### Miscellaneous Chores
+
+* add support for signature verification for attestation records ([#184](https://github.com/ibm-hyper-protect/contract-go/issues/184)) ([e9b172b](https://github.com/ibm-hyper-protect/contract-go/commit/e9b172b6122aeeb9cfabbe58e443c4b2ad01c285))
+* update Maintainers ([5042531](https://github.com/ibm-hyper-protect/contract-go/commit/50425310f067672d877e4b5c0815cfd9f154048f))
+
+### Tests
+
+* Add testcase for more coverage ([c621b21](https://github.com/ibm-hyper-protect/contract-go/commit/c621b21fe64b79a7c4357f86d1907171781caba4))
+* adding testcases for decrypt ([48de191](https://github.com/ibm-hyper-protect/contract-go/commit/48de19152b765fb7cb5c418ed4e215959972df68))
+* dummy commit ([818acf2](https://github.com/ibm-hyper-protect/contract-go/commit/818acf215741de56262ca3184af56946a864589a))
+* removing duplicate testcases ([8753d18](https://github.com/ibm-hyper-protect/contract-go/commit/8753d183bf68d3d33a2a122621063acc248a458d))
+
 ## [2.10.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.9.0...v2.10.0) (2026-02-17)
 
 ### Features
