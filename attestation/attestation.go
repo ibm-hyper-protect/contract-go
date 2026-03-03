@@ -70,8 +70,8 @@ func HpcrGetAttestationRecords(data, privateKey string) (string, error) {
 // Returns:
 //   - nil if signature verification succeeds
 //   - Error if verification fails or parameters are invalid
-func HpcrVerifySignatureAttestationRecords(attestationRecords string, signature []byte, attestationCert string) error {
-	if gen.CheckIfEmpty(attestationRecords, attestationCert) || len(signature) == 0 {
+func HpcrVerifySignatureAttestationRecords(attestationRecords, signature, attestationCert string) error {
+	if gen.CheckIfEmpty(attestationRecords, attestationCert, signature) {
 		return fmt.Errorf(missingParameterErrStatement)
 	}
 
@@ -82,7 +82,7 @@ func HpcrVerifySignatureAttestationRecords(attestationRecords string, signature 
 	}
 
 	// Verify signature using OpenSSL
-	err = enc.VerifySignature(attestationRecords, signature, publicKey)
+	err = enc.VerifySignature(attestationRecords, []byte(signature), publicKey)
 	if err != nil {
 		return fmt.Errorf("signature verification failed - %v", err)
 	}

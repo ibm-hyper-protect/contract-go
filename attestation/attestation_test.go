@@ -56,17 +56,17 @@ func TestHpcrGetAttestationRecords(t *testing.T) {
 // Testcase to check HpcrVerifySignatureAttestationRecords parameter validation
 func TestHpcrVerifySignatureAttestationRecords_ParameterValidation(t *testing.T) {
 	// Test with empty attestation records
-	err := HpcrVerifySignatureAttestationRecords("", []byte("signature"), "cert")
+	err := HpcrVerifySignatureAttestationRecords("", "signature", "cert")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "required parameter is missing")
 
 	// Test with empty signature
-	err = HpcrVerifySignatureAttestationRecords("records", []byte(""), "cert")
+	err = HpcrVerifySignatureAttestationRecords("records", "", "cert")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "required parameter is missing")
 
 	// Test with empty certificate
-	err = HpcrVerifySignatureAttestationRecords("records", []byte("signature"), "")
+	err = HpcrVerifySignatureAttestationRecords("records", "signature", "")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "required parameter is missing")
 }
@@ -107,41 +107,28 @@ func TestHpcrVerifySignatureAttestationRecords_ValidParameters(t *testing.T) {
 		t.Errorf("failed to sign attestation records - %v", err)
 	}
 
-	// Convert signature string to bytes
-	signature := []byte(signatureStr)
-
 	// Verify the signature with valid parameters - should succeed
-	err = HpcrVerifySignatureAttestationRecords(attestationRecords, signature, cert)
+	err = HpcrVerifySignatureAttestationRecords(attestationRecords, signatureStr, cert)
 	assert.NoError(t, err, "Signature verification should succeed with valid parameters")
 }
 
 // Testcase to check HpcrVerifySignatureAttestationRecords with invalid PEM format
 func TestHpcrVerifySignatureAttestationRecords_InvalidPEMFormat(t *testing.T) {
-	err := HpcrVerifySignatureAttestationRecords("records", []byte("signature"), "invalid-cert")
+	err := HpcrVerifySignatureAttestationRecords("records", "signature", "invalid-cert")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to extract public key")
 }
 
 // Testcase to check HpcrVerifySignatureAttestationRecords with valid PEM but invalid certificate data
 func TestHpcrVerifySignatureAttestationRecords_InvalidCertificateData(t *testing.T) {
-	err := HpcrVerifySignatureAttestationRecords("records", []byte("signature"), invalidCert)
+	err := HpcrVerifySignatureAttestationRecords("records", "signature", invalidCert)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to extract public key")
-}
-
-// Testcase to check HpcrVerifySignatureAttestationRecords with valid signature
-func TestHpcrVerifySignatureAttestationRecords_ValidSignature(t *testing.T) {
-	t.Skip("Skipping integration test - requires actual IBM attestation certificate and signature files")
-
-	// This test would require actual se-signature.bin file from IBM attestation
-	// For now, we test the function with parameter validation and error cases
-	// In production, users will have the actual IBM attestation certificate and signature
 }
 
 // Testcase to check HpcrVerifySignatureAttestationRecords with invalid signature
 func TestHpcrVerifySignatureAttestationRecords_InvalidSignature(t *testing.T) {
 	attestationRecords := "test attestation records"
-	invalidSignature := []byte("invalid signature data")
 
 	// Create a test certificate
 	privateKeyData, err := gen.ReadDataFromFile(privateKeyPath)
@@ -159,13 +146,10 @@ func TestHpcrVerifySignatureAttestationRecords_InvalidSignature(t *testing.T) {
 		t.Errorf("failed to create certificate - %v", err)
 	}
 
-	err = gen.RemoveTempFile(certPath)
-	if err != nil {
-		t.Errorf("failed to remove temp file - %v", err)
-	}
+	defer gen.RemoveTempFile(certPath)
 
 	// Verify with invalid signature should fail
-	err = HpcrVerifySignatureAttestationRecords(attestationRecords, invalidSignature, cert)
+	err = HpcrVerifySignatureAttestationRecords(attestationRecords, "invalid signature data", cert)
 	assert.Error(t, err, "Signature verification should fail with invalid signature")
 	assert.Contains(t, err.Error(), "signature verification failed")
 }
