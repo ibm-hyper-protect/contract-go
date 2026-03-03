@@ -19,6 +19,7 @@ import (
 	"fmt"
 
 	decrypt "github.com/ibm-hyper-protect/contract-go/v2/common/decrypt"
+	enc "github.com/ibm-hyper-protect/contract-go/v2/common/encrypt"
 	gen "github.com/ibm-hyper-protect/contract-go/v2/common/general"
 )
 
@@ -48,4 +49,43 @@ func HpcrGetAttestationRecords(data, privateKey string) (string, error) {
 	}
 
 	return attestationRecords, nil
+}
+
+// HpcrVerifySignatureAttestationRecords verifies the signature of decrypted attestation records
+// against an IBM attestation certificate. This ensures the attestation records have not been
+// modified and were signed by IBM.
+//
+// The function uses OpenSSL commands to extract the public key from the certificate and verify
+// the signature, following the same approach as documented in IBM Cloud documentation.
+//
+// The function expects the attestation records to be in decrypted form (output from
+// HpcrGetAttestationRecords). The signature should be the binary content of the
+// se-signature.bin file.
+//
+// Parameters:
+//   - attestationRecords: Decrypted attestation records content (se-checksums.txt)
+//   - signature: Binary signature data (se-signature.bin content)
+//   - attestationCert: IBM attestation certificate in PEM format
+//
+// Returns:
+//   - nil if signature verification succeeds
+//   - Error if verification fails or parameters are invalid
+func HpcrVerifySignatureAttestationRecords(attestationRecords string, signature []byte, attestationCert string) error {
+	if gen.CheckIfEmpty(attestationRecords, attestationCert) || len(signature) == 0 {
+		return fmt.Errorf(missingParameterErrStatement)
+	}
+
+	// Extract public key from certificate using OpenSSL
+	publicKey, err := enc.ExtractPublicKeyFromCert(attestationCert)
+	if err != nil {
+		return fmt.Errorf("failed to extract public key from certificate - %v", err)
+	}
+
+	// Verify signature using OpenSSL
+	err = enc.VerifySignature(attestationRecords, signature, publicKey)
+	if err != nil {
+		return fmt.Errorf("signature verification failed - %v", err)
+	}
+
+	return nil
 }

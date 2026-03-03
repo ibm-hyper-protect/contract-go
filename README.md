@@ -46,6 +46,7 @@ Learn more:
 
 - **Attestation Management**
   - Decrypt encrypted attestation records
+  - Verify signature of attestation records against IBM certificates
 
 - **Certificate Operations**
   - Download HPVS encryption certificates from IBM Cloud
