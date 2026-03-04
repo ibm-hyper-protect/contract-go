@@ -1,3 +1,9 @@
+## [2.13.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.12.0...v2.13.0) (2026-03-04)
+
+### Features
+
+* Add support REV 26 ([#201](https://github.com/ibm-hyper-protect/contract-go/issues/201)) ([67ecca0](https://github.com/ibm-hyper-protect/contract-go/commit/67ecca049d50642b2d0e07a29acff0a75a270f0d))
+
 ## [2.12.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.11.0...v2.12.0) (2026-03-04)
 
 ### Features
