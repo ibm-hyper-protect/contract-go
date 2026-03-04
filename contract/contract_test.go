@@ -70,6 +70,8 @@ const (
 	sampleSignedEncryptedContract              = "../samples/hpcc/signed-encrypt-hpcc.yaml"
 	sampleGzippedInidata                       = "../samples/hpcc/gzipped-initdata"
 	sampleSingedEncryptedContractInputChecksum = "1b6ee574d6061896c23fad0711d1a89b8d9b7748506ab089201db1335605daea"
+
+	sampleCertificate = "../encryption/ibm-confidential-computing-container-runtime-26.2.0-encrypt.crt"
 )
 
 var (
@@ -234,8 +236,7 @@ func TestHpcrVerifyContractAttestPubKey(t *testing.T) {
 
 // Testcase to check if HpcrContractSignedEncrypted() is able to generate
 func TestHpcrContractSignedEncrypted(t *testing.T) {
-	encryption_cert := "../encryption/ibm-hyper-protect-container-runtime-1-0-s390x-25-encrypt.crt"
-	data, err := os.ReadFile(encryption_cert)
+	data, err := os.ReadFile(sampleCertificate)
 	if err != nil {
 		t.Errorf("Error reading file: - %v", err)
 	}

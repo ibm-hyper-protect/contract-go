@@ -7449,14 +7449,14 @@
           "env": {
             "volumes": {
               "test": {
-                "seed": "env phrase"
+                "seed": "ThisIsAValidEnv123"
               }
             }
           },
           "workload": {
             "volumes": {
               "test": {
-                "seed": "workload phrase"
+                "seed": "ThisIsAValidWorkload123"
               }
             }
           }
@@ -7465,7 +7465,7 @@
           "env": {
             "volumes": {
               "test": {
-                "seed": "env phrase"
+                "seed": "ThisIsAValidEnv123"
               }
             }
           },
@@ -7474,7 +7474,7 @@
               "test": {
                 "mount": "/mnt/data",
                 "filesystem": "ext4",
-                "seed": "workload phrase"
+                "seed": "ThisIsAValidWorkload123"
               }
             }
           }
@@ -7484,7 +7484,7 @@
             "volumes": {
               "test": {
                 "volumeID": "ICIC UUID",
-                "seed": "env phrase"
+                "seed": "ThisIsAValidEnv123"
               }
             }
           },
@@ -7493,7 +7493,7 @@
               "test": {
                 "mount": "/mnt/data",
                 "filesystem": "ext4",
-                "seed": "workload phrase"
+                "seed": "ThisIsAValidWorkload123"
               }
             }
           }
@@ -7534,7 +7534,7 @@
             {
               "test": {
                 "mount": "/mnt/data",
-                "seed": "fancy phrase"
+                "seed": "ThisIsAValidPass123"
               }
             }
           ]
@@ -7552,28 +7552,18 @@
           "examples": [
             {
               "test": {
-                "seed": "fancy phrase"
+                "seed": "ThisIsAValidPass123"
               }
             },
             {
               "test": {
                 "volumeID": "ICIC UUID",
-                "seed": "fancy phrase"
+                "seed": "ThisIsAValidPass123"
               }
             }
           ]
         },
         "envVolume": {
-          "oneOf": [
-            {
-              "$ref": "#/allOf/3/$defs/envVolumeWithKey"
-            },
-            {
-              "$ref": "#/allOf/3/$defs/envVolumePlain"
-            }
-          ]
-        },
-        "envVolumeWithKey": {
           "type": "object",
           "title": "Volume",
           "description": "Definition of the specification of a single volume.",
@@ -7589,33 +7579,6 @@
             },
             "kmsTimeout": {
               "$ref": "#/allOf/3/$defs/kmsTimeout"
-            },
-            "apiKey": {
-              "$ref": "#/allOf/3/$defs/volApiKey"
-            },
-            "volumeName": {
-              "$ref": "#/allOf/3/$defs/volumeName"
-            },
-            "volumeID": {
-              "$ref": "#/allOf/3/$defs/volumeID"
-            }
-          },
-          "required": [
-            "seed",
-            "kms"
-          ],
-          "additionalProperties": false
-        },
-        "envVolumePlain": {
-          "type": "object",
-          "title": "Volume",
-          "description": "Definition of the specification of a single volume.",
-          "properties": {
-            "seed": {
-              "$ref": "#/allOf/3/$defs/seed"
-            },
-            "previousSeed": {
-              "$ref": "#/allOf/3/$defs/previousSeed"
             },
             "apiKey": {
               "$ref": "#/allOf/3/$defs/volApiKey"
@@ -7656,51 +7619,27 @@
           "additionalProperties": false
         },
         "seed": {
-          "anyOf": [
-            {
-              "type": "string",
-              "description": "Deprecated. Use 'seed' with the updated pattern. This pattern support will be removed in future versions.",
-              "minLength": 3,
-              "examples": [
-                "testing value"
-              ]
-            },
-            {
-              "type": "string",
-              "title": "seed",
-              "description": "Part of the encryption seed used to encrypt the device.",
-              "minLength": 15,
-              "pattern": "^[a-zA-Z0-9!@#$%^&*(),.?\":{}|<>_-]{15,}$",
-              "examples": [
-                "ThisIsAValidPass123",
-                "mypassword!@#2024",
-                "1234567890ABCDEF"
-              ]
-            }
+          "type": "string",
+          "title": "seed",
+          "description": "Part of the encryption seed used to encrypt the device.",
+          "minLength": 15,
+          "pattern": "^[a-zA-Z0-9!@#$%^&*(),.?\":{}|<>_-]{15,}$",
+          "examples": [
+            "ThisIsAValidPass123",
+            "mypassword!@#2024",
+            "1234567890ABCDEF"
           ]
         },
         "previousSeed": {
-          "anyOf": [
-            {
-              "type": "string",
-              "description": "Deprecated. Use 'seed' with the updated pattern. This pattern support will be removed in future versions.",
-              "minLength": 3,
-              "examples": [
-                "testing value"
-              ]
-            },
-            {
-              "type": "string",
-              "title": "previous seed",
-              "description": "Previous seed used to encrypt the device.",
-              "minLength": 15,
-              "pattern": "^[a-zA-Z0-9!@#$%^&*(),.?\":{}|<>_-]{15,}$",
-              "examples": [
-                "ThisIsAValidPass123",
-                "mypassword!@#2024",
-                "1234567890ABCDEF"
-              ]
-            }
+          "type": "string",
+          "title": "previous seed",
+          "description": "Previous seed used to encrypt the device.",
+          "minLength": 15,
+          "pattern": "^[a-zA-Z0-9!@#$%^&*(),.?\":{}|<>_-]{15,}$",
+          "examples": [
+            "ThisIsAValidPass123",
+            "mypassword!@#2024",
+            "1234567890ABCDEF"
           ]
         },
         "filesystem": {
