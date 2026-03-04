@@ -636,6 +636,74 @@ func main() {
 
 ---
 
+### HpcrContractSign
+
+Generates Signed contract from the input contract
+
+**Package:** `github.com/ibm-hyper-protect/contract-go/v2/contract`
+
+**Signature:**
+```go
+func HpcrContractSign(contract, privateKey string) (string, string, string, error)
+```
+
+**Parameters:**
+
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `contract` | `string` | Required | Contract to sign |
+| `privateKey` | `string` | Required | RSA private key (PEM format) for signing |
+
+**Returns:**
+
+| Return | Type | Description |
+|--------|------|-------------|
+| Signed Contract | `string` | YAML with `workload`, `env`, and `envWorkloadSignature` |
+| Input Checksum | `string` | SHA256 of original contract |
+| Output Checksum | `string` | SHA256 of final contract |
+| Error | `error` | Error if text is empty |
+
+**Example:**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+)
+
+func main() {
+    contractYAML := `
+env: hyper-protect-basic.fdsiufhaogdhup.idsvoijsndojvpnsv
+workload: hyper-protect-basic.jriewcbdpoiew.diewuphfwhfep
+`
+    privateKey := `-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEA...
+-----END RSA PRIVATE KEY-----`
+
+    // Generates signed contract
+    signedContract, inputHash, outputHash := contract.HpcrContractSign(contractYAML, privateKey)
+    if err != nil {
+        log.Fatalf("Contract Signature creation failed: %v", err)
+    }
+
+    fmt.Printf("Signed Contract: %s\n", signedContract)
+    fmt.Printf("Input checksum: %s\n", inputHash)
+    fmt.Printf("Output checksum: %s\n", outputHash)
+}
+```
+
+**Validated Fields:**
+- Contract structure (env, workload)
+- Required fields presence
+
+**Common Errors:**
+- `"failed to sign contract"` - Signature generation failed
+
+---
+
 ### HpcrJson
 
 Generates Base64-encoded representation of JSON data with integrity checksums.
