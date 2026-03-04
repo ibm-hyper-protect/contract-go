@@ -341,6 +341,44 @@ func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encrypt
 	return finalContract, gen.GenerateSha256(contract), gen.GenerateSha256(finalContract), nil
 }
 
+// HpcrContractSign generates a signed contract from an encrypted contract
+// It signs the contract with the private key.
+//
+// Parameters:
+//   - contract: Encrypted contract with workload and env
+//   - privateKey: Private key to sign the contract
+//
+// Returns:
+//   - Signed contract YAML
+//   - SHA256 hash of the original contract
+//   - SHA256 hash of the final signed contract
+//   - Error if signing fails
+func HpcrContractSign(contract, privateKey string) (string, string, string, error) {
+	var contractMap map[string]interface{}
+
+	err := yaml.Unmarshal([]byte(contract), &contractMap)
+	if err != nil {
+		return "", "", "", fmt.Errorf("failed to unmarshal YAML - %v", err)
+	}
+
+	workload := contractMap["workload"].(string)
+	env := contractMap["env"].(string)
+
+	workloadEnvSignature, err := enc.SignContract(workload, env, privateKey)
+	if err != nil {
+		return "", "", "", fmt.Errorf("failed to sign contract - %v", err)
+	}
+
+	attestationPublicKey, _ := contractMap["attestationPublicKey"].(string)
+
+	finalContract, err := enc.GenFinalSignedContract(workload, env, workloadEnvSignature, attestationPublicKey)
+	if err != nil {
+		return "", "", "", fmt.Errorf("failed to generate final contract - %v", err)
+	}
+
+	return finalContract, gen.GenerateSha256(contract), gen.GenerateSha256(finalContract), nil
+}
+
 // HpccInitdata generates a gzipped and encoded initdata string.
 // It creates the initdata.toml based on tomltemplate and gzip the initdata.toml content to compress data.
 // It encode the compressed content in base64.

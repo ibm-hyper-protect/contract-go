@@ -72,6 +72,10 @@ const (
 	sampleSingedEncryptedContractInputChecksum = "1b6ee574d6061896c23fad0711d1a89b8d9b7748506ab089201db1335605daea"
 
 	sampleCertificate = "../encryption/ibm-confidential-computing-container-runtime-26.2.0-encrypt.crt"
+
+	sampleEncryptedContract    = "../samples/sign/contract.enc.yaml"
+	sampleEncryptedInputSha    = "6a15ebc21cec4fc6a1e7317b4ca4de9cf71bb7a29d9f81d42cd8474b270c54a1"
+	sampleSignEncryptOutputSha = "001e7c38bf6f34c80e0c1f7ca42ef420667f09687038bbe0233badda9cc210af"
 )
 
 var (
@@ -364,6 +368,27 @@ func TestHpcrTextDecrypted(t *testing.T) {
 	assert.Equal(t, result, decryptedText)
 	assert.Equal(t, inputSha, encryptedTextSha)
 	assert.Equal(t, outputSha, decryptedTextSha)
+}
+
+// Testcase to check HpcrContractSign() is able to sign contract
+func TestHpcrContractSign(t *testing.T) {
+	encryptedContract, err := gen.ReadDataFromFile(sampleEncryptedContract)
+	if err != nil {
+		t.Errorf("failed to read encrypted contract - %v", err)
+	}
+
+	privateKey, err := gen.ReadDataFromFile(samplePrivateKeyPath)
+	if err != nil {
+		t.Errorf("failed to read private key - %v", err)
+	}
+
+	_, inputSha, outputSha, err := HpcrContractSign(encryptedContract, privateKey)
+	if err != nil {
+		t.Errorf("failed to sign the encrypted contract - %v", err)
+	}
+
+	assert.Equal(t, inputSha, sampleEncryptedInputSha)
+	assert.Equal(t, outputSha, sampleSignEncryptOutputSha)
 }
 
 // Testcase to check HpccInitdata() is able to gzip data.
