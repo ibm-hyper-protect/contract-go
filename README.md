@@ -55,7 +55,7 @@ Learn more:
 
 - **Contract Generation**
   - Generate Base64-encoded data from text, JSON, initdata annotation and docker compose / podman play archives
-  - Create encrypted and signed contracts
+  - Create signed and encrypted & signed contracts
   - Support contract expiry with CSR (Certificate Signing Request)
   - Validate contract schemas
   - Decrypt encrypted text in Hyper Protect format
