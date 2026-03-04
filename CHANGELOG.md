@@ -1,3 +1,13 @@
+## [2.14.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.13.0...v2.14.0) (2026-03-04)
+
+### Features
+
+* add support to sign contract ([922e33b](https://github.com/ibm-hyper-protect/contract-go/commit/922e33b7f936ad5d127007a3da4ef1ff6947d4b8))
+
+### Documentation
+
+* update user documentation ([1206538](https://github.com/ibm-hyper-protect/contract-go/commit/1206538a137f1eb27b5d8b462bd26d3d36e83984))
+
 ## [2.13.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.12.0...v2.13.0) (2026-03-04)
 
 ### Features
