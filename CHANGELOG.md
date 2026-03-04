@@ -1,3 +1,9 @@
+## [2.12.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.11.0...v2.12.0) (2026-03-04)
+
+### Features
+
+* update algorithm to encrypt contract ([#181](https://github.com/ibm-hyper-protect/contract-go/issues/181)) ([0df2a6d](https://github.com/ibm-hyper-protect/contract-go/commit/0df2a6d11ff25c1f3f1680b8d9c236581df4c1e5))
+
 ## [2.11.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.10.0...v2.11.0) (2026-03-03)
 
 ### Features
