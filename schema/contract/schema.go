@@ -19,8 +19,5 @@ import (
 	_ "embed"
 )
 
-//go:embed hpse-contract-schema-1.0.93.json
-var ContractSchemaHpvs string
-
-//go:embed hpse-contract-schema-1.0.93-rhel.json
-var ContractSchemaHpcrRhvs string
+//go:embed hpse-contract-schema-1.0.101.json
+var ContractSchema string
