@@ -60,11 +60,11 @@ func HpcrGetAttestationRecords(data, privateKey string) (string, error) {
 //
 // The function expects the attestation records to be in decrypted form (output from
 // HpcrGetAttestationRecords). The signature should be the binary content of the
-// se-signature.bin file.
+// se-signature.bin file as a string (binary data read as string).
 //
 // Parameters:
 //   - attestationRecords: Decrypted attestation records content (se-checksums.txt)
-//   - signature: Binary signature data (se-signature.bin content)
+//   - signature: Binary signature data as string (se-signature.bin content read as string)
 //   - attestationCert: IBM attestation certificate in PEM format
 //
 // Returns:
@@ -82,7 +82,7 @@ func HpcrVerifySignatureAttestationRecords(attestationRecords, signature, attest
 	}
 
 	// Verify signature using OpenSSL
-	err = enc.VerifySignature(attestationRecords, []byte(signature), publicKey)
+	err = enc.VerifySignature(attestationRecords, signature, publicKey)
 	if err != nil {
 		return fmt.Errorf("signature verification failed - %v", err)
 	}
