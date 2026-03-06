@@ -186,6 +186,33 @@ func CreateTempFile(data string) (string, error) {
 	return tmpFile.Name(), nil
 }
 
+// CreateTempBinaryFile creates a temporary file with binary data.
+// It creates a temp file with the prefix "hpvs-", writes the binary data to it,
+// and returns the file path. This function preserves binary data integrity.
+//
+// Parameters:
+//   - data: Binary data to write to the temporary file
+//
+// Returns:
+//   - Absolute path to the created temporary file
+//   - Error if file creation or writing fails
+func CreateTempBinaryFile(data []byte) (string, error) {
+	tmpFile, err := os.CreateTemp("", TempFolderNamePrefix)
+	if err != nil {
+		return "", err
+	}
+	defer tmpFile.Close()
+
+	// Write the binary data to the temp file.
+	_, err = tmpFile.Write(data)
+	if err != nil {
+		return "", err
+	}
+
+	// Return the path to the temp file.
+	return tmpFile.Name(), nil
+}
+
 // RemoveTempFile deletes a file at the specified path.
 // It is typically used to clean up temporary files created by CreateTempFile.
 //

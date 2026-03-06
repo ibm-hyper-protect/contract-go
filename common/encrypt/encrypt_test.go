@@ -710,7 +710,7 @@ func TestVerifySignature(t *testing.T) {
 	}
 
 	// Verify signature
-	err = VerifySignature(testData, []byte(signature), publicKey)
+	err = VerifySignature(testData, signature, publicKey)
 	if err != nil {
 		t.Errorf("signature verification failed - %v", err)
 	}
@@ -719,7 +719,7 @@ func TestVerifySignature(t *testing.T) {
 // Testcase to check if VerifySignature() fails with invalid signature
 func TestVerifySignature_InvalidSignature(t *testing.T) {
 	testData := "test data"
-	invalidSignature := []byte("invalid signature")
+	invalidSignature := "invalid signature"
 
 	privateKey, err := gen.ReadDataFromFile(samplePrivateKeyPath)
 	if err != nil {

@@ -395,24 +395,25 @@ func ExtractPublicKeyFromCert(cert string) (string, error) {
 //
 // Parameters:
 //   - data: Original data that was signed
-//   - signature: Binary signature data to verify
+//   - signature: Binary signature data as string (binary file content read as string)
 //   - publicKey: RSA public key in PEM format
 //
 // Returns:
 //   - nil if signature verification succeeds
 //   - Error if OpenSSL is not found or verification fails
-func VerifySignature(data string, signature []byte, publicKey string) error {
+func VerifySignature(data string, signature string, publicKey string) error {
 	err := OpensslCheck()
 	if err != nil {
 		return fmt.Errorf("openssl not found - %v", err)
 	}
 
-	dataPath, err := gen.CreateTempFile(data)
+	// Use CreateTempBinaryFile for data to preserve exact content including whitespace
+	dataPath, err := gen.CreateTempBinaryFile([]byte(data))
 	if err != nil {
 		return fmt.Errorf("failed to create temp file for data - %v", err)
 	}
 
-	signaturePath, err := gen.CreateTempFile(string(signature))
+	signaturePath, err := gen.CreateTempBinaryFile([]byte(signature))
 	if err != nil {
 		return fmt.Errorf("failed to create temp file for signature - %v", err)
 	}
