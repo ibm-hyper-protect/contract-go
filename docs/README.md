@@ -1,8 +1,41 @@
-# Hyper Protect Contract Go Library - API Documentation
+# IBM Confidential Computing Contract Go Library - API Documentation
 
 ## Introduction
 
-The `contract-go` library provides a comprehensive API for working with IBM Hyper Protect services. This documentation covers all available functions, their parameters, return values, and usage examples.
+The `contract-go` library provides a comprehensive API for working with IBM Confidential Computing services (formerly known as IBM Hyper Protect services). This documentation covers all available functions, their parameters, return values, and usage examples.
+
+## What is a Contract?
+
+A **contract** is a definition file in YAML format that is used to configure and deploy IBM Confidential Computing workloads. The contract specifies workload details, environment configuration, and attestation settings. When a virtual server instance boots, the bootloader decrypts and validates the contract, then brings up the workload.
+
+### Contract Sections
+
+A contract has four valid high-level sections:
+
+| Section | Required | Description |
+|---------|----------|-------------|
+| `workload` | Yes | Defines the container workload, registry authentication, images, and volumes |
+| `env` | Yes | Specifies the deployment environment, logging, and signing key |
+| `attestationPublicKey` | No | RSA public key for encrypting attestation records |
+| `envWorkloadSignature` | No | Signature of the workload and env sections for integrity verification |
+
+### Encryption Format
+
+Encrypted sections use the format: `hyper-protect-basic.<encrypted-password>.<encrypted-data>`
+
+The encryption process:
+1. Generate a random 32-byte AES password
+2. Encrypt the password with the IBM encryption certificate (RSA)
+3. Encrypt the section data with the AES password (AES-256-CBC)
+4. Combine as `hyper-protect-basic.<base64-encrypted-password>.<base64-encrypted-data>`
+
+### Supported Platforms
+
+| Platform Identifier | Official Name |
+|---------------------|---------------|
+| `hpvs` | IBM Confidential Computing Container Runtime |
+| `hpcr-rhvs` | IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions |
+| `hpcc-peerpod` | IBM Confidential Computing Containers for Red Hat OpenShift Container Platform |
 
 ## Table of Contents
 
@@ -327,9 +360,9 @@ func main() {
 
     fmt.Printf("Version: %s\n", version)
     fmt.Printf("Certificate:\n%s\n", cert)
-    fmt.Printf("Expiry date:\n%s\n", expiry_date)
-    fmt.Printf("Expiry days:\n%s\n", expiry_days)
-    fmt.Printf("status:\n%s\n", status)
+    fmt.Printf("Expiry date: %s\n", expiry_date)
+    fmt.Printf("Expiry days: %s\n", expiry_days)
+    fmt.Printf("Status: %s\n", status)
 }
 ```
 
@@ -684,7 +717,7 @@ MIIEpAIBAAKCAQEA...
 -----END RSA PRIVATE KEY-----`
 
     // Generates signed contract
-    signedContract, inputHash, outputHash := contract.HpcrContractSign(contractYAML, privateKey)
+    signedContract, inputHash, outputHash, err := contract.HpcrContractSign(contractYAML, privateKey)
     if err != nil {
         log.Fatalf("Contract Signature creation failed: %v", err)
     }
@@ -800,8 +833,8 @@ import (
 
 func main() {
     text := "sensitive data"
-    cert := ```....your certificate...```
-    privateKey := ```...your private key...```
+    cert := "....your certificate..."
+    privateKey := "...your private key..."
 
     // Use default certificate
     encrypted, _, _, err := contract.HpcrTextEncrypted(text, "", cert)
@@ -1511,9 +1544,9 @@ func main() {
 ```
 
 **Supported Platforms:**
-- HPVS (Hyper Protect Virtual Servers)
-- HPCR RHVS (Hyper Protect Container Runtime for Red Hat Virtualization)
-- HPCC Peer Pod (Hyper Protect Confidential Container Peer Pods)
+- IBM Confidential Computing Container Runtime (HPVS)
+- IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (HPCR-RHVS)
+- IBM Confidential Computing Containers for Red Hat OpenShift Container Platform (HPCC-PeerPod)
 
 **Common Errors:**
 - `"Invalid schema file"` - Invalid YAML format in network configuration
@@ -1549,7 +1582,7 @@ func main() {
     }
 
     // 2. Get specific version certificate
-    version, cert, err := certificate.HpcrGetEncryptionCertificateFromJson(certsJSON, "1.1.15")
+    version, cert, _, _, _, err := certificate.HpcrGetEncryptionCertificateFromJson(certsJSON, "1.1.15")
     if err != nil {
         log.Fatal(err)
     }
@@ -1796,13 +1829,13 @@ fmt.Printf("Output checksum: %s\n", outputHash)
 
 ## Platform-Specific Constants
 
-The library supports three Hyper Protect platforms:
+The library supports three IBM Confidential Computing platforms:
 
 ```go
 const (
-    HyperProtectOsHpvs     = "hpvs"         // Hyper Protect Virtual Servers
-    HyperProtectOsHpcrRhvs = "hpcr-rhvs"    // HPCR for Red Hat Virtualization
-    HyperProtectConfidentialContainerPeerPods = "hpcc-peerpod" // HPCC Peer Pods
+    HyperProtectOsHpvs     = "hpvs"         // IBM Confidential Computing Container Runtime
+    HyperProtectOsHpcrRhvs = "hpcr-rhvs"    // IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions
+    HyperProtectConfidentialContainerPeerPods = "hpcc-peerpod" // IBM Confidential Computing Containers for Red Hat OpenShift Container Platform
 )
 ```
 
@@ -1830,11 +1863,12 @@ contract.HpcrContractSignedEncrypted(
 - **Contributing:** [CONTRIBUTING.md](../CONTRIBUTING.md)
 - **Security:** [SECURITY.md](../SECURITY.md)
 
-### IBM Hyper Protect Documentation
+### IBM Confidential Computing Documentation
 
-- [Confidential Computing with LinuxONE](https://cloud.ibm.com/docs/vpc?topic=vpc-about-se)
-- [IBM Hyper Protect Virtual Servers](https://www.ibm.com/docs/en/hpvs/2.2.x)
-- [IBM Hyper Protect Confidential Container](https://www.ibm.com/docs/en/hpcc/1.1.x)
+- [Confidential computing with LinuxONE](https://cloud.ibm.com/docs/vpc?topic=vpc-about-se)
+- [IBM Confidential Computing Container Runtime](https://www.ibm.com/docs/en/cccr/2.2.x)
+- [IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions](https://www.ibm.com/docs/en/ccrv/1.1.x)
+- [IBM Confidential Computing Containers for Red Hat OpenShift](https://www.ibm.com/docs/en/ccro/1.1.x)
 
 ### Related Projects
 

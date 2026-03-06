@@ -6,7 +6,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/ibm-hyper-protect/contract-go.svg)](https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go/v2)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-A Go library for automating the provisioning and management of IBM Hyper Protect confidential computing workloads.
+A Go library for generating, signing, and encrypting deployment contracts for IBM Confidential Computing workloads on IBM Z and LinuxONE.
 
 ## Table of Contents
 
@@ -24,23 +24,32 @@ A Go library for automating the provisioning and management of IBM Hyper Protect
 
 ## Overview
 
-The `contract-go` library automates the provisioning of IBM Hyper Protect confidential computing solutions:
+The `contract-go` library automates the provisioning of IBM Confidential Computing solutions:
 
-- **Hyper Protect Virtual Servers (HPVS)** - Secure virtual servers on IBM Cloud
-- **Hyper Protect Container Runtime (HPCR)** for RedHat Virtualization (RHVS)
-- **Hyper Protect Confidential Container (HPCC)** for Red Hat OpenShift Peer Pods
+- **IBM Confidential Computing Container Runtime** (formerly known as Hyper Protect Virtual Servers) — Deploy confidential computing workloads on IBM Z and LinuxONE using IBM Secure Execution for Linux
+- **IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions** (formerly known as Hyper Protect Container Runtime for Red Hat Virtualization Solutions) — Purpose-built for hosting critical, centralized services within tightly controlled virtualized environments on IBM Z
+- **IBM Confidential Computing Containers for Red Hat OpenShift Container Platform** (formerly known as IBM Hyper Protect Confidential Container for Red Hat OpenShift Container Platform) — Deploy isolated workloads using IBM Secure Execution for Linux, integrated with Red Hat OpenShift Container Platform
 
-This library provides cryptographic operations, contract generation, validation, and management capabilities for deploying workloads in secure enclaves on IBM LinuxONE.
+This library provides cryptographic operations, contract generation, validation, and management capabilities for deploying workloads in secure enclaves on IBM Z and LinuxONE.
 
-### What are Hyper Protect Services?
+### Who Is This For?
 
-IBM Hyper Protect services provide confidential computing capabilities that protect data in use by leveraging Secure Execution feature of Z. 
+This library is for **Go developers** who need to programmatically generate, sign, and encrypt deployment contracts for IBM Confidential Computing services. Common users include:
+
+- **DevOps engineers** automating confidential computing deployments via Terraform or CI/CD pipelines
+- **Solution providers** building applications that run in secure enclaves
+- **Platform teams** managing contract lifecycle across environments
+
+### What is IBM Confidential Computing?
+
+IBM Confidential Computing services protect data in use by leveraging the IBM Secure Execution for Linux feature on IBM Z and LinuxONE hardware. Each deployment is configured through a **contract** — an encrypted YAML definition file that specifies workload, environment, and attestation settings. This library automates the generation and management of these contracts.
 
 Learn more:
 
 - [Confidential computing with LinuxONE](https://cloud.ibm.com/docs/vpc?topic=vpc-about-se)
-- [IBM Hyper Protect Virtual Servers](https://www.ibm.com/docs/en/hpvs/2.2.x)
-- [IBM Hyper Protect Confidential Container for Red Hat OpenShift](https://www.ibm.com/docs/en/hpcc/1.1.x)
+- [IBM Confidential Computing Container Runtime](https://www.ibm.com/docs/en/cccr/2.2.x)
+- [IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions](https://www.ibm.com/docs/en/ccrv/1.1.x)
+- [IBM Confidential Computing Containers for Red Hat OpenShift](https://www.ibm.com/docs/en/ccro/1.1.x)
 
 ## Features
 
@@ -100,6 +109,32 @@ $env:OPENSSL_BIN="C:\Program Files\OpenSSL-Win64\bin\openssl.exe"
 
 ## Quick Start
 
+### Encode Text
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+)
+
+func main() {
+    text := "Hello, IBM Confidential Computing!"
+
+    encoded, inputHash, outputHash, err := contract.HpcrText(text)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("Base64 encoded: %s\n", encoded)
+    fmt.Printf("Input SHA256:  %s\n", inputHash)
+    fmt.Printf("Output SHA256: %s\n", outputHash)
+}
+```
+
 ### Generate a Signed and Encrypted Contract
 
 ```go
@@ -125,13 +160,16 @@ workload: |
   type: workload
   compose:
     archive: your-archive
-attestationPublicKey: LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQ0lqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FnOEFNSUlDQ2dLQ0FnRUF4cklNT3RvSktWRTZQbGhvVlJ1dgorb3YxaW1jOEZRZUdQZ3VoVFBpQUFrNDVqRStJSnVKTHZtVHFkOE8yVlZwT05iZEhiN3ZpWGEydUwxeFBOcUp2ClVpVmZNTDUyN1B4V25TU3drcitKNDYwamZvZCtaMkJOQ0k1eVV6dVYxQVhvNHV3YmVLVzNYbVM2b2FIT1YrNmsKU1YwWCt3cFE5a3J5QnJ2NWVJc2tsSTBtS3JnaXBOc2N4b3hvNG4rRDlPMWRDVU5XRzZ4MmlpVnVLeXp4VzZZTgordW9wNHZxb3VMM2pGQ1crVkRGVHgycGViNzNqL2V6WnRUVVhEbStPZTc1V21zVkxjUUg4RXZYbVFsRVAvbEduCnZZMWQ1RXI1ZjlBSU5yOEdRWjM1OHNrWENvdCtseDZiMmQveTZwWEFOTFpBR2ZoRmZLSUMxSVdHOTQrRVdqMG4KUFB6Y1NpeHhHUk53bHZjV3BDY3hKTHFEb1VCaDF0NVA4OGJTVVJUVnpuZUVydDVYbUtjRVdDd3JsSGRrSWdGYgp1azFpbWlEOHl4S2RtZmNKdzZzRm5NeDlTb3FxSFFqNk9FUFZrV3E3Y1VYQUVMN05PSzlWTnZzZUxlNnEwRkRVClNLOSt5Ty9PdEdtSEFMcFJtY2dzNGlKOVJmRTlZQUt0a1JQRlRETUdYR0lFUGdnQkIyMHRlblk0ZTRyaXE1UWgKYWp1Y2txd3psRkhjbEZLWk9jMXNMR3NCRmhHSERIZm1taWNnWkhBdVN5YVpaM29QM3czbmhNK2IwT2grSjFSMwpWQUVWWUlDMzArVUZVR1dyTU40Q3ZDLzZaVk5YVkZ4ZkZMcU8raGFnNnI4Q3VqVEtLQ3NiaE5kaVNoNlRvdWhUCjZNY2N3OVg2bkpPdFBhK0E3L0ZVV3BVQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo=
+attestationPublicKey: LS0tLS1CRUdJTi...
 `
+    privateKey := `-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEA...
+-----END RSA PRIVATE KEY-----`
 
     // Generate signed and encrypted contract
     signedContract, inputHash, outputHash, err := contract.HpcrContractSignedEncrypted(
         contractYAML,
-        "hpvs",              // Hyper Protect OS type
+        "hpvs",              // Platform type (hpvs, hpcr-rhvs, or hpcc-peerpod)
         "",                  // Use default encryption certificate
         privateKey,          // Your RSA private key
     )
@@ -181,38 +219,39 @@ func main() {
 
 Comprehensive documentation is available at:
 
-- **[User Documentation](https://ibm-hyper-protect.github.io/contract-go)** - Detailed API reference and usage examples
-- **[Go Package Documentation](https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go/v2)** - Generated Go docs
-- **[Examples](samples/)** - Sample contracts and configurations
+- **[User Documentation](https://ibm-hyper-protect.github.io/contract-go)** — Detailed API reference and usage examples
+- **[Go Package Documentation](https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go/v2)** — Generated Go docs
+- **[Examples](samples/)** — Sample contracts and configurations
 
 ## Supported Platforms
 
-| Platform | Description | Support Status |
-|----------|-------------|----------------|
-| HPVS | Hyper Protect Virtual Servers | Supported |
-| HPCR-RHVS | Hyper Protect Container Runtime for Red Hat Virtualization | Supported |
-| HPCC-PeerPod | Hyper Protect Confidential Container Peer Pods | Supported |
+| Platform | Official Name | Version | Support Status |
+|----------|---------------|---------|----------------|
+| HPVS | IBM Confidential Computing Container Runtime | 2.2.x | Supported |
+| HPCR-RHVS | IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions | 1.1.x | Supported |
+| HPCC-PeerPod | IBM Confidential Computing Containers for Red Hat OpenShift Container Platform | 1.1.x | Supported |
 
 ## Examples
 
 The [`samples/`](samples/) directory contains example configurations:
 
 - [Simple Contract](samples/simple_contract.yaml)
+- [Contract with Attestation Public Key](samples/attest_pub_key_contract.yaml)
 - [Workload Configuration](samples/workload.yaml)
-- [Network Configuration](samples/network/network_config.yaml)
+- [Encrypted Contract](samples/sign/contract.enc.yaml)
+- [HPCC Signed & Encrypted Contract](samples/hpcc/signed-encrypt-hpcc.yaml)
 - [Docker Compose](samples/tgz/docker-compose.yaml)
 
 ## Related Projects
 
-This library is used by several tools in the IBM Hyper Protect ecosystem:
+This library is used by several tools in the IBM Confidential Computing ecosystem:
 
 | Project | Description |
 |---------|-------------|
-| [contract-cli](https://github.com/ibm-hyper-protect/contract-cli) | CLI tool for generating Hyper Protect contracts |
-| [terraform-provider-hpcr](https://github.com/ibm-hyper-protect/terraform-provider-hpcr) | Terraform provider for Hyper Protect contracts |
+| [contract-cli](https://github.com/ibm-hyper-protect/contract-cli) | CLI tool for generating IBM Confidential Computing contracts |
+| [terraform-provider-hpcr](https://github.com/ibm-hyper-protect/terraform-provider-hpcr) | Terraform provider for IBM Confidential Computing contracts |
 | [k8s-operator-hpcr](https://github.com/ibm-hyper-protect/k8s-operator-hpcr) | Kubernetes operator for contract management |
-| [linuxone-vsi-automation-samples](https://github.com/ibm-hyper-protect/linuxone-vsi-automation-samples) | Terraform examples for HPVS and HPCR RHVS |
-| [hyper-protect-virtual-server-samples](https://github.com/ibm-hyper-protect/hyper-protect-virtual-server-samples) | HPVS feature samples and scripts |
+| [linuxone-vsi-automation-samples](https://github.com/ibm-hyper-protect/linuxone-vsi-automation-samples) | Examples for IBM Confidential Computing deployments |
 
 ## Contributing
 

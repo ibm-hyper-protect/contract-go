@@ -118,6 +118,19 @@ We actively welcome your pull requests! However, please follow this process:
    make test
    ```
 
+### Available Makefile Targets
+
+| Target | Description |
+|--------|-------------|
+| `make help` | Display all available targets |
+| `make install-deps` | Download Go module dependencies |
+| `make test` | Run all tests with verbose output |
+| `make test-cover` | Run tests with coverage report |
+| `make update-packages` | Update all Go module dependencies |
+| `make tidy` | Tidy Go module dependencies |
+| `make clean` | Remove build artifacts |
+| `make fmt` | Format all Go source files |
+
 ## Development Workflow
 
 1. **Create a feature branch** from `main`:
