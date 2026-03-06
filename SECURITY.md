@@ -98,6 +98,7 @@ When using `contract-go`, we recommend:
 2. **Dependency Management**
    - Regularly audit dependencies for known vulnerabilities
    - Keep dependencies up to date
+   - The project uses [WhiteSource](https://www.whitesourcesoftware.com/) for automated dependency vulnerability scanning (see `.whitesource` configuration)
 3. **Testing**
    - Write tests that cover security-relevant code paths
    - Test error handling and edge cases
@@ -142,6 +143,10 @@ These operations rely on:
 - Proper OpenSSL installation and configuration
 - Secure key generation and storage (user responsibility)
 - Trusted encryption certificates from IBM Cloud
+
+### Encryption Certificate Chain
+
+The encryption and attestation certificates are signed by the IBM intermediate certificate, which is signed by the IBM DigiCert intermediate certificate (which in turn is signed by DigiCert Trusted Root G4). For more information about the certificates, see [DigiCert Trusted Root Authority Certificates](https://www.digicert.com/kb/digicert-root-certificates.htm).
 
 ### Contract Expiry
 

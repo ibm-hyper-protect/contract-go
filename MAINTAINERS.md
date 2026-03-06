@@ -175,6 +175,8 @@ Before merging:
 
 ### Release Process
 
+Releases are managed using [semantic-release](https://semantic-release.gitbook.io/) (see `.releaserc` configuration):
+
 1. Update version in `go.mod`
 2. Update `CHANGELOG.md`
 3. Create release tag following semantic versioning

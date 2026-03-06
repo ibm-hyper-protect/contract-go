@@ -41,20 +41,23 @@ type CertSpec struct {
 	Patch string
 }
 
-// HpcrGetEncryptionCertificateFromJson extracts a specific version's encryption certificate from downloaded certificates.
-// It parses the JSON/YAML output from HpcrDownloadEncryptionCertificates and returns the certificate
-// for the requested version.
+// HpcrGetEncryptionCertificateFromJson extracts a specific version's encryption certificate
+// from the output of [HpcrDownloadEncryptionCertificates].
+//
+// Use this function after downloading certificates with [HpcrDownloadEncryptionCertificates]
+// to extract the certificate, version, expiry details, and status for a specific IBM Confidential
+// Computing Container Runtime version.
 //
 // Parameters:
-//   - encryptionCertificateJson: JSON or YAML formatted certificate data from HpcrDownloadEncryptionCertificates
-//   - version: Specific HPCR version to extract (e.g., "1.1.15")
+//   - encryptionCertificateJson: JSON or YAML formatted certificate data (output from [HpcrDownloadEncryptionCertificates])
+//   - version: Specific version to extract (e.g., "1.1.15")
 //
 // Returns:
 //   - Version string of the extracted certificate
-//   - PEM-formatted encryption certificate
-//   - Expiry date of the encryption certificate
-//   - Expiry days of the encryption certificate
-//   - Status of the Encryption certificate
+//   - PEM-formatted encryption certificate for use with contract encryption functions
+//   - Expiry date of the encryption certificate (human-readable date string)
+//   - Expiry days remaining as a string (e.g., "365")
+//   - Status of the certificate (e.g., "valid", "expired")
 //   - Error if version not found or data is invalid
 func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version string) (string, string, string, string, string, error) {
 	if gen.CheckIfEmpty(encryptionCertificateJson, version) {
@@ -68,18 +71,25 @@ func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version str
 	return latestVersion, certInfo["cert"], certInfo["expiry_date"], certInfo["expiry_days"], certInfo["status"], nil
 }
 
-// HpcrDownloadEncryptionCertificates downloads encryption certificates for specified HPCR versions from IBM Cloud.
-// It retrieves certificates for each version in the list, validates their existence and expiry,
-// and returns them in either JSON or YAML format.
+// HpcrDownloadEncryptionCertificates downloads encryption certificates for specified IBM
+// Confidential Computing Container Runtime versions from IBM Cloud.
+//
+// Use this function to download the IBM encryption certificates required for encrypting
+// contract sections. Each version of the runtime may have a different encryption certificate.
+// The certificates are used to encrypt the random AES password in the "hyper-protect-basic"
+// encryption format. You can then extract individual certificates using [HpcrGetEncryptionCertificateFromJson].
 //
 // Parameters:
-//   - versionList: List of HPCR versions to download (e.g., []string{"1.1.14", "1.1.15"})
-//   - formatType: Output format - "json" or "yaml" (defaults to "json" if empty)
-//   - certDownloadUrlTemplate: Custom URL template for certificate download (uses IBM Cloud default if empty)
+//   - versionList: List of runtime versions to download certificates for (e.g., []string{"1.1.14", "1.1.15"}).
+//     Version format must be "major.minor.patch" (e.g., "1.1.15").
+//   - formatType: Output format — "json" or "yaml" (defaults to "json" if empty)
+//   - certDownloadUrlTemplate: Custom URL template for certificate download. If empty, uses the
+//     default IBM Cloud Object Storage URL. Template variables: {{.Major}}, {{.Minor}}, {{.Patch}}
 //
 // Returns:
-//   - JSON or YAML formatted map of versions to certificates with status and expiry information
-//   - Error if download fails or version not found
+//   - JSON or YAML formatted map of versions to certificates, each with cert, status, expiry_days,
+//     and expiry_date fields
+//   - Error if download fails, version format is invalid, or certificate not found
 func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDownloadUrlTemplate string) (string, error) {
 	if certDownloadUrlTemplate == "" {
 		certDownloadUrlTemplate = defaultEncCertUrlTemplate
@@ -156,16 +166,18 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 	}
 }
 
-// HpcrValidateEncryptionCertificate validates an encryption certificate and returns expiry information.
-// It checks the certificate's validity period and returns a message indicating whether the certificate
-// is valid, about to expire, or has already expired.
+// HpcrValidateEncryptionCertificate validates an IBM encryption certificate and returns its expiry status.
+//
+// Use this function to check whether an encryption certificate is still valid before using it
+// for contract encryption. This is especially important in CI/CD pipelines and automation
+// to detect expiring certificates early and avoid deployment failures.
 //
 // Parameters:
-//   - encryptionCert: PEM-formatted encryption certificate to validate
+//   - encryptionCert: PEM-formatted IBM encryption certificate to validate
 //
 // Returns:
-//   - Validation message with expiry information (days remaining or expiration date)
-//   - Error if certificate is invalid, corrupted, or has expired
+//   - Validation message indicating the certificate status (valid with days remaining, or expired)
+//   - Error if the certificate is invalid, corrupted, or has expired
 func HpcrValidateEncryptionCertificate(encryptionCert string) (string, error) {
 	msg, err := gen.CheckEncryptionCertValidityForContractEncryption(encryptionCert)
 	if err != nil {
