@@ -1,3 +1,9 @@
+## [2.14.1](https://github.com/ibm-hyper-protect/contract-go/compare/v2.14.0...v2.14.1) (2026-03-06)
+
+### Bug Fixes
+
+* Add function to keep raw bytes without any trimming or modification ([bfdc12a](https://github.com/ibm-hyper-protect/contract-go/commit/bfdc12a6d9729efefd901b3d4bcc49f3680cc141))
+
 ## [2.14.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.13.0...v2.14.0) (2026-03-04)
 
 ### Features
