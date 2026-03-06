@@ -81,11 +81,11 @@ body:
     id: platform
     attributes:
       label: Target Platform
-      description: Which Hyper Protect platform does this feature relate to?
+      description: Which IBM Confidential Computing platform does this feature relate to?
       options:
-        - HPVS (Hyper Protect Virtual Servers)
-        - HPCR-RHVS (Hyper Protect Container Runtime)
-        - HPCC-PeerPod (Confidential Container Peer Pods)
+        - HPVS (IBM Confidential Computing Container Runtime)
+        - HPCR-RHVS (IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions)
+        - HPCC-PeerPod (IBM Confidential Computing Containers for Red Hat OpenShift Container Platform)
         - All platforms
         - Not platform-specific
     validations:
