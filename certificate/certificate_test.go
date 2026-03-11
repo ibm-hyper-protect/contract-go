@@ -40,6 +40,20 @@ var (
 	sampleEncryptionCertVersions       = []string{"1.0.20", "1.0.21", "1.0.22"}
 	sampleInvalidEncryptionCertVersion = []string{"abc", "xy.z"}
 	sampleCertDownloadTemplate         = "https://hpvsvpcubuntu.s3.us.cloud-object-storage.appdomain.cloud/s390x-{{.Patch}}/ibm-hyper-protect-container-runtime-{{.Major}}-{{.Minor}}-s390x-{{.Patch}}-encrypt.crt"
+
+	sampleEncryptionCertPath = "../samples/encryption-cert/active.crt"
+
+	sampleValidChainEncCertPath   = "../samples/certificate-chain/valid-chain/encryption.crt"
+	sampleValidChainInterCertPath = "../samples/certificate-chain/valid-chain/intermediate.crt"
+	sampleValidChainRootCertPath  = "../samples/certificate-chain/valid-chain/root.crt"
+
+	sampleInvalidEncCertPath   = "../samples/certificate-chain/invalid-chain/encryption.crt"
+	sampleInvalidInterCertPath = "../samples/certificate-chain/invalid-chain/wrong_intermediate.crt"
+	sampleInvalidRootCertPath  = "../samples/certificate-chain/invalid-chain/root.crt"
+
+	sampleExpiredEncCertPath   = "../samples/certificate-chain/expired-chain/expired_encryption.crt"
+	sampleExpiredInterCertPath = "../samples/certificate-chain/expired-chain/intermediate.crt"
+	sampleExpiredRootCertPath  = "../samples/certificate-chain/expired-chain/root.crt"
 )
 
 // Testcase to check if GetEncryptionCertificateFromJson() gets encryption certificate as per version constraint
@@ -109,7 +123,7 @@ func TestCombined(t *testing.T) {
 
 // Testcase to CheckEncryptionCertValidity() is able to validate encryption certificate
 func TestHpcrDownloadEncryptionCertificates(t *testing.T) {
-	encryptionCert, err := gen.ReadDataFromFile("../samples/encryption-cert/active.crt")
+	encryptionCert, err := gen.ReadDataFromFile(sampleEncryptionCertPath)
 	if err != nil {
 		t.Errorf("failed to get encrypted checksum - %v", err)
 	}
@@ -133,4 +147,165 @@ func TestHpcrDownloadEncryptionCertificatesYamlFormat(t *testing.T) {
 
 	assert.NotEmpty(t, result)
 	assert.Contains(t, result, "1.0.20")
+}
+
+// Testcase to check if HpcrValidateEncryptionCertificateComplete validates certificate chain correctly
+func TestHpcrValidateEncryptionCertificateComplete_ValidChain(t *testing.T) {
+	// Using the active certificate from samples as encryption cert
+	encCert, err := gen.ReadDataFromFile(sampleEncryptionCertPath)
+	if err != nil {
+		t.Errorf("failed to read encryption certificate - %v", err)
+	}
+
+	// For testing, we'll use the same cert as intermediate and root
+	// This is a self-signed certificate, so OpenSSL will accept it
+	intermediateCert := encCert
+	rootCert := encCert
+
+	valid, msg, err := HpcrValidateEncryptionCertificateComplete(encCert, intermediateCert, rootCert)
+
+	// Self-signed certificate should validate successfully with OpenSSL
+	assert.NoError(t, err)
+	assert.True(t, valid)
+	assert.NotEmpty(t, msg)
+}
+
+// Testcase to check if HpcrValidateEncryptionCertificateComplete handles empty parameters
+func TestHpcrValidateEncryptionCertificateComplete_EmptyParameters(t *testing.T) {
+	valid, msg, err := HpcrValidateEncryptionCertificateComplete("", "", "")
+	assert.Error(t, err)
+	assert.False(t, valid)
+	assert.Empty(t, msg)
+	assert.Contains(t, err.Error(), missingParameterErrStatement)
+}
+
+// Testcase to check if HpcrValidateEncryptionCertificateComplete handles invalid certificate format
+func TestHpcrValidateEncryptionCertificateComplete_InvalidFormat(t *testing.T) {
+	valid, msg, err := HpcrValidateEncryptionCertificateComplete("invalid", "cert", "data")
+	assert.Error(t, err)
+	assert.False(t, valid)
+	assert.NotEmpty(t, msg)
+	// OpenSSL error messages may vary, so just check for error
+}
+
+// Testcase to check if HpcrCheckCertificateRevocation handles empty parameters
+func TestHpcrCheckCertificateRevocation_EmptyParameters(t *testing.T) {
+	revoked, msg, err := HpcrCheckCertificateRevocation("", "")
+	assert.Error(t, err)
+	assert.False(t, revoked)
+	assert.Empty(t, msg)
+	assert.Contains(t, err.Error(), missingParameterErrStatement)
+}
+
+// Testcase to check if HpcrCheckCertificateRevocation handles invalid certificate
+func TestHpcrCheckCertificateRevocation_InvalidCert(t *testing.T) {
+	revoked, msg, err := HpcrCheckCertificateRevocation("invalid", "crl")
+	assert.Error(t, err)
+	assert.False(t, revoked)
+	assert.Empty(t, msg)
+}
+
+// Testcase to check if HpcrDownloadCRL handles empty URL
+func TestHpcrDownloadCRL_EmptyURL(t *testing.T) {
+	crl, err := HpcrDownloadCRL("")
+	assert.Error(t, err)
+	assert.Empty(t, crl)
+	assert.Contains(t, err.Error(), missingParameterErrStatement)
+}
+
+// Testcase to check if HpcrDownloadCRL handles invalid URL
+func TestHpcrDownloadCRL_InvalidURL(t *testing.T) {
+	crl, err := HpcrDownloadCRL("http://invalid-url-that-does-not-exist.example.com/crl")
+	assert.Error(t, err)
+	assert.Empty(t, crl)
+}
+
+// Testcase to validate certificate chain with valid sample certificates
+func TestHpcrValidateEncryptionCertificateComplete_WithSampleCerts_ValidChain(t *testing.T) {
+	// Read valid certificate chain from samples
+	encryptionCert, err := gen.ReadDataFromFile(sampleValidChainEncCertPath)
+	if err != nil {
+		t.Error("Failed to read encryption certificate")
+	}
+
+	intermediateCert, err := gen.ReadDataFromFile(sampleValidChainInterCertPath)
+	if err != nil {
+		t.Error("Failed to read Intermediate certificate")
+	}
+
+	rootCert, err := gen.ReadDataFromFile(sampleValidChainRootCertPath)
+	if err != nil {
+		t.Error("Failed to read root certificate")
+	}
+
+	// Validate the certificate chain
+	valid, msg, err := HpcrValidateEncryptionCertificateComplete(string(encryptionCert), string(intermediateCert), string(rootCert))
+
+	assert.NoError(t, err, "Validation should not return error for valid chain")
+	assert.True(t, valid, "Certificate chain should be valid")
+	assert.Contains(t, msg, "Certificate chain is valid", "Message should indicate valid chain")
+	assert.Contains(t, msg, "expires on", "Message should include expiry information")
+	t.Logf("Valid chain test passed: %s", msg)
+}
+
+// Testcase to validate certificate chain with invalid sample certificates (broken chain)
+func TestHpcrValidateEncryptionCertificateComplete_WithSampleCerts_InvalidChain(t *testing.T) {
+	// Read invalid certificate chain from samples (wrong intermediate)
+	encryptionCert, err := gen.ReadDataFromFile(sampleInvalidEncCertPath)
+	if err != nil {
+		t.Error("Failed to read encryption certificate")
+	}
+
+	wrongIntermediateCert, err := gen.ReadDataFromFile(sampleInvalidInterCertPath)
+	if err != nil {
+		t.Error("Failed to read intermediate certificate")
+	}
+
+	rootCert, err := gen.ReadDataFromFile(sampleInvalidRootCertPath)
+	if err != nil {
+		t.Error("Failed to read root certificate")
+	}
+
+	// Try to validate the broken certificate chain
+	valid, msg, err := HpcrValidateEncryptionCertificateComplete(string(encryptionCert), string(wrongIntermediateCert), string(rootCert))
+
+	// We expect either an error or invalid result
+	if err != nil {
+		assert.Contains(t, err.Error(), "certificate chain validation failed", "Error should indicate validation failure")
+		t.Logf("Correctly detected broken chain with error: %v", err)
+	} else {
+		assert.False(t, valid, "Certificate chain should be invalid")
+		t.Logf("Correctly detected broken chain: %s", msg)
+	}
+}
+
+// Testcase to validate expired certificate
+func TestHpcrValidateEncryptionCertificateComplete_WithSampleCerts_ExpiredCert(t *testing.T) {
+	// Read expired certificate from samples
+	expiredEncryptionCert, err := gen.ReadDataFromFile(sampleExpiredEncCertPath)
+	if err != nil {
+		t.Error("Failed to read encryption certificate")
+	}
+
+	intermediateCert, err := gen.ReadDataFromFile(sampleExpiredInterCertPath)
+	if err != nil {
+		t.Error("Failed to read intermediate certificate")
+	}
+
+	rootCert, err := gen.ReadDataFromFile(sampleExpiredRootCertPath)
+	if err != nil {
+		t.Error("Failed to read root certificate")
+	}
+
+	// Try to validate the expired certificate
+	valid, msg, err := HpcrValidateEncryptionCertificateComplete(string(expiredEncryptionCert), string(intermediateCert), string(rootCert))
+
+	// We expect either an error or invalid result
+	if err != nil {
+		assert.Contains(t, err.Error(), "certificate chain validation failed", "Error should indicate validation failure")
+		t.Logf("Correctly detected expired certificate with error: %v", err)
+	} else {
+		assert.False(t, valid, "Expired certificate should be invalid")
+		t.Logf("Correctly detected expired certificate: %s", msg)
+	}
 }

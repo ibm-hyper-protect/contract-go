@@ -22,6 +22,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	validChainEncCertPath   = "../../samples/certificate-chain/valid-chain/encryption.crt"
+	validChainInterCertPath = "../../samples/certificate-chain/valid-chain/intermediate.crt"
+	validChainRootCertPath  = "../../samples/certificate-chain/valid-chain/root.crt"
+)
+
 // Test ValidateCertificateChain with empty parameters
 func TestValidateCertificateChain_EmptyParameters(t *testing.T) {
 	valid, msg, err := ValidateCertificateChain("", "", "")
@@ -74,22 +80,19 @@ func TestDownloadCRL_InvalidURL(t *testing.T) {
 // Test ValidateCertificateChain with valid certificate chain from samples
 func TestValidateCertificateChain_ValidChain(t *testing.T) {
 	// Read valid certificate chain from samples directory
-	encryptionCert, err := general.ReadDataFromFile("../../samples/certificate-chain/valid-chain/encryption.crt")
+	encryptionCert, err := general.ReadDataFromFile(validChainEncCertPath)
 	if err != nil {
-		t.Skip("Skipping test - sample certificates not found. Run from repository root.")
-		return
+		t.Error("Failed to read encryption certificate")
 	}
 
-	intermediateCert, err := general.ReadDataFromFile("../../samples/certificate-chain/valid-chain/intermediate.crt")
+	intermediateCert, err := general.ReadDataFromFile(validChainInterCertPath)
 	if err != nil {
-		t.Skip("Skipping test - sample certificates not found")
-		return
+		t.Error("Failed to read intermediate certificate")
 	}
 
-	rootCert, err := general.ReadDataFromFile("../../samples/certificate-chain/valid-chain/root.crt")
+	rootCert, err := general.ReadDataFromFile(validChainRootCertPath)
 	if err != nil {
-		t.Skip("Skipping test - sample certificates not found")
-		return
+		t.Error("Failed to read root certificate")
 	}
 
 	// Validate the certificate chain
