@@ -62,6 +62,9 @@ Learn more:
   - Download HPVS encryption certificates from IBM Cloud
   - Extract specific encryption certificates by version
   - Validate expiry of encryption certificate
+  - **Validate complete certificate chains** (encryption cert -> intermediate -> root)
+  - **Check certificate revocation status** using CRL (Certificate Revocation List)
+  - **Download CRLs** from certificate distribution points
 
 - **Contract Generation**
   - Generate Base64-encoded data from text, JSON, initdata annotation and docker compose / podman play archives
@@ -216,6 +219,70 @@ func main() {
 }
 ```
 
+### Validate Certificate Chain
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/certificate"
+)
+
+func main() {
+    // Download IBM encryption certificate
+    versions := []string{"1.1.15"}
+    certsJSON, err := certificate.HpcrDownloadEncryptionCertificates(versions, "json", "")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Extract encryption certificate
+    _, encCert, _, _, _, err := certificate.HpcrGetEncryptionCertificateFromJson(certsJSON, "1.1.15")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Load intermediate and root certificates
+    // In production, obtain these from IBM or DigiCert
+    intermediateCert := `-----BEGIN CERTIFICATE-----
+... IBM intermediate CA certificate ...
+-----END CERTIFICATE-----`
+    
+    rootCert := `-----BEGIN CERTIFICATE-----
+... DigiCert root CA certificate ...
+-----END CERTIFICATE-----`
+
+    // Validate complete certificate chain
+    valid, msg, err := certificate.HpcrValidateCertChain(
+        encCert,
+        intermediateCert, // IBM intermediate CA certificate
+        rootCert,         // DigiCert root CA certificate
+    )
+    if err != nil || !valid {
+        log.Fatalf("Certificate validation failed: %v", err)
+    }
+
+    fmt.Printf("%s\n", msg)
+
+    // Check certificate revocation status
+    crlURL := "http://crl3.digicert.com/DigiCertTrustedG4CodeSigningRSA4096SHA3842021CA1.crl"
+    crl, err := certificate.HpcrDownloadCRL(crlURL)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    revoked, msg, err := certificate.HpcrCheckCertificateRevocation(encCert, crl)
+    if err != nil || revoked {
+        log.Fatalf("Certificate revoked: %v", err)
+    }
+
+    fmt.Printf("%s\n", msg)
+}
+```
+
 ## Documentation
 
 Comprehensive documentation is available at:
@@ -242,6 +309,7 @@ The [`samples/`](samples/) directory contains example configurations:
 - [Encrypted Contract](samples/sign/contract.enc.yaml)
 - [HPCC Signed & Encrypted Contract](samples/hpcc/signed-encrypt-hpcc.yaml)
 - [Docker Compose](samples/tgz/docker-compose.yaml)
+- [Certificate Chain Validation](samples/certificate-chain/)
 
 ## Related Projects
 

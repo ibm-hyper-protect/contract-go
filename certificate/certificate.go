@@ -24,6 +24,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	crt "github.com/ibm-hyper-protect/contract-go/v2/common/cert"
 	gen "github.com/ibm-hyper-protect/contract-go/v2/common/general"
 )
 
@@ -184,4 +185,99 @@ func HpcrValidateEncryptionCertificate(encryptionCert string) (string, error) {
 		return "", err
 	}
 	return msg, nil
+}
+
+// HpcrValidateCertChain validates the complete certificate chain
+// including signatures, expiry, and trust relationships. Users must provide all
+// certificates (encryption, intermediate, and root).
+//
+// This function performs comprehensive validation by:
+//   - Verifying that the encryption certificate is signed by the intermediate certificate
+//   - Verifying that the intermediate certificate is signed by the root certificate
+//   - Checking that all certificates are within their validity periods
+//   - Verifying the trust chain (issuer/subject matching)
+//   - Providing warnings for certificates expiring soon
+//
+// The validation is performed using OpenSSL verify command, which provides
+// industry-standard certificate chain validation.
+//
+// Parameters:
+//   - encryptionCert: PEM-formatted encryption certificate
+//   - intermediateCert: PEM-formatted intermediate certificate
+//   - rootCert: PEM-formatted root certificate (e.g., DigiCert Trusted Root G4)
+//
+// Returns:
+//   - valid: true if certificate chain is valid, false otherwise
+//   - message: Detailed validation message with expiry information and warnings
+//   - error: Error if validation fails or parameters are invalid
+func HpcrValidateCertChain(encryptionCert, intermediateCert, rootCert string) (bool, string, error) {
+	if gen.CheckIfEmpty(encryptionCert, intermediateCert, rootCert) {
+		return false, "", fmt.Errorf(missingParameterErrStatement)
+	}
+
+	valid, msg, err := crt.ValidateCertificateChain(encryptionCert, intermediateCert, rootCert)
+	if err != nil {
+		return false, msg, err
+	}
+
+	return valid, msg, nil
+}
+
+// HpcrCheckCertificateRevocation checks if a certificate has been revoked
+// by checking against the provided Certificate Revocation List (CRL).
+// Users must provide both the certificate and the CRL.
+//
+// This function verifies that:
+//   - The certificate is not in the CRL's revoked certificates list
+//   - The CRL is still valid (not expired)
+//   - Returns detailed revocation information if the certificate is revoked
+//
+// The validation is performed using OpenSSL verify command with CRL checking,
+// which provides industry-standard revocation verification.
+//
+// Parameters:
+//   - encryptionCert: PEM-formatted certificate to check
+//   - crlData: PEM-formatted Certificate Revocation List
+//
+// Returns:
+//   - revoked: true if certificate is revoked, false otherwise
+//   - message: Detailed revocation status message
+//   - error: Error if check fails or parameters are invalid
+func HpcrCheckCertificateRevocation(encryptionCert, crlData string) (bool, string, error) {
+	if gen.CheckIfEmpty(encryptionCert, crlData) {
+		return false, "", fmt.Errorf(missingParameterErrStatement)
+	}
+
+	// Check revocation status using OpenSSL
+	revoked, msg, err := crt.CheckCertificateRevocation(encryptionCert, crlData)
+	if err != nil {
+		return false, "", err
+	}
+
+	return revoked, msg, nil
+}
+
+// HpcrDownloadCRL downloads a Certificate Revocation List from the specified URL.
+// This is a helper function for users who need to obtain CRLs for revocation checking.
+//
+// The CRL URL can typically be found in the certificate's CRL Distribution Points
+// extension. Common CRL URLs for IBM certificates include DigiCert CRL endpoints.
+//
+// Parameters:
+//   - crlURL: URL of the CRL to download (e.g., "http://crl3.digicert.com/...")
+//
+// Returns:
+//   - PEM-formatted CRL data
+//   - Error if download fails or URL is invalid
+func HpcrDownloadCRL(crlURL string) (string, error) {
+	if gen.CheckIfEmpty(crlURL) {
+		return "", fmt.Errorf(missingParameterErrStatement)
+	}
+
+	crlData, err := crt.DownloadCRL(crlURL)
+	if err != nil {
+		return "", err
+	}
+
+	return crlData, nil
 }
