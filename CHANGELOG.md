@@ -1,3 +1,23 @@
+## [2.15.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.14.1...v2.15.0) (2026-03-23)
+
+### Features
+
+* add public function for chain of certificate and CRL revocation ([8974545](https://github.com/ibm-hyper-protect/contract-go/commit/897454539b288c4c67ba6679a5d6ccb4301e481e))
+* add support to validate cert chain, expiry, download crl and revocation ([8ac3464](https://github.com/ibm-hyper-protect/contract-go/commit/8ac3464f13dd4f48dad4e3b4771433bfd1b11ebb))
+
+### Documentation
+
+* add documentation for chain of certificate & revocation list ([18a2dc3](https://github.com/ibm-hyper-protect/contract-go/commit/18a2dc3702b2b2c4b4e0f7af164ae9479596784b))
+* add user documentation badge in README ([b47ba7f](https://github.com/ibm-hyper-protect/contract-go/commit/b47ba7fc0f7c8e6298d7175e0e9d89f7ab8dfa37))
+* update Issue & PR templates ([db551b6](https://github.com/ibm-hyper-protect/contract-go/commit/db551b633fd4357075f5738defda81729346310c))
+* update user documentations ([b121c91](https://github.com/ibm-hyper-protect/contract-go/commit/b121c91caa478ec16003fe707b1dc04075688de0))
+
+### Miscellaneous Chores
+
+* **deps:** update docker.io/library/hello-world docker digest to 85404b3 ([#206](https://github.com/ibm-hyper-protect/contract-go/issues/206)) ([43dce64](https://github.com/ibm-hyper-protect/contract-go/commit/43dce6436bab8f9f38c726e427d38b19f71f64f4))
+* review comments ([652b4ab](https://github.com/ibm-hyper-protect/contract-go/commit/652b4ab044427eafd86f3ba044e992d8cd184ed3))
+* update code comments for public function ([3e63af4](https://github.com/ibm-hyper-protect/contract-go/commit/3e63af4ff1a2601e3e0fa75658ff711be7751630))
+
 ## [2.14.1](https://github.com/ibm-hyper-protect/contract-go/compare/v2.14.0...v2.14.1) (2026-03-06)
 
 ### Bug Fixes
