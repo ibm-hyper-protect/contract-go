@@ -149,8 +149,8 @@ func TestHpcrDownloadEncryptionCertificatesYamlFormat(t *testing.T) {
 	assert.Contains(t, result, "1.0.20")
 }
 
-// Testcase to check if HpcrValidateEncryptionCertificateComplete validates certificate chain correctly
-func TestHpcrValidateEncryptionCertificateComplete_ValidChain(t *testing.T) {
+// Testcase to check if HpcrValidateCertChain validates certificate chain correctly
+func TestHpcrValidateCertChain_ValidChain(t *testing.T) {
 	// Using the active certificate from samples as encryption cert
 	encCert, err := gen.ReadDataFromFile(sampleEncryptionCertPath)
 	if err != nil {
@@ -162,7 +162,7 @@ func TestHpcrValidateEncryptionCertificateComplete_ValidChain(t *testing.T) {
 	intermediateCert := encCert
 	rootCert := encCert
 
-	valid, msg, err := HpcrValidateEncryptionCertificateComplete(encCert, intermediateCert, rootCert)
+	valid, msg, err := HpcrValidateCertChain(encCert, intermediateCert, rootCert)
 
 	// Self-signed certificate should validate successfully with OpenSSL
 	assert.NoError(t, err)
@@ -170,18 +170,18 @@ func TestHpcrValidateEncryptionCertificateComplete_ValidChain(t *testing.T) {
 	assert.NotEmpty(t, msg)
 }
 
-// Testcase to check if HpcrValidateEncryptionCertificateComplete handles empty parameters
-func TestHpcrValidateEncryptionCertificateComplete_EmptyParameters(t *testing.T) {
-	valid, msg, err := HpcrValidateEncryptionCertificateComplete("", "", "")
+// Testcase to check if HpcrValidateCertChain handles empty parameters
+func TestHpcrValidateCertChain_EmptyParameters(t *testing.T) {
+	valid, msg, err := HpcrValidateCertChain("", "", "")
 	assert.Error(t, err)
 	assert.False(t, valid)
 	assert.Empty(t, msg)
 	assert.Contains(t, err.Error(), missingParameterErrStatement)
 }
 
-// Testcase to check if HpcrValidateEncryptionCertificateComplete handles invalid certificate format
-func TestHpcrValidateEncryptionCertificateComplete_InvalidFormat(t *testing.T) {
-	valid, msg, err := HpcrValidateEncryptionCertificateComplete("invalid", "cert", "data")
+// Testcase to check if HpcrValidateCertChain handles invalid certificate format
+func TestHpcrValidateCertChain_InvalidFormat(t *testing.T) {
+	valid, msg, err := HpcrValidateCertChain("invalid", "cert", "data")
 	assert.Error(t, err)
 	assert.False(t, valid)
 	assert.NotEmpty(t, msg)
@@ -221,7 +221,7 @@ func TestHpcrDownloadCRL_InvalidURL(t *testing.T) {
 }
 
 // Testcase to validate certificate chain with valid sample certificates
-func TestHpcrValidateEncryptionCertificateComplete_WithSampleCerts_ValidChain(t *testing.T) {
+func TestHpcrValidateCertChain_WithSampleCerts_ValidChain(t *testing.T) {
 	// Read valid certificate chain from samples
 	encryptionCert, err := gen.ReadDataFromFile(sampleValidChainEncCertPath)
 	if err != nil {
@@ -239,7 +239,7 @@ func TestHpcrValidateEncryptionCertificateComplete_WithSampleCerts_ValidChain(t 
 	}
 
 	// Validate the certificate chain
-	valid, msg, err := HpcrValidateEncryptionCertificateComplete(string(encryptionCert), string(intermediateCert), string(rootCert))
+	valid, msg, err := HpcrValidateCertChain(string(encryptionCert), string(intermediateCert), string(rootCert))
 
 	assert.NoError(t, err, "Validation should not return error for valid chain")
 	assert.True(t, valid, "Certificate chain should be valid")
@@ -249,7 +249,7 @@ func TestHpcrValidateEncryptionCertificateComplete_WithSampleCerts_ValidChain(t 
 }
 
 // Testcase to validate certificate chain with invalid sample certificates (broken chain)
-func TestHpcrValidateEncryptionCertificateComplete_WithSampleCerts_InvalidChain(t *testing.T) {
+func TestHpcrValidateCertChain_WithSampleCerts_InvalidChain(t *testing.T) {
 	// Read invalid certificate chain from samples (wrong intermediate)
 	encryptionCert, err := gen.ReadDataFromFile(sampleInvalidEncCertPath)
 	if err != nil {
@@ -267,7 +267,7 @@ func TestHpcrValidateEncryptionCertificateComplete_WithSampleCerts_InvalidChain(
 	}
 
 	// Try to validate the broken certificate chain
-	valid, msg, err := HpcrValidateEncryptionCertificateComplete(string(encryptionCert), string(wrongIntermediateCert), string(rootCert))
+	valid, msg, err := HpcrValidateCertChain(string(encryptionCert), string(wrongIntermediateCert), string(rootCert))
 
 	// We expect either an error or invalid result
 	if err != nil {
@@ -280,7 +280,7 @@ func TestHpcrValidateEncryptionCertificateComplete_WithSampleCerts_InvalidChain(
 }
 
 // Testcase to validate expired certificate
-func TestHpcrValidateEncryptionCertificateComplete_WithSampleCerts_ExpiredCert(t *testing.T) {
+func TestHpcrValidateCertChain_WithSampleCerts_ExpiredCert(t *testing.T) {
 	// Read expired certificate from samples
 	expiredEncryptionCert, err := gen.ReadDataFromFile(sampleExpiredEncCertPath)
 	if err != nil {
@@ -298,7 +298,7 @@ func TestHpcrValidateEncryptionCertificateComplete_WithSampleCerts_ExpiredCert(t
 	}
 
 	// Try to validate the expired certificate
-	valid, msg, err := HpcrValidateEncryptionCertificateComplete(string(expiredEncryptionCert), string(intermediateCert), string(rootCert))
+	valid, msg, err := HpcrValidateCertChain(string(expiredEncryptionCert), string(intermediateCert), string(rootCert))
 
 	// We expect either an error or invalid result
 	if err != nil {

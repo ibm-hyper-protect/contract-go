@@ -187,7 +187,7 @@ func HpcrValidateEncryptionCertificate(encryptionCert string) (string, error) {
 	return msg, nil
 }
 
-// HpcrValidateEncryptionCertificateComplete validates the complete certificate chain
+// HpcrValidateCertChain validates the complete certificate chain
 // including signatures, expiry, and trust relationships. Users must provide all
 // certificates (encryption, intermediate, and root).
 //
@@ -210,7 +210,7 @@ func HpcrValidateEncryptionCertificate(encryptionCert string) (string, error) {
 //   - valid: true if certificate chain is valid, false otherwise
 //   - message: Detailed validation message with expiry information and warnings
 //   - error: Error if validation fails or parameters are invalid
-func HpcrValidateEncryptionCertificateComplete(encryptionCert, intermediateCert, rootCert string) (bool, string, error) {
+func HpcrValidateCertChain(encryptionCert, intermediateCert, rootCert string) (bool, string, error) {
 	if gen.CheckIfEmpty(encryptionCert, intermediateCert, rootCert) {
 		return false, "", fmt.Errorf(missingParameterErrStatement)
 	}

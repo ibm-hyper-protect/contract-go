@@ -139,7 +139,7 @@ func CheckCertificateRevocation(certPEM, crlPEM string) (bool, string, error) {
 	if err != nil {
 		// Check if error indicates revocation
 		errMsg := strings.TrimSpace(result)
-		if strings.Contains(errMsg, "revoked") || strings.Contains(strings.ToLower(errMsg), "revoked") {
+		if strings.Contains(strings.ToLower(errMsg), "revoked") {
 			return true, fmt.Sprintf("Certificate is revoked: %s", errMsg), nil
 		}
 		return false, "", fmt.Errorf("CRL check failed - %v", errMsg)

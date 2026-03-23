@@ -256,7 +256,7 @@ func main() {
 -----END CERTIFICATE-----`
 
     // Validate complete certificate chain
-    valid, msg, err := certificate.HpcrValidateEncryptionCertificateComplete(
+    valid, msg, err := certificate.HpcrValidateCertChain(
         encCert,
         intermediateCert, // IBM intermediate CA certificate
         rootCert,         // DigiCert root CA certificate

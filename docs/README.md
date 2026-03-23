@@ -432,7 +432,7 @@ MIIDXTCCAkWgAwIBAgIJAKL...
 - `"Encryption certificate has already expired on <date>"` - Certificate has expired
 
 
-### HpcrValidateEncryptionCertificateComplete
+### HpcrValidateCertChain
 
 Validates a complete certificate chain including leaf certificate, intermediate certificate, and root certificate using OpenSSL.
 
@@ -440,7 +440,7 @@ Validates a complete certificate chain including leaf certificate, intermediate 
 
 **Signature:**
 ```go
-func HpcrValidateEncryptionCertificateComplete(encryptionCert, intermediateCert, rootCert string) (bool, string, error)
+func HpcrValidateCertChain(encryptionCert, intermediateCert, rootCert string) (bool, string, error)
 ```
 
 **Parameters:**
@@ -487,7 +487,7 @@ MIICPzCCAcWgAwIBAgIQBVVWvPJep...
 -----END CERTIFICATE-----`
 
     // Validate complete chain
-    valid, msg, err := certificate.HpcrValidateEncryptionCertificateComplete(
+    valid, msg, err := certificate.HpcrValidateCertChain(
         encCert, intermediateCert, rootCert)
     if err != nil {
         log.Fatalf("Validation failed: %v", err)
@@ -576,7 +576,7 @@ MIIFjTCCBHWgAwIBAgIQDZjzzEXP4h...
         return
     }
 
-    fmt.Printf("Certificate is valid: %s\n", msg)
+    fmt.Printf("Certificate is not revoked: %s\n", msg)
 }
 ```
 
