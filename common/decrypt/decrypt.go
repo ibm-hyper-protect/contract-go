@@ -29,11 +29,12 @@ import (
 // Parameters:
 //   - base64EncryptedData: Base64-encoded encrypted password
 //   - privateKey: RSA private key (PEM format) for decryption
+//   - password: Optional password to unlock the private key (empty string "" for unencrypted keys)
 //
 // Returns:
 //   - Decrypted password string
 //   - Error if OpenSSL is not found, Base64 decoding fails, or decryption fails
-func DecryptPassword(base64EncryptedData, privateKey string) (string, error) {
+func DecryptPassword(base64EncryptedData, privateKey, password string) (string, error) {
 	err := enc.OpensslCheck()
 	if err != nil {
 		return "", fmt.Errorf("openssl not found - %v", err)
@@ -54,7 +55,14 @@ func DecryptPassword(base64EncryptedData, privateKey string) (string, error) {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
 
-	result, err := gen.ExecCommand(gen.GetOpenSSLPath(), "", "pkeyutl", "-decrypt", "-inkey", privateKeyPath, "-in", encryptedDataPath)
+	// OpenSSL command with optional password for encrypted private keys
+	args := []string{"pkeyutl", "-decrypt", "-inkey", privateKeyPath}
+	if password != "" {
+		args = append(args, "-passin", fmt.Sprintf("pass:%s", password))
+	}
+	args = append(args, "-in", encryptedDataPath)
+
+	result, err := gen.ExecCommand(gen.GetOpenSSLPath(), "", args...)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
 	}
@@ -114,19 +122,20 @@ func DecryptWorkload(password, encryptedWorkload string) (string, error) {
 // Parameters:
 //   - data: hyper-protect-basic.<encrypted-password>.<encrypted-data>
 //   - privateKey: Private key to decrypt the data
+//   - password: Optional password to unlock the private key (empty string "" for unencrypted keys)
 //
 // Returns:
 //   - Decrypted data
 //   - Error if OpenSSL is not found, Base64 decoding fails, or decryption fails
-func DecryptText(data, privateKey string) (string, error) {
+func DecryptText(data, privateKey, password string) (string, error) {
 	encodedEncryptedPassword, encodedEncryptedData := gen.GetEncryptPassWorkload(data)
 
-	password, err := DecryptPassword(encodedEncryptedPassword, privateKey)
+	pass, err := DecryptPassword(encodedEncryptedPassword, privateKey, password)
 	if err != nil {
 		return "", fmt.Errorf("failed to decrypt password - %v", err)
 	}
 
-	decryptedData, err := DecryptWorkload(password, encodedEncryptedData)
+	decryptedData, err := DecryptWorkload(pass, encodedEncryptedData)
 	if err != nil {
 		return "", fmt.Errorf("failed to decrypt text - %v", err)
 	}
