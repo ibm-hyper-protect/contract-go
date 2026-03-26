@@ -39,16 +39,17 @@ const (
 // Parameters:
 //   - data: Encrypted attestation data in the format "hyper-protect-basic.<encrypted-password>.<encrypted-data>"
 //   - privateKey: RSA private key (PEM format) corresponding to the attestationPublicKey used in the contract
+//   - password: Optional password to unlock the private key if it's encrypted (empty string "" for unencrypted keys)
 //
 // Returns:
 //   - Decrypted attestation records string (typically se-checksums.txt content)
 //   - Error if decryption fails or parameters are missing
-func HpcrGetAttestationRecords(data, privateKey string) (string, error) {
+func HpcrGetAttestationRecords(data, privateKey, password string) (string, error) {
 	if gen.CheckIfEmpty(data, privateKey) {
 		return "", fmt.Errorf(missingParameterErrStatement)
 	}
 
-	attestationRecords, err := decrypt.DecryptText(data, privateKey)
+	attestationRecords, err := decrypt.DecryptText(data, privateKey, password)
 	if err != nil {
 		return "", fmt.Errorf("failed to decrypt attestation records - %v", err)
 	}
