@@ -40,6 +40,10 @@ func DecryptPassword(base64EncryptedData, privateKey, password string) (string, 
 		return "", fmt.Errorf("openssl not found - %v", err)
 	}
 
+	if gen.IsPrivateKeyEncrypted(privateKey) && password == "" {
+		return "", fmt.Errorf("private key is encrypted but no password provided - use the password parameter to unlock the key")
+	}
+
 	decodedEncryptedData, err := gen.DecodeBase64String(base64EncryptedData)
 	if err != nil {
 		return "", fmt.Errorf("failed to decode Base64 - %v", err)
@@ -55,7 +59,6 @@ func DecryptPassword(base64EncryptedData, privateKey, password string) (string, 
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
 
-	// OpenSSL command with optional password for encrypted private keys
 	args := []string{"pkeyutl", "-decrypt", "-inkey", privateKeyPath}
 	args = gen.AppendPasswordArgs(args, password)
 	args = append(args, "-in", encryptedDataPath)

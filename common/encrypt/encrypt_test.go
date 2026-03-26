@@ -776,7 +776,7 @@ func TestGeneratePublicKeyWithEncryptedPrivateKeyNoPassword(t *testing.T) {
 
 	_, err = GeneratePublicKey(privateKey, "")
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to execute openssl command")
+	assert.Contains(t, err.Error(), "private key is encrypted but no password provided")
 }
 
 // Testcase to check if SignContract() works with password-protected private key
@@ -850,5 +850,5 @@ func TestSignContractWithEncryptedPrivateKeyNoPassword(t *testing.T) {
 
 	_, err = SignContract("test-workload", "test-env", privateKey, "")
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to execute openssl command")
+	assert.Contains(t, err.Error(), "private key is encrypted but no password provided")
 }

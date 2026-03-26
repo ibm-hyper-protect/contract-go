@@ -300,10 +300,10 @@ func TestDecryptPasswordWithEncryptedPrivateKeyNoPassword(t *testing.T) {
 		t.Errorf("failed to read encrypted private key - %v", err)
 	}
 
-	// Decrypt without password - should fail
+	// Decrypt without password - should fail with clear error message
 	_, err = DecryptPassword(encryptedData, privateKeyData, "")
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to execute openssl command")
+	assert.Contains(t, err.Error(), "private key is encrypted but no password provided")
 }
 
 // Testcase to check if DecryptPassword() successfully decrypts with password-protected key

@@ -151,6 +151,19 @@ func AppendPasswordArgs(args []string, password string) []string {
 	return args
 }
 
+// IsPrivateKeyEncrypted checks if a PEM-encoded private key is encrypted.
+// It examines the PEM headers to determine if the key requires a password.
+//
+// Parameters:
+//   - privateKey: PEM-encoded private key string
+//
+// Returns:
+//   - true if the private key is encrypted, false otherwise
+func IsPrivateKeyEncrypted(privateKey string) bool {
+	return strings.Contains(privateKey, "ENCRYPTED") ||
+		strings.Contains(privateKey, "Proc-Type: 4,ENCRYPTED")
+}
+
 // ReadDataFromFile reads the entire contents of a file and returns it as a string.
 // It opens the file, reads all data, and closes the file automatically.
 //

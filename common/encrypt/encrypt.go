@@ -58,12 +58,15 @@ func GeneratePublicKey(privateKey, password string) (string, error) {
 		return "", fmt.Errorf("openssl not found - %v", err)
 	}
 
+	if gen.IsPrivateKeyEncrypted(privateKey) && password == "" {
+		return "", fmt.Errorf("private key is encrypted but no password provided - use the password parameter to unlock the key")
+	}
+
 	privateKeyPath, err := gen.CreateTempFile(privateKey)
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
 
-	// OpenSSL command with optional password for encrypted private keys
 	args := []string{"rsa", "-in", privateKeyPath}
 	args = gen.AppendPasswordArgs(args, password)
 	args = append(args, "-pubout")
@@ -312,6 +315,10 @@ func SignContract(encryptedWorkload, encryptedEnv, privateKey, password string) 
 		return "", fmt.Errorf("openssl not found - %v", err)
 	}
 
+	if gen.IsPrivateKeyEncrypted(privateKey) && password == "" {
+		return "", fmt.Errorf("private key is encrypted but no password provided - use the password parameter to unlock the key")
+	}
+
 	combinedContract := encryptedWorkload + encryptedEnv
 
 	privateKeyPath, err := gen.CreateTempFile(privateKey)
@@ -319,7 +326,6 @@ func SignContract(encryptedWorkload, encryptedEnv, privateKey, password string) 
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
 
-	// OpenSSL command with optional password for encrypted private keys
 	args := []string{"dgst", "-sha256", "-sign", privateKeyPath}
 	args = gen.AppendPasswordArgs(args, password)
 
