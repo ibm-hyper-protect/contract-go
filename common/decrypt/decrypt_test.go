@@ -25,9 +25,13 @@ import (
 )
 
 const (
-	encryptedChecksumPath      = "../../samples/attestation/se-checksums.txt.enc"
-	privateKeyPath             = "../../samples/attestation/private.pem"
-	sampleAttestationRecordKey = "baseimage"
+	encryptedChecksumPath       = "../../samples/attestation/se-checksums.txt.enc"
+	privateKeyPath              = "../../samples/attestation/private.pem"
+	encryptedPrivateKeyPath     = "../../samples/decrypt/private_encrypted.key"
+	encryptedPublicKeyPath      = "../../samples/decrypt/public_encrypted.key"
+	encryptedDataPath           = "../../samples/decrypt/encrypt_encrypted.txt"
+	encryptedPrivateKeyPassword = "decryptpass"
+	sampleAttestationRecordKey  = "baseimage"
 )
 
 // Testcase to check if DecryptPassword() is able to decrypt password
@@ -44,7 +48,7 @@ func TestDecryptPassword(t *testing.T) {
 		t.Errorf("failed to read private key - %v", err)
 	}
 
-	_, err = DecryptPassword(encodedEncryptedData, privateKeyData)
+	_, err = DecryptPassword(encodedEncryptedData, privateKeyData, "")
 	if err != nil {
 		t.Errorf("failed to decrypt password - %v", err)
 	}
@@ -65,7 +69,7 @@ func TestDecryptWorkload(t *testing.T) {
 		t.Errorf("failed to read private key - %v", err)
 	}
 
-	password, err := DecryptPassword(encodedEncryptedPassword, privateKeyData)
+	password, err := DecryptPassword(encodedEncryptedPassword, privateKeyData, "")
 	if err != nil {
 		t.Errorf("failed to decrypt password - %v", err)
 	}
@@ -87,7 +91,7 @@ func TestDecryptPasswordInvalidPrivateKey(t *testing.T) {
 
 	encodedEncryptedData := strings.Split(encChecksum, ".")[1]
 
-	_, err = DecryptPassword(encodedEncryptedData, "invalid-private-key")
+	_, err = DecryptPassword(encodedEncryptedData, "invalid-private-key", "")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to execute openssl command")
 }
@@ -106,13 +110,13 @@ func TestDecryptPasswordEmptyBase64(t *testing.T) {
 		t.Errorf("failed to read private key - %v", err)
 	}
 
-	_, err = DecryptPassword("", privateKey)
+	_, err = DecryptPassword("", privateKey, "")
 	assert.Error(t, err)
 }
 
 // Testcase to check if DecryptPassword() handles empty private key
 func TestDecryptPasswordEmptyPrivateKey(t *testing.T) {
-	_, err := DecryptPassword("dGVzdA==", "")
+	_, err := DecryptPassword("dGVzdA==", "", "")
 	assert.Error(t, err)
 }
 
@@ -142,7 +146,7 @@ func TestDecryptPasswordSuccess(t *testing.T) {
 		t.Errorf("failed to read private key - %v", err)
 	}
 
-	result, err := DecryptPassword(encodedEncryptedData, privateKeyData)
+	result, err := DecryptPassword(encodedEncryptedData, privateKeyData, "")
 	assert.NoError(t, err)
 	assert.NotEmpty(t, result)
 }
@@ -162,7 +166,7 @@ func TestDecryptWorkloadSuccess(t *testing.T) {
 		t.Errorf("failed to read private key - %v", err)
 	}
 
-	password, err := DecryptPassword(encodedEncryptedPassword, privateKeyData)
+	password, err := DecryptPassword(encodedEncryptedPassword, privateKeyData, "")
 	assert.NoError(t, err)
 
 	result, err := DecryptWorkload(password, encodedEncryptedData)
@@ -177,7 +181,7 @@ func TestDecryptPasswordMalformedBase64(t *testing.T) {
 		t.Errorf("failed to read private key - %v", err)
 	}
 
-	_, err = DecryptPassword("not-valid-base64!@#", privateKey)
+	_, err = DecryptPassword("not-valid-base64!@#", privateKey, "")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to decode Base64")
 }
@@ -201,7 +205,7 @@ func TestDecryptTextSuccess(t *testing.T) {
 		t.Errorf("failed to read private key - %v", err)
 	}
 
-	result, err := DecryptText(encChecksum, privateKeyData)
+	result, err := DecryptText(encChecksum, privateKeyData, "")
 	assert.NoError(t, err)
 	assert.NotEmpty(t, result)
 	assert.Contains(t, result, sampleAttestationRecordKey)
@@ -214,7 +218,7 @@ func TestDecryptTextInvalidPrivateKey(t *testing.T) {
 		t.Errorf("failed to read encrypted checksum - %v", err)
 	}
 
-	_, err = DecryptText(encChecksum, "invalid-private-key")
+	_, err = DecryptText(encChecksum, "invalid-private-key", "")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to decrypt password")
 }
@@ -226,7 +230,7 @@ func TestDecryptTextEmptyPrivateKey(t *testing.T) {
 		t.Errorf("failed to read encrypted checksum - %v", err)
 	}
 
-	_, err = DecryptText(encChecksum, "")
+	_, err = DecryptText(encChecksum, "", "")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to decrypt password")
 }
@@ -238,6 +242,87 @@ func TestDecryptTextMalformedData(t *testing.T) {
 		t.Errorf("failed to read private key - %v", err)
 	}
 
-	_, err = DecryptText("hyper-protect-basic.invalid.data", privateKeyData)
+	_, err = DecryptText("hyper-protect-basic.invalid.data", privateKeyData, "")
 	assert.Error(t, err)
+}
+
+// Testcase to check if DecryptPassword() works with password-protected private key
+func TestDecryptPasswordWithEncryptedPrivateKey(t *testing.T) {
+	// Read encrypted data
+	encryptedData, err := gen.ReadDataFromFile(encryptedDataPath)
+	if err != nil {
+		t.Errorf("failed to read encrypted data - %v", err)
+	}
+
+	// Read password-protected private key
+	privateKeyData, err := gen.ReadDataFromFile(encryptedPrivateKeyPath)
+	if err != nil {
+		t.Errorf("failed to read encrypted private key - %v", err)
+	}
+
+	// Decrypt with correct password
+	result, err := DecryptPassword(encryptedData, privateKeyData, encryptedPrivateKeyPassword)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+}
+
+// Testcase to check if DecryptPassword() fails with wrong password for encrypted private key
+func TestDecryptPasswordWithEncryptedPrivateKeyWrongPassword(t *testing.T) {
+	// Read encrypted data
+	encryptedData, err := gen.ReadDataFromFile(encryptedDataPath)
+	if err != nil {
+		t.Errorf("failed to read encrypted data - %v", err)
+	}
+
+	// Read password-protected private key
+	privateKeyData, err := gen.ReadDataFromFile(encryptedPrivateKeyPath)
+	if err != nil {
+		t.Errorf("failed to read encrypted private key - %v", err)
+	}
+
+	// Decrypt with wrong password - should fail
+	_, err = DecryptPassword(encryptedData, privateKeyData, "wrongpassword")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to execute openssl command")
+}
+
+// Testcase to check if DecryptPassword() fails when password is required but not provided
+func TestDecryptPasswordWithEncryptedPrivateKeyNoPassword(t *testing.T) {
+	// Read encrypted data
+	encryptedData, err := gen.ReadDataFromFile(encryptedDataPath)
+	if err != nil {
+		t.Errorf("failed to read encrypted data - %v", err)
+	}
+
+	// Read password-protected private key
+	privateKeyData, err := gen.ReadDataFromFile(encryptedPrivateKeyPath)
+	if err != nil {
+		t.Errorf("failed to read encrypted private key - %v", err)
+	}
+
+	// Decrypt without password - should fail
+	_, err = DecryptPassword(encryptedData, privateKeyData, "")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to execute openssl command")
+}
+
+// Testcase to check if DecryptPassword() successfully decrypts with password-protected key
+func TestDecryptPasswordWithEncryptedPrivateKeySuccess(t *testing.T) {
+	// Read encrypted data
+	encryptedData, err := gen.ReadDataFromFile(encryptedDataPath)
+	if err != nil {
+		t.Errorf("failed to read encrypted data - %v", err)
+	}
+
+	// Read password-protected private key
+	privateKeyData, err := gen.ReadDataFromFile(encryptedPrivateKeyPath)
+	if err != nil {
+		t.Errorf("failed to read encrypted private key - %v", err)
+	}
+
+	// Decrypt with correct password
+	result, err := DecryptPassword(encryptedData, privateKeyData, encryptedPrivateKeyPassword)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+	assert.Contains(t, result, "Test encrypted data")
 }
