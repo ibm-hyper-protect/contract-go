@@ -57,9 +57,7 @@ func DecryptPassword(base64EncryptedData, privateKey, password string) (string, 
 
 	// OpenSSL command with optional password for encrypted private keys
 	args := []string{"pkeyutl", "-decrypt", "-inkey", privateKeyPath}
-	if password != "" {
-		args = append(args, "-passin", fmt.Sprintf("pass:%s", password))
-	}
+	args = gen.AppendPasswordArgs(args, password)
 	args = append(args, "-in", encryptedDataPath)
 
 	result, err := gen.ExecCommand(gen.GetOpenSSLPath(), "", args...)

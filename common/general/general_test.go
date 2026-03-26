@@ -612,3 +612,54 @@ func TestCheckEncryptionCertValidityForContractEncryptionInvalid(t *testing.T) {
 	_, err := CheckEncryptionCertValidityForContractEncryption("invalid-certificate")
 	assert.Error(t, err)
 }
+
+// Testcase to check if AppendPasswordArgs() appends password arguments when password is provided
+func TestAppendPasswordArgsWithPassword(t *testing.T) {
+	args := []string{"openssl", "rsa", "-in", "key.pem"}
+	password := "testpassword"
+
+	result := AppendPasswordArgs(args, password)
+
+	assert.Equal(t, 6, len(result))
+	assert.Equal(t, "openssl", result[0])
+	assert.Equal(t, "rsa", result[1])
+	assert.Equal(t, "-in", result[2])
+	assert.Equal(t, "key.pem", result[3])
+	assert.Equal(t, "-passin", result[4])
+	assert.Equal(t, "pass:testpassword", result[5])
+}
+
+// Testcase to check if AppendPasswordArgs() does not modify args when password is empty
+func TestAppendPasswordArgsWithoutPassword(t *testing.T) {
+	args := []string{"openssl", "rsa", "-in", "key.pem"}
+	password := ""
+
+	result := AppendPasswordArgs(args, password)
+
+	assert.Equal(t, 4, len(result))
+	assert.Equal(t, args, result)
+}
+
+// Testcase to check if AppendPasswordArgs() handles empty args slice
+func TestAppendPasswordArgsEmptyArgs(t *testing.T) {
+	args := []string{}
+	password := "testpassword"
+
+	result := AppendPasswordArgs(args, password)
+
+	assert.Equal(t, 2, len(result))
+	assert.Equal(t, "-passin", result[0])
+	assert.Equal(t, "pass:testpassword", result[1])
+}
+
+// Testcase to check if AppendPasswordArgs() handles special characters in password
+func TestAppendPasswordArgsSpecialCharacters(t *testing.T) {
+	args := []string{"openssl", "dgst"}
+	password := "p@ssw0rd!#$"
+
+	result := AppendPasswordArgs(args, password)
+
+	assert.Equal(t, 4, len(result))
+	assert.Equal(t, "-passin", result[2])
+	assert.Equal(t, "pass:p@ssw0rd!#$", result[3])
+}

@@ -65,9 +65,7 @@ func GeneratePublicKey(privateKey, password string) (string, error) {
 
 	// OpenSSL command with optional password for encrypted private keys
 	args := []string{"rsa", "-in", privateKeyPath}
-	if password != "" {
-		args = append(args, "-passin", fmt.Sprintf("pass:%s", password))
-	}
+	args = gen.AppendPasswordArgs(args, password)
 	args = append(args, "-pubout")
 
 	publicKey, err := gen.ExecCommand(gen.GetOpenSSLPath(), "", args...)
@@ -323,9 +321,7 @@ func SignContract(encryptedWorkload, encryptedEnv, privateKey, password string) 
 
 	// OpenSSL command with optional password for encrypted private keys
 	args := []string{"dgst", "-sha256", "-sign", privateKeyPath}
-	if password != "" {
-		args = append(args, "-passin", fmt.Sprintf("pass:%s", password))
-	}
+	args = gen.AppendPasswordArgs(args, password)
 
 	workloadEnvSignature, err := gen.ExecCommand(gen.GetOpenSSLPath(), combinedContract, args...)
 	if err != nil {
