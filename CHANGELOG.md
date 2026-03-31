@@ -1,3 +1,23 @@
+## [2.16.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.15.0...v2.16.0) (2026-03-31)
+
+### Features
+
+* add support to accept password for encrypted private key ([a55c916](https://github.com/ibm-hyper-protect/contract-go/commit/a55c916402c781fd9e5a6201df319aad2013a679))
+* add support to public functions for accepting password for encrypted private key ([d2c6696](https://github.com/ibm-hyper-protect/contract-go/commit/d2c66966372054afb038fe83f848dbcd066089f4))
+* add/update testcases ([c018541](https://github.com/ibm-hyper-protect/contract-go/commit/c0185412e42a065fee8e78d556ff98adca35eab8))
+* more testcases ([b21fd6c](https://github.com/ibm-hyper-protect/contract-go/commit/b21fd6c193e897849fa2fb66ee7d232134c31ae0))
+* some optimisations ([2c138ce](https://github.com/ibm-hyper-protect/contract-go/commit/2c138ce839be47e855fbfbe4214897019beea1c9))
+* update go version to 1.26.1 ([6c1e93d](https://github.com/ibm-hyper-protect/contract-go/commit/6c1e93d23894acb28b6d09653e654578f3892b13))
+
+### Documentation
+
+* update documentation ([34ca086](https://github.com/ibm-hyper-protect/contract-go/commit/34ca0863b7e44a9d5c6d042ff8a603da7c5af290))
+
+### Miscellaneous Chores
+
+* **deps:** update docker.io/library/hello-world docker digest to 452a468 ([#210](https://github.com/ibm-hyper-protect/contract-go/issues/210)) ([0e65719](https://github.com/ibm-hyper-protect/contract-go/commit/0e6571992c54769057d79bf75aac6e2aace35fd3))
+* **deps:** update docker.io/library/hello-world docker digest to 6ae972d ([#209](https://github.com/ibm-hyper-protect/contract-go/issues/209)) ([eba6300](https://github.com/ibm-hyper-protect/contract-go/commit/eba6300a8e11e58fd764f38dd89e6506fb09514b))
+
 ## [2.15.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.14.1...v2.15.0) (2026-03-23)
 
 ### Features
