@@ -45,7 +45,7 @@ func TestHpcrGetAttestationRecords(t *testing.T) {
 		t.Errorf("failed to get private key - %v", err)
 	}
 
-	result, err := HpcrGetAttestationRecords(encChecksum, privateKeyData)
+	result, err := HpcrGetAttestationRecords(encChecksum, privateKeyData, "")
 	if err != nil {
 		t.Errorf("failed to decrypt attestation records - %v", err)
 	}
@@ -156,7 +156,7 @@ func TestHpcrVerifySignatureAttestationRecords_InvalidSignature(t *testing.T) {
 
 // Testcase to check if HpcrGetAttestationRecords() handles empty parameters
 func TestHpcrGetAttestationRecordsEmptyData(t *testing.T) {
-	_, err := HpcrGetAttestationRecords("", "")
+	_, err := HpcrGetAttestationRecords("", "", "")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), missingParameterErrStatement)
 }
@@ -168,7 +168,7 @@ func TestHpcrGetAttestationRecordsInvalidPrivateKey(t *testing.T) {
 		t.Errorf("failed to get encrypted checksum - %v", err)
 	}
 
-	_, err = HpcrGetAttestationRecords(encChecksum, "invalid-private-key")
+	_, err = HpcrGetAttestationRecords(encChecksum, "invalid-private-key", "")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to decrypt password")
 }
@@ -190,7 +190,7 @@ func TestHpcrGetAttestationRecordsDecryptWorkloadFailure(t *testing.T) {
 		t.Errorf("failed to read private key - %v", err)
 	}
 
-	_, err = HpcrGetAttestationRecords(corruptedData, privateKeyData)
+	_, err = HpcrGetAttestationRecords(corruptedData, privateKeyData, "")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to decrypt attestation records")
 }

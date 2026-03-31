@@ -68,6 +68,24 @@ const (
 	// active.crt will be valid up to November 9, 2030
 	sampleEncryptionCertificate        = "../../samples/encryption-cert/active.crt"
 	sampleEncryptionCertificateExpired = "../../samples/encryption-cert/expired.crt"
+
+	// Sample encrypted private key with Proc-Type header
+	sampleEncryptedPrivateKey = `-----BEGIN RSA PRIVATE KEY-----
+Proc-Type: 4,ENCRYPTED
+DEK-Info: AES-128-CBC,1234567890ABCDEF
+
+encrypted content here
+-----END RSA PRIVATE KEY-----`
+
+	// Sample unencrypted private key
+	sampleUnencryptedPrivateKey = `-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEA...
+-----END RSA PRIVATE KEY-----`
+
+	// Sample encrypted private key with ENCRYPTED in header
+	sampleEncryptedPrivateKeyWithHeader = `-----BEGIN ENCRYPTED PRIVATE KEY-----
+MIIFHDBOBgkqhkiG9w0BBQ0wQTApBgkqhkiG9w0BBQwwHAQI...
+-----END ENCRYPTED PRIVATE KEY-----`
 )
 
 // Testcase to check if CheckIfEmpty() is able to identify empty variables
@@ -611,4 +629,70 @@ func TestCheckEncryptionCertValidityInvalid(t *testing.T) {
 func TestCheckEncryptionCertValidityForContractEncryptionInvalid(t *testing.T) {
 	_, err := CheckEncryptionCertValidityForContractEncryption("invalid-certificate")
 	assert.Error(t, err)
+}
+
+// Testcase to check if AppendPasswordArgs() appends password arguments when password is provided
+func TestAppendPasswordArgsWithPassword(t *testing.T) {
+	args := []string{"openssl", "rsa", "-in", "key.pem"}
+	password := "testpassword"
+
+	result := AppendPasswordArgs(args, password)
+
+	assert.Equal(t, 6, len(result))
+	assert.Equal(t, "openssl", result[0])
+	assert.Equal(t, "rsa", result[1])
+	assert.Equal(t, "-in", result[2])
+	assert.Equal(t, "key.pem", result[3])
+	assert.Equal(t, "-passin", result[4])
+	assert.Equal(t, "pass:testpassword", result[5])
+}
+
+// Testcase to check if AppendPasswordArgs() does not modify args when password is empty
+func TestAppendPasswordArgsWithoutPassword(t *testing.T) {
+	args := []string{"openssl", "rsa", "-in", "key.pem"}
+	password := ""
+
+	result := AppendPasswordArgs(args, password)
+
+	assert.Equal(t, 4, len(result))
+	assert.Equal(t, args, result)
+}
+
+// Testcase to check if AppendPasswordArgs() handles empty args slice
+func TestAppendPasswordArgsEmptyArgs(t *testing.T) {
+	args := []string{}
+	password := "testpassword"
+
+	result := AppendPasswordArgs(args, password)
+
+	assert.Equal(t, 2, len(result))
+	assert.Equal(t, "-passin", result[0])
+	assert.Equal(t, "pass:testpassword", result[1])
+}
+
+// Testcase to check if AppendPasswordArgs() handles special characters in password
+func TestAppendPasswordArgsSpecialCharacters(t *testing.T) {
+	args := []string{"openssl", "dgst"}
+	password := "p@ssw0rd!#$"
+
+	result := AppendPasswordArgs(args, password)
+
+	assert.Equal(t, 4, len(result))
+	assert.Equal(t, "-passin", result[2])
+	assert.Equal(t, "pass:p@ssw0rd!#$", result[3])
+}
+
+// Testcase to check if IsPrivateKeyEncrypted() detects encrypted keys
+func TestIsPrivateKeyEncrypted(t *testing.T) {
+	assert.True(t, IsPrivateKeyEncrypted(sampleEncryptedPrivateKey))
+}
+
+// Testcase to check if IsPrivateKeyEncrypted() detects unencrypted keys
+func TestIsPrivateKeyUnencrypted(t *testing.T) {
+	assert.False(t, IsPrivateKeyEncrypted(sampleUnencryptedPrivateKey))
+}
+
+// Testcase to check if IsPrivateKeyEncrypted() detects ENCRYPTED in header
+func TestIsPrivateKeyEncryptedWithEncryptedHeader(t *testing.T) {
+	assert.True(t, IsPrivateKeyEncrypted(sampleEncryptedPrivateKeyWithHeader))
 }

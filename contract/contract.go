@@ -129,18 +129,19 @@ func HpcrTextEncrypted(plainText, hyperProtectOs, encryptionCertificate string) 
 // Parameters:
 //   - encryptedText: Encrypted text in format "hyper-protect-basic.<encrypted-password>.<encrypted-data>"
 //   - privateKey: RSA private key (PEM format) corresponding to the encryption certificate used during encryption
+//   - password: Optional password to unlock the encrypted private key (empty string "" for unencrypted keys)
 //
 // Returns:
 //   - Decrypted plain text
 //   - SHA256 hash of the encrypted input (input checksum)
 //   - SHA256 hash of the decrypted output (output checksum)
 //   - Error if decryption fails or parameters are missing
-func HpcrTextDecrypted(encryptedText, privateKey string) (string, string, string, error) {
+func HpcrTextDecrypted(encryptedText, privateKey, password string) (string, string, string, error) {
 	if gen.CheckIfEmpty(encryptedText, privateKey) {
 		return "", "", "", fmt.Errorf(emptyParameterErrStatement)
 	}
 
-	decryptedText, err := dec.DecryptText(encryptedText, privateKey)
+	decryptedText, err := dec.DecryptText(encryptedText, privateKey, password)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to decrypt text - %v", err)
 	}
@@ -295,13 +296,14 @@ func HpcrVerifyContract(contract, version string) error {
 //     uses the embedded default certificate for the specified platform.
 //   - privateKey: RSA private key (PEM format) for signing the contract.
 //     Generate with: openssl genrsa -out private.pem 4096
+//   - password: Optional password to unlock the encrypted private key (empty string "" for unencrypted keys)
 //
 // Returns:
 //   - Signed and encrypted contract YAML containing workload, env, and envWorkloadSignature sections
 //   - SHA256 hash of the original contract (input checksum)
 //   - SHA256 hash of the final signed contract (output checksum)
 //   - Error if validation, encryption, or signing fails
-func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate, privateKey string) (string, string, string, error) {
+func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate, privateKey, password string) (string, string, string, error) {
 	err := HpcrVerifyContract(contract, hyperProtectOs)
 	if err != nil {
 		return "", "", "", fmt.Errorf("schema verification failed - %v", err)
@@ -321,12 +323,12 @@ func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate
 		return "", "", "", fmt.Errorf("Failed to encrypt contract - %v", err)
 	}
 
-	publicKey, err := enc.GeneratePublicKey(privateKey)
+	publicKey, err := enc.GeneratePublicKey(privateKey, password)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to generate public key - %v", err)
 	}
 
-	signedEncryptContract, err := encryptWrapper(contract, hyperProtectOs, encryptCertificate, privateKey, publicKey)
+	signedEncryptContract, err := encryptWrapper(contract, hyperProtectOs, encryptCertificate, privateKey, password, publicKey)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to sign and encrypt contract - %v", err)
 	}
@@ -352,6 +354,7 @@ func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate
 //   - encryptionCertificate: PEM-formatted IBM encryption certificate. If empty, the library
 //     uses the embedded default certificate.
 //   - privateKey: RSA private key (PEM format) for signing the contract
+//   - password: Optional password to unlock the encrypted private key (empty string "" for unencrypted keys)
 //   - cacert: CA certificate (PEM format) used to issue the time-limited signing certificate
 //   - caKey: CA private key (PEM format) used to sign the time-limited certificate
 //   - csrDataStr: Certificate Signing Request parameters as JSON string.
@@ -365,7 +368,7 @@ func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate
 //   - SHA256 hash of the original contract (input checksum)
 //   - SHA256 hash of the final signed contract (output checksum)
 //   - Error if validation, CSR generation, certificate creation, or signing fails
-func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encryptionCertificate, privateKey, cacert, caKey, csrDataStr, csrPemData string, expiryDays int) (string, string, string, error) {
+func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encryptionCertificate, privateKey, password, cacert, caKey, csrDataStr, csrPemData string, expiryDays int) (string, string, string, error) {
 	err := HpcrVerifyContract(contract, hyperProtectOs)
 	if err != nil {
 		return "", "", "", fmt.Errorf("schema verification failed - %v", err)
@@ -384,7 +387,7 @@ func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encrypt
 		return "", "", "", fmt.Errorf("failed to generate signing certificate - %v", err)
 	}
 
-	finalContract, err := encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey, signingCert)
+	finalContract, err := encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey, password, signingCert)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to generate signed and encrypted contract - %v", err)
 	}
@@ -403,13 +406,14 @@ func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encrypt
 // Parameters:
 //   - contract: YAML contract string with pre-encrypted workload and env sections
 //   - privateKey: RSA private key (PEM format) used to generate the signature
+//   - password: Optional password to unlock the encrypted private key (empty string "" for unencrypted keys)
 //
 // Returns:
 //   - Signed contract YAML with workload, env, and envWorkloadSignature sections
 //   - SHA256 hash of the original contract (input checksum)
 //   - SHA256 hash of the final signed contract (output checksum)
 //   - Error if YAML parsing or signing fails
-func HpcrContractSign(contract, privateKey string) (string, string, string, error) {
+func HpcrContractSign(contract, privateKey, password string) (string, string, string, error) {
 	var contractMap map[string]interface{}
 
 	err := yaml.Unmarshal([]byte(contract), &contractMap)
@@ -420,7 +424,7 @@ func HpcrContractSign(contract, privateKey string) (string, string, string, erro
 	workload := contractMap["workload"].(string)
 	env := contractMap["env"].(string)
 
-	workloadEnvSignature, err := enc.SignContract(workload, env, privateKey)
+	workloadEnvSignature, err := enc.SignContract(workload, env, privateKey, password)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to sign contract - %v", err)
 	}
@@ -491,12 +495,13 @@ func HpccInitdata(contract string) (string, string, string, error) {
 //   - hyperProtectOs: Target platform — "hpvs", "hpcr-rhvs", or "hpcc-peerpod" (default: hpvs)
 //   - encryptionCertificate: PEM-formatted encryption certificate (optional, uses default if empty)
 //   - privateKey: RSA private key (PEM format) for signing
+//   - password: Optional password to unlock the encrypted private key (empty string "" for unencrypted keys)
 //   - publicKey: Public key or signing certificate (PEM format) to inject into the env section
 //
 // Returns:
 //   - Final contract YAML with encrypted workload, env, and envWorkloadSignature
 //   - Error if encryption or signing fails
-func encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey, publicKey string) (string, error) {
+func encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey, password, publicKey string) (string, error) {
 	if gen.CheckIfEmpty(contract, privateKey, publicKey) {
 		return "", fmt.Errorf(emptyParameterErrStatement)
 	}
@@ -528,7 +533,7 @@ func encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey,
 		return "", fmt.Errorf("failed to encrypt env - %v", err)
 	}
 
-	workloadEnvSignature, err := enc.SignContract(encryptedWorkload, encryptedEnv, privateKey)
+	workloadEnvSignature, err := enc.SignContract(encryptedWorkload, encryptedEnv, privateKey, password)
 	if err != nil {
 		return "", fmt.Errorf("failed to sign contract - %v", err)
 	}

@@ -134,6 +134,36 @@ func ExecCommand(commandName, stdinInput string, args ...string) (string, error)
 	return out.String(), nil
 }
 
+// AppendPasswordArgs appends OpenSSL password arguments to an args slice if a password is provided.
+// This helper function eliminates code duplication when building OpenSSL commands that support
+// password-protected private keys.
+//
+// Parameters:
+//   - args: Existing slice of command arguments
+//   - password: Optional password for encrypted private keys (empty string for unencrypted keys)
+//
+// Returns:
+//   - Updated args slice with password arguments appended if password is non-empty
+func AppendPasswordArgs(args []string, password string) []string {
+	if password != "" {
+		args = append(args, "-passin", fmt.Sprintf("pass:%s", password))
+	}
+	return args
+}
+
+// IsPrivateKeyEncrypted checks if a PEM-encoded private key is encrypted.
+// It examines the PEM headers to determine if the key requires a password.
+//
+// Parameters:
+//   - privateKey: PEM-encoded private key string
+//
+// Returns:
+//   - true if the private key is encrypted, false otherwise
+func IsPrivateKeyEncrypted(privateKey string) bool {
+	return strings.Contains(privateKey, "ENCRYPTED") ||
+		strings.Contains(privateKey, "Proc-Type: 4,ENCRYPTED")
+}
+
 // ReadDataFromFile reads the entire contents of a file and returns it as a string.
 // It opens the file, reads all data, and closes the file automatically.
 //

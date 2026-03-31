@@ -47,14 +47,19 @@ func OpensslCheck() error {
 //
 // Parameters:
 //   - privateKey: RSA private key (PEM format)
+//   - password: Optional password to unlock the encrypted private key (empty string "" for unencrypted keys)
 //
 // Returns:
 //   - Public key in PEM format
 //   - Error if OpenSSL is not found or key extraction fails
-func GeneratePublicKey(privateKey string) (string, error) {
+func GeneratePublicKey(privateKey, password string) (string, error) {
 	err := OpensslCheck()
 	if err != nil {
 		return "", fmt.Errorf("openssl not found - %v", err)
+	}
+
+	if gen.IsPrivateKeyEncrypted(privateKey) && password == "" {
+		return "", fmt.Errorf("private key is encrypted but no password provided - use the password parameter to unlock the key")
 	}
 
 	privateKeyPath, err := gen.CreateTempFile(privateKey)
@@ -62,7 +67,11 @@ func GeneratePublicKey(privateKey string) (string, error) {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
 
-	publicKey, err := gen.ExecCommand(gen.GetOpenSSLPath(), "", "rsa", "-in", privateKeyPath, "-pubout")
+	args := []string{"rsa", "-in", privateKeyPath}
+	args = gen.AppendPasswordArgs(args, password)
+	args = append(args, "-pubout")
+
+	publicKey, err := gen.ExecCommand(gen.GetOpenSSLPath(), "", args...)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
 	}
@@ -295,14 +304,19 @@ func CreateCert(csrPath, caCertPath, caKeyPath string, expiryDays int) (string, 
 //   - encryptedWorkload: Encrypted workload section of the contract
 //   - encryptedEnv: Encrypted environment section of the contract
 //   - privateKey: RSA private key (PEM format) used to sign the contract
+//   - password: Optional password to unlock the private key if it's encrypted (empty string "" for unencrypted keys)
 //
 // Returns:
 //   - Base64-encoded SHA-256 signature of the combined contract sections
 //   - Error if OpenSSL is not found or signing fails
-func SignContract(encryptedWorkload, encryptedEnv, privateKey string) (string, error) {
+func SignContract(encryptedWorkload, encryptedEnv, privateKey, password string) (string, error) {
 	err := OpensslCheck()
 	if err != nil {
 		return "", fmt.Errorf("openssl not found - %v", err)
+	}
+
+	if gen.IsPrivateKeyEncrypted(privateKey) && password == "" {
+		return "", fmt.Errorf("private key is encrypted but no password provided - use the password parameter to unlock the key")
 	}
 
 	combinedContract := encryptedWorkload + encryptedEnv
@@ -312,7 +326,10 @@ func SignContract(encryptedWorkload, encryptedEnv, privateKey string) (string, e
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
 
-	workloadEnvSignature, err := gen.ExecCommand(gen.GetOpenSSLPath(), combinedContract, "dgst", "-sha256", "-sign", privateKeyPath)
+	args := []string{"dgst", "-sha256", "-sign", privateKeyPath}
+	args = gen.AppendPasswordArgs(args, password)
+
+	workloadEnvSignature, err := gen.ExecCommand(gen.GetOpenSSLPath(), combinedContract, args...)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
 	}

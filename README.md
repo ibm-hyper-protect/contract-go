@@ -72,6 +72,7 @@ Learn more:
   - Support contract expiry with CSR (Certificate Signing Request)
   - Validate contract schemas
   - Decrypt encrypted text in Hyper Protect format
+  - Password-protected private key support for decrypting attestation records and generate signed contracts
 
 - **Archive Management**
   - Generate Base64 tar archives of `docker-compose.yaml` or `pods.yaml`
@@ -176,6 +177,52 @@ MIIEpAIBAAKCAQEA...
         "hpvs",              // Platform type (hpvs, hpcr-rhvs, or hpcc-peerpod)
         "",                  // Use default encryption certificate
         privateKey,          // Your RSA private key
+        "",                  // Password for encrypted private key (empty if not encrypted)
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("Signed Contract: %s\n", signedContract)
+    fmt.Printf("Input SHA256: %s\n", inputHash)
+    fmt.Printf("Output SHA256: %s\n", outputHash)
+}
+```
+
+### Using Password-Protected Private Keys
+
+If your private key is encrypted with a password, provide it as the last parameter:
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+)
+
+func main() {
+    contractYAML := `...` // Your contract YAML
+    
+    // Encrypted private key (with password protection)
+    encryptedPrivateKey := `-----BEGIN RSA PRIVATE KEY-----
+Proc-Type: 4,ENCRYPTED
+DEK-Info: AES-256-CBC,1234567890ABCDEF
+
+MIIEpAIBAAKCAQEA...
+-----END RSA PRIVATE KEY-----`
+
+    password := "your-secure-password"
+
+    // Generate signed and encrypted contract with password-protected key
+    signedContract, inputHash, outputHash, err := contract.HpcrContractSignedEncrypted(
+        contractYAML,
+        "hpvs",
+        "",
+        encryptedPrivateKey,
+        password,  // Provide password for encrypted private key
     )
     if err != nil {
         log.Fatal(err)
