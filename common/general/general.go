@@ -643,7 +643,7 @@ func VerifyContractWithSchema(contract, version string) error {
 
 	contractSchema, err := fetchContractSchema(version)
 	if err != nil {
-		return fmt.Errorf("error fetching contract schema")
+		return fmt.Errorf("error fetching contract schema: %v", err)
 	}
 
 	sch, err := jsonschema.CompileString("schema.json", contractSchema)
@@ -730,9 +730,9 @@ func convertToStringkeys(m map[any]any) map[string]any {
 //   - Error if version is invalid
 func fetchContractSchema(version string) (string, error) {
 	if version == HyperProtectOsHpvs || version == HyperProtectConfidentialContainerPeerPods || version == "" {
-		return sch.ContractSchema, nil
+		return sch.ContractSchemaHpvs, nil
 	} else if version == HyperProtectOsHpcrRhvs {
-		return sch.ContractSchemaRhel, nil
+		return sch.ContractSchemaHpcrRhvs, nil
 	} else {
 		return "", fmt.Errorf("invalid Hyper Protect version")
 	}
