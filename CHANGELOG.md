@@ -1,3 +1,9 @@
+## [2.17.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.16.1...v2.17.0) (2026-04-01)
+
+### Features
+
+* Added New schema for CCCO(HPCC) for contract validation ([fe9e348](https://github.com/ibm-hyper-protect/contract-go/commit/fe9e348b8cf089318f180f8077d4f99305f2c5a3))
+
 ## [2.16.1](https://github.com/ibm-hyper-protect/contract-go/compare/v2.16.0...v2.16.1) (2026-04-01)
 
 ### Bug Fixes
