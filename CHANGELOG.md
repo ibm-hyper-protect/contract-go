@@ -1,3 +1,11 @@
+## [2.16.1](https://github.com/ibm-hyper-protect/contract-go/compare/v2.16.0...v2.16.1) (2026-04-01)
+
+### Bug Fixes
+
+* Add Rhel schema ([0e87faa](https://github.com/ibm-hyper-protect/contract-go/commit/0e87faac5af8a802e9fc926d2fd40ba23989c0b3))
+* updated schema variable name ([1ef1cf0](https://github.com/ibm-hyper-protect/contract-go/commit/1ef1cf03ca8f80647e73e3b290aa08f3ba3bf223))
+* updating error statement ([4a32cec](https://github.com/ibm-hyper-protect/contract-go/commit/4a32cec44e8b2891d087d90c03a7c5fd996640c6))
+
 ## [2.16.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.15.0...v2.16.0) (2026-03-31)
 
 ### Features
