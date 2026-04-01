@@ -729,10 +729,12 @@ func convertToStringkeys(m map[any]any) map[string]any {
 //   - JSON schema string for contract validation
 //   - Error if version is invalid
 func fetchContractSchema(version string) (string, error) {
-	if version == HyperProtectOsHpvs || version == HyperProtectConfidentialContainerPeerPods || version == "" {
+	if version == HyperProtectOsHpvs || version == "" {
 		return sch.ContractSchemaHpvs, nil
 	} else if version == HyperProtectOsHpcrRhvs {
 		return sch.ContractSchemaHpcrRhvs, nil
+	} else if version == HyperProtectConfidentialContainerPeerPods {
+		return sch.ContractSchemaCoco, nil
 	} else {
 		return "", fmt.Errorf("invalid Hyper Protect version")
 	}

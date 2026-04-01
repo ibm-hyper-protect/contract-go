@@ -86,6 +86,11 @@ MIIEpAIBAAKCAQEA...
 	sampleEncryptedPrivateKeyWithHeader = `-----BEGIN ENCRYPTED PRIVATE KEY-----
 MIIFHDBOBgkqhkiG9w0BBQ0wQTApBgkqhkiG9w0BBQwwHAQI...
 -----END ENCRYPTED PRIVATE KEY-----`
+
+	// Sample plain contracts for COCO json schema validation
+	sampleCoCoRegoMissingContract                  = "../../samples/hpcc/plain-contract-missing-regovalidator-section.yaml"
+	sampleCoCoCompleteConfidentialContainerSection = "../../samples/hpcc/plain-contract-complete-confidential-container-section.yaml"
+	sampleCoCoMissingPolicy                        = "../../samples/hpcc/plain-contract-missing-policy.yaml"
 )
 
 // Testcase to check if CheckIfEmpty() is able to identify empty variables
@@ -695,4 +700,45 @@ func TestIsPrivateKeyUnencrypted(t *testing.T) {
 // Testcase to check if IsPrivateKeyEncrypted() detects ENCRYPTED in header
 func TestIsPrivateKeyEncryptedWithEncryptedHeader(t *testing.T) {
 	assert.True(t, IsPrivateKeyEncrypted(sampleEncryptedPrivateKeyWithHeader))
+}
+
+// Testcase to check if schema validation works for valid confidential-containers section
+func TestVerifyContractWithSchemaValidConfidentialContainers(t *testing.T) {
+	contract, err := ReadDataFromFile(sampleCoCoCompleteConfidentialContainerSection)
+	if err != nil {
+		t.Errorf("failed to read contract - %v", err)
+	}
+
+	// This SHOULD pass because all required fields are present
+	err = VerifyContractWithSchema(contract, "hpcc-peerpod")
+
+	assert.NoError(t, err, "Validation should pass when all required fields are present")
+}
+
+// Testcase to verify validation fails when regoValidator is missing form confidential-containers section.
+func TestVerifyContractWithSchemaMissingRegoValidator(t *testing.T) {
+	// Contract with confidential-containers but missing regoValidator
+	contract, err := ReadDataFromFile(sampleCoCoRegoMissingContract)
+	if err != nil {
+		t.Errorf("failed to read contract - %v", err)
+	}
+
+	err = VerifyContractWithSchema(contract, "hpcc-peerpod")
+
+	assert.Error(t, err, "Validation should fail when regoValidator is missing")
+	assert.Contains(t, err.Error(), "regoValidator", "Error message should mention regoValidator")
+}
+
+// Testcase to verify validation fails when regoValidator.policy is missing form confidential-containers section.
+func TestVerifyContractWithSchemaMissingRegoValidatorPolicy(t *testing.T) {
+	// Contract with regoValidator but missing the required 'policy' field
+	contract, err := ReadDataFromFile(sampleCoCoMissingPolicy)
+	if err != nil {
+		t.Errorf("failed to read contract - %v", err)
+	}
+
+	err = VerifyContractWithSchema(contract, "hpcc-peerpod")
+
+	assert.Error(t, err, "Validation should fail when regoValidator.policy is missing")
+	assert.Contains(t, err.Error(), "policy", "Error message should mention policy")
 }
