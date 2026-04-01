@@ -24,3 +24,6 @@ var ContractSchemaHpvs string
 
 //go:embed hpse-contract-schema-1.0.102-rhel.json
 var ContractSchemaHpcrRhvs string
+
+//go:embed hpse-contract-schema-coco-1.0.93-rhel.json
+var ContractSchemaCoco string

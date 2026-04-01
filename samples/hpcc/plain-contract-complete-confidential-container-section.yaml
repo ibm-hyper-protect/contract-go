@@ -1,0 +1,24 @@
+workload: |
+  type: workload
+  confidential-containers:
+    config:
+      cosign:
+        test-image:
+          publicKey: "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE\n-----END PUBLIC KEY-----"
+    allowedContainers:
+      test-container:
+        allowedImages:
+          imageNames:
+            - "docker.io/library/nginx:latest"
+            - "quay.io/test/app:v1.0"
+    regoValidator:
+      policy: "package validate\ndefault allow = true"
+    secret:
+      verificationKey: "test-verification-key-12345"
+      decryptionKey: "test-decryption-key-67890"
+env: |
+  type: env
+  logging:
+    logRouter:
+      hostname: 5c2d6b69-c7f0-41bd-b69b-240695369d6e.ingress.us-south.logs.cloud.ibm.com
+      iamApiKey: ab00e3c09p1d4ff7fff9f04c12183413
