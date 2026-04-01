@@ -643,7 +643,7 @@ func VerifyContractWithSchema(contract, version string) error {
 
 	contractSchema, err := fetchContractSchema(version)
 	if err != nil {
-		return fmt.Errorf("error fetching contract schema: %v", err)
+		return fmt.Errorf("error fetching contract schema")
 	}
 
 	sch, err := jsonschema.CompileString("schema.json", contractSchema)
