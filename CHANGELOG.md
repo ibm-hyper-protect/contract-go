@@ -1,3 +1,9 @@
+## [2.17.1](https://github.com/ibm-hyper-protect/contract-go/compare/v2.17.0...v2.17.1) (2026-04-12)
+
+### Bug Fixes
+
+* **deps:** update go dependencies ([#216](https://github.com/ibm-hyper-protect/contract-go/issues/216)) ([5f63163](https://github.com/ibm-hyper-protect/contract-go/commit/5f63163b7a7e11dd53cdb547174999c1e3aa6677))
+
 ## [2.17.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.16.1...v2.17.0) (2026-04-01)
 
 ### Features
