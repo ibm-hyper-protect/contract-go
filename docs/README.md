@@ -1004,6 +1004,77 @@ MIIEpAIBAAKCAQEA...
 
 ---
 
+### HpcrContractTemplate
+
+Returns built-in contract template content for `workload`, `env`, or both as a combined YAML scaffold.
+
+**Package:** `github.com/ibm-hyper-protect/contract-go/v2/contract`
+
+**Signature:**
+```go
+func HpcrContractTemplate(templateType string) (string, error)
+```
+
+**Parameters:**
+
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `templateType` | `string` | Optional | Template selector: `"workload"`, `"env"`, or `""` (returns combined output) |
+
+**Returns:**
+
+| Return | Type | Description |
+|--------|------|-------------|
+| Template Content | `string` | YAML template content from `contract/template/workload.yaml`, `contract/template/env.yaml`, or both |
+| Error | `error` | Error if template type is invalid or template files cannot be read |
+
+**Example:**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+)
+
+func main() {
+    workloadTemplate, err := contract.HpcrContractTemplate("workload")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Workload template:\n%s\n", workloadTemplate)
+
+    envTemplate, err := contract.HpcrContractTemplate("env")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Env template:\n%s\n", envTemplate)
+
+    combinedTemplate, err := contract.HpcrContractTemplate("")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Combined template:\n%s\n", combinedTemplate)
+}
+```
+
+**Combined Output Format (`templateType == ""`):**
+```yaml
+workload: |
+  ...content of workload.yaml...
+env: |
+  ...content of env.yaml...
+```
+
+**Common Errors:**
+- `"unsupported template type: <value>"` - `templateType` is not one of `"workload"`, `"env"`, or `""`
+- `"failed to read workload template"` - Unable to read `contract/template/workload.yaml`
+- `"failed to read env template"` - Unable to read `contract/template/env.yaml`
+
+---
+
 ### HpcrJson
 
 Generates Base64-encoded representation of JSON data with integrity checksums.

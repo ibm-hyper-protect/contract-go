@@ -70,6 +70,7 @@ Learn more:
   - Generate Base64-encoded data from text, JSON, initdata annotation and docker compose / podman play archives
   - Create signed and encrypted & signed contracts
   - Support contract expiry with CSR (Certificate Signing Request)
+  - Load built-in workload and env contract templates
   - Validate contract schemas
   - Decrypt encrypted text in Hyper Protect format
   - Password-protected private key support for decrypting attestation records and generate signed contracts
@@ -137,6 +138,44 @@ func main() {
     fmt.Printf("Base64 encoded: %s\n", encoded)
     fmt.Printf("Input SHA256:  %s\n", inputHash)
     fmt.Printf("Output SHA256: %s\n", outputHash)
+}
+```
+
+### Load Contract Templates
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+)
+
+func main() {
+    // Retrieve workload template only
+    workloadTemplate, err := contract.HpcrContractTemplate("workload")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Workload Template:\n%s\n", workloadTemplate)
+
+    // Retrieve env template only
+    envTemplate, err := contract.HpcrContractTemplate("env")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Env Template:\n%s\n", envTemplate)
+
+    // Retrieve combined contract scaffold:
+    // workload: | <workload template>
+    // env: | <env template>
+    contractTemplate, err := contract.HpcrContractTemplate("")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Combined Contract Template:\n%s\n", contractTemplate)
 }
 ```
 
