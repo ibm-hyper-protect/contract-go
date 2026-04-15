@@ -1,0 +1,20 @@
+type: workload
+auths:
+  <registry url>:
+    password: <password>
+    username: <user name>
+# Use either compose or pods
+play:
+  archive: <base64 TGZ of podman play support files>
+compose:
+  archive: <base64 TGZ of docker compose support files>
+images:
+  dct:
+    <docker image name (without the tag, an example is docker.io/redbookuser/s390x:)>:
+      notary: "<notary URL>"
+      publicKey: <docker content trust signed public key>
+volumes:
+  <volume key>:
+    mount: "<data volume mount path>"
+    seed: "<Passphrase of the LUKS encryption>"
+    filesystem: "ext4"
