@@ -18,6 +18,7 @@ package contract
 import (
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -76,6 +77,10 @@ const (
 	sampleEncryptedContract    = "../samples/sign/contract.enc.yaml"
 	sampleEncryptedInputSha    = "6a15ebc21cec4fc6a1e7317b4ca4de9cf71bb7a29d9f81d42cd8474b270c54a1"
 	sampleSignEncryptOutputSha = "001e7c38bf6f34c80e0c1f7ca42ef420667f09687038bbe0233badda9cc210af"
+
+	// Contract template fixtures used by template retrieval tests.
+	sampleWorkloadTemplatePath = "./template/workload.yaml"
+	sampleEnvTemplatePath      = "./template/env.yaml"
 )
 
 var (
@@ -794,4 +799,76 @@ func TestHpcrVerifyContractInvalidSchema(t *testing.T) {
 	invalidContract := `workload: test`
 	err := HpcrVerifyContract(invalidContract, "")
 	assert.Error(t, err)
+}
+
+// Testcase to check if HpcrContractTemplate() is able to return workload template content.
+func TestHpcrContractTemplateWorkload(t *testing.T) {
+	expectedTemplate, err := gen.ReadDataFromFile(sampleWorkloadTemplatePath)
+	if err != nil {
+		t.Errorf("failed to read workload template file - %v", err)
+	}
+
+	workloadTemplate, err := HpcrContractTemplate("workload")
+	assert.NoError(t, err)
+	assert.Equal(t, expectedTemplate, workloadTemplate)
+}
+
+// Testcase to check if HpcrContractTemplate() is able to return env template content.
+func TestHpcrContractTemplateEnv(t *testing.T) {
+	expectedTemplate, err := gen.ReadDataFromFile(sampleEnvTemplatePath)
+	if err != nil {
+		t.Errorf("failed to read env template file - %v", err)
+	}
+
+	envTemplate, err := HpcrContractTemplate("env")
+	assert.NoError(t, err)
+	assert.Equal(t, expectedTemplate, envTemplate)
+}
+
+// Testcase to check if HpcrContractTemplate() is able to return combined template content.
+func TestHpcrContractTemplateCombined(t *testing.T) {
+	workloadTemplate, err := gen.ReadDataFromFile(sampleWorkloadTemplatePath)
+	if err != nil {
+		t.Errorf("failed to read workload template file - %v", err)
+	}
+
+	envTemplate, err := gen.ReadDataFromFile(sampleEnvTemplatePath)
+	if err != nil {
+		t.Errorf("failed to read env template file - %v", err)
+	}
+
+	expectedOutput := "workload: |\n" + indentTemplateBlockForTest(workloadTemplate)
+	if !strings.HasSuffix(workloadTemplate, "\n") {
+		expectedOutput += "\n"
+	}
+	expectedOutput += "env: |\n" + indentTemplateBlockForTest(envTemplate)
+
+	combinedTemplate, err := HpcrContractTemplate("")
+	assert.NoError(t, err)
+	assert.Equal(t, expectedOutput, combinedTemplate)
+}
+
+// Testcase to check if HpcrContractTemplate() handles invalid template type.
+func TestHpcrContractTemplateInvalidType(t *testing.T) {
+	_, err := HpcrContractTemplate("invalid")
+	assert.EqualError(t, err, "unsupported template type: invalid")
+}
+
+// indentTemplateBlockForTest mirrors production indentation behavior for expected YAML output.
+func indentTemplateBlockForTest(content string) string {
+	if content == "" {
+		return "  "
+	}
+
+	var output strings.Builder
+	for _, line := range strings.SplitAfter(content, "\n") {
+		if line == "" {
+			continue
+		}
+
+		output.WriteString("  ")
+		output.WriteString(line)
+	}
+
+	return output.String()
 }

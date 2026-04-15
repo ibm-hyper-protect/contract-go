@@ -18,6 +18,9 @@ package contract
 import (
 	"bytes"
 	"fmt"
+	"path/filepath"
+	"runtime"
+	"strings"
 	"text/template"
 
 	"gopkg.in/yaml.v3"
@@ -29,6 +32,11 @@ import (
 
 const (
 	emptyParameterErrStatement = "required parameter is empty"
+
+	// Contract template locations relative to this package.
+	contractTemplateDirPath  = "template"
+	workloadTemplateFilePath = "workload.yaml"
+	envTemplateFilePath      = "env.yaml"
 )
 
 // HPCC initdata.toml file template.
@@ -439,6 +447,54 @@ func HpcrContractSign(contract, privateKey, password string) (string, string, st
 	return finalContract, gen.GenerateSha256(contract), gen.GenerateSha256(finalContract), nil
 }
 
+// HpcrContractTemplate returns contract template content for workload, env, or both.
+//
+// Parameters:
+//   - templateType: "workload", "env", or "" (returns both templates combined)
+//
+// Returns:
+//   - Template content as string
+//   - Error if template type is unsupported or file read fails
+func HpcrContractTemplate(templateType string) (string, error) {
+	switch templateType {
+	case "workload":
+		workloadTemplate, err := readHpcrTemplateFile(workloadTemplateFilePath)
+		if err != nil {
+			return "", fmt.Errorf("failed to read workload template - %v", err)
+		}
+		return workloadTemplate, nil
+	case "env":
+		envTemplate, err := readHpcrTemplateFile(envTemplateFilePath)
+		if err != nil {
+			return "", fmt.Errorf("failed to read env template - %v", err)
+		}
+		return envTemplate, nil
+	case "":
+		workloadTemplate, err := readHpcrTemplateFile(workloadTemplateFilePath)
+		if err != nil {
+			return "", fmt.Errorf("failed to read workload template - %v", err)
+		}
+
+		envTemplate, err := readHpcrTemplateFile(envTemplateFilePath)
+		if err != nil {
+			return "", fmt.Errorf("failed to read env template - %v", err)
+		}
+
+		var templateBuilder strings.Builder
+		templateBuilder.WriteString("workload: |\n")
+		templateBuilder.WriteString(indentTemplateContent(workloadTemplate))
+		if !strings.HasSuffix(workloadTemplate, "\n") {
+			templateBuilder.WriteString("\n")
+		}
+		templateBuilder.WriteString("env: |\n")
+		templateBuilder.WriteString(indentTemplateContent(envTemplate))
+
+		return templateBuilder.String(), nil
+	default:
+		return "", fmt.Errorf("unsupported template type: %s", templateType)
+	}
+}
+
 // HpccInitdata generates gzipped and Base64-encoded initdata for IBM Confidential Computing
 // Containers for Red Hat OpenShift Container Platform (HPCC) peer pod deployments.
 //
@@ -594,4 +650,39 @@ func encrypter(stringText, hyperProtectOs, encryptionCertificate string) (string
 	}
 
 	return enc.EncryptFinalStr(encodedEncryptedPassword, encryptedString), nil
+}
+
+// readHpcrTemplateFile resolves a template file path under contract/template and returns its content.
+func readHpcrTemplateFile(fileName string) (string, error) {
+	_, currentFile, _, ok := runtime.Caller(0)
+	if !ok {
+		return "", fmt.Errorf("failed to resolve contract template path")
+	}
+
+	templatePath := filepath.Join(filepath.Dir(currentFile), contractTemplateDirPath, fileName)
+	templateContent, err := gen.ReadDataFromFile(templatePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read template file %s - %v", fileName, err)
+	}
+
+	return templateContent, nil
+}
+
+// indentTemplateContent adds two-space indentation to each line for YAML block scalar formatting.
+func indentTemplateContent(content string) string {
+	if content == "" {
+		return "  "
+	}
+
+	var indentedContent strings.Builder
+	for _, line := range strings.SplitAfter(content, "\n") {
+		if line == "" {
+			continue
+		}
+
+		indentedContent.WriteString("  ")
+		indentedContent.WriteString(line)
+	}
+
+	return indentedContent.String()
 }
