@@ -1,3 +1,24 @@
+## [2.18.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.17.1...v2.18.0) (2026-04-15)
+
+### Features
+
+* update CRL functions ([ad2f266](https://github.com/ibm-hyper-protect/contract-go/commit/ad2f266e811e0c1cad8b308da016460597fafd00))
+
+### Bug Fixes
+
+* encryption & attestation certificate validation and crl revocation ([d713751](https://github.com/ibm-hyper-protect/contract-go/commit/d71375127d8b36618f2ad0f9a5c6aff979619929))
+
+### Documentation
+
+* update user documentation ([0e56ae1](https://github.com/ibm-hyper-protect/contract-go/commit/0e56ae169b92fe3530c327f96e13a6d01188a6ef))
+* update user documentation ([dc23c90](https://github.com/ibm-hyper-protect/contract-go/commit/dc23c9036f4a0afb9f85ec4bae37eb782e75d8f5))
+
+### Miscellaneous Chores
+
+* **deps:** update docker.io/library/hello-world docker digest to f907814 ([#217](https://github.com/ibm-hyper-protect/contract-go/issues/217)) ([089e7f4](https://github.com/ibm-hyper-protect/contract-go/commit/089e7f46aebce2d4d8f094321ea8acf32a4852cb))
+* go mod tidy ([f8b82d8](https://github.com/ibm-hyper-protect/contract-go/commit/f8b82d8e34f9c5e9eaa0e97e589a22f978abf2b2))
+* unused cert files ([46fa8e3](https://github.com/ibm-hyper-protect/contract-go/commit/46fa8e38feb5c3f7fa6562bfd2c69d43fe508875))
+
 ## [2.17.1](https://github.com/ibm-hyper-protect/contract-go/compare/v2.17.0...v2.17.1) (2026-04-12)
 
 ### Bug Fixes
