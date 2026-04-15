@@ -1,2 +1,0 @@
-basicConstraints = CA:TRUE
-keyUsage = keyCertSign, cRLSign
