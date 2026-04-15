@@ -266,7 +266,7 @@ func main() {
 }
 ```
 
-### Validate Certificate Chain
+### Validate Certificate Documents
 
 ```go
 package main
@@ -302,11 +302,16 @@ func main() {
 ... DigiCert root CA certificate ...
 -----END CERTIFICATE-----`
 
-    // Validate complete certificate chain
-    valid, msg, err := certificate.HpcrValidateCertChain(
-        encCert,
-        intermediateCert, // IBM intermediate CA certificate
-        rootCert,         // DigiCert root CA certificate
+    digicertIntermediateCert := `-----BEGIN CERTIFICATE-----
+... DigiCert intermediate CA certificate ...
+-----END CERTIFICATE-----`
+
+    // Validate encryption certificate document (chain + signature + dates)
+    valid, msg, err := certificate.HpcrVerifyEncryptionCertificateDocument(
+        encCert,                  // encryption certificate document
+        intermediateCert,         // IBM intermediate CA certificate
+        digicertIntermediateCert, // DigiCert intermediate CA certificate
+        rootCert,                 // DigiCert root CA certificate
     )
     if err != nil || !valid {
         log.Fatalf("Certificate validation failed: %v", err)
@@ -314,16 +319,34 @@ func main() {
 
     fmt.Printf("%s\n", msg)
 
-    // Check certificate revocation status
-    crlURL := "http://crl3.digicert.com/DigiCertTrustedG4CodeSigningRSA4096SHA3842021CA1.crl"
-    crl, err := certificate.HpcrDownloadCRL(crlURL)
+    // Attestation certificate document (for combined CRL check)
+    attestationCert := `-----BEGIN CERTIFICATE-----
+... attestation certificate document ...
+-----END CERTIFICATE-----`
+
+    // Validate CRL signature and ensure encryption certificate serial is not revoked
+    valid, msg, err = certificate.HpcrValidateCertificateRevocationList(
+        encCert,
+        intermediateCert,
+    )
     if err != nil {
         log.Fatal(err)
     }
+    if !valid {
+        log.Fatalf("Encryption CRL validation failed: %s", msg)
+    }
+    fmt.Printf("%s\n", msg)
 
-    revoked, msg, err := certificate.HpcrCheckCertificateRevocation(encCert, crl)
-    if err != nil || revoked {
-        log.Fatalf("Certificate revoked: %v", err)
+    // Validate CRL signature and ensure attestation certificate serial is not revoked
+    valid, msg, err = certificate.HpcrValidateCertificateRevocationList(
+        attestationCert,
+        intermediateCert,
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+    if !valid {
+        log.Fatalf("Attestation CRL validation failed: %s", msg)
     }
 
     fmt.Printf("%s\n", msg)
