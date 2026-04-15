@@ -187,97 +187,79 @@ func HpcrValidateEncryptionCertificate(encryptionCert string) (string, error) {
 	return msg, nil
 }
 
-// HpcrValidateCertChain validates the complete certificate chain
-// including signatures, expiry, and trust relationships. Users must provide all
-// certificates (encryption, intermediate, and root).
-//
-// This function performs comprehensive validation by:
-//   - Verifying that the encryption certificate is signed by the intermediate certificate
-//   - Verifying that the intermediate certificate is signed by the root certificate
-//   - Checking that all certificates are within their validity periods
-//   - Verifying the trust chain (issuer/subject matching)
-//   - Providing warnings for certificates expiring soon
-//
-// The validation is performed using OpenSSL verify command, which provides
-// industry-standard certificate chain validation.
+// HpcrVerifyEncryptionCertificateDocument verifies an encryption certificate
+// document by checking issuer chain, document signature, and validity dates.
 //
 // Parameters:
-//   - encryptionCert: PEM-formatted encryption certificate
-//   - intermediateCert: PEM-formatted intermediate certificate
-//   - rootCert: PEM-formatted root certificate (e.g., DigiCert Trusted Root G4)
+//   - encryptionCert: encryption certificate document content
+//   - ibmIntermediateCert: IBM intermediate certificate content
+//   - digicertIntermediateCert: DigiCert intermediate certificate content
+//   - digicertRootCert: DigiCert root certificate content
 //
 // Returns:
-//   - valid: true if certificate chain is valid, false otherwise
-//   - message: Detailed validation message with expiry information and warnings
-//   - error: Error if validation fails or parameters are invalid
-func HpcrValidateCertChain(encryptionCert, intermediateCert, rootCert string) (bool, string, error) {
-	if gen.CheckIfEmpty(encryptionCert, intermediateCert, rootCert) {
+//   - valid: true if the certificate document is valid
+//   - message: Detailed validation message
+//   - error: Error with stage information if validation fails
+func HpcrVerifyEncryptionCertificateDocument(encryptionCert, ibmIntermediateCert, digicertIntermediateCert, digicertRootCert string) (bool, string, error) {
+	if gen.CheckIfEmpty(encryptionCert, ibmIntermediateCert, digicertIntermediateCert, digicertRootCert) {
 		return false, "", fmt.Errorf(missingParameterErrStatement)
 	}
 
-	valid, msg, err := crt.ValidateCertificateChain(encryptionCert, intermediateCert, rootCert)
+	valid, msg, err := crt.ValidateEncryptionCertificateDocument(encryptionCert, ibmIntermediateCert, digicertIntermediateCert, digicertRootCert)
 	if err != nil {
-		return false, msg, err
+		return false, "", err
 	}
 
 	return valid, msg, nil
 }
 
-// HpcrCheckCertificateRevocation checks if a certificate has been revoked
-// by checking against the provided Certificate Revocation List (CRL).
-// Users must provide both the certificate and the CRL.
-//
-// This function verifies that:
-//   - The certificate is not in the CRL's revoked certificates list
-//   - The CRL is still valid (not expired)
-//   - Returns detailed revocation information if the certificate is revoked
-//
-// The validation is performed using OpenSSL verify command with CRL checking,
-// which provides industry-standard revocation verification.
+// HpcrVerifyAttestationCertificateDocument verifies an attestation certificate
+// document by checking issuer chain, document signature, and validity dates.
 //
 // Parameters:
-//   - encryptionCert: PEM-formatted certificate to check
-//   - crlData: PEM-formatted Certificate Revocation List
+//   - attestationCert: attestation certificate document content
+//   - ibmIntermediateCert: IBM intermediate certificate content
+//   - digicertIntermediateCert: DigiCert intermediate certificate content
+//   - digicertRootCert: DigiCert root certificate content
 //
 // Returns:
-//   - revoked: true if certificate is revoked, false otherwise
-//   - message: Detailed revocation status message
-//   - error: Error if check fails or parameters are invalid
-func HpcrCheckCertificateRevocation(encryptionCert, crlData string) (bool, string, error) {
-	if gen.CheckIfEmpty(encryptionCert, crlData) {
+//   - valid: true if the certificate document is valid
+//   - message: Detailed validation message
+//   - error: Error with stage information if validation fails
+func HpcrVerifyAttestationCertificateDocument(attestationCert, ibmIntermediateCert, digicertIntermediateCert, digicertRootCert string) (bool, string, error) {
+	if gen.CheckIfEmpty(attestationCert, ibmIntermediateCert, digicertIntermediateCert, digicertRootCert) {
 		return false, "", fmt.Errorf(missingParameterErrStatement)
 	}
 
-	// Check revocation status using OpenSSL
-	revoked, msg, err := crt.CheckCertificateRevocation(encryptionCert, crlData)
+	valid, msg, err := crt.ValidateAttestationCertificateDocument(attestationCert, ibmIntermediateCert, digicertIntermediateCert, digicertRootCert)
 	if err != nil {
 		return false, "", err
 	}
 
-	return revoked, msg, nil
+	return valid, msg, nil
 }
 
-// HpcrDownloadCRL downloads a Certificate Revocation List from the specified URL.
-// This is a helper function for users who need to obtain CRLs for revocation checking.
-//
-// The CRL URL can typically be found in the certificate's CRL Distribution Points
-// extension. Common CRL URLs for IBM certificates include DigiCert CRL endpoints.
+// HpcrValidateCertificateRevocationList validates CRL metadata/signature and checks
+// that both encryption and attestation certificates are not revoked.
 //
 // Parameters:
-//   - crlURL: URL of the CRL to download (e.g., "http://crl3.digicert.com/...")
+//   - encryptionCert: encryption certificate content
+//   - attestationCert: attestation certificate content
+//   - ibmIntermediateCert: IBM intermediate certificate content
 //
 // Returns:
-//   - PEM-formatted CRL data
-//   - Error if download fails or URL is invalid
-func HpcrDownloadCRL(crlURL string) (string, error) {
-	if gen.CheckIfEmpty(crlURL) {
-		return "", fmt.Errorf(missingParameterErrStatement)
+//   - valid: true if CRL validation succeeded and neither certificate is revoked
+//   - message: Detailed validation message
+//   - error: Error with stage information if validation fails
+func HpcrValidateCertificateRevocationList(encryptionCert, attestationCert, ibmIntermediateCert string) (bool, string, error) {
+	if gen.CheckIfEmpty(encryptionCert, attestationCert, ibmIntermediateCert) {
+		return false, "", fmt.Errorf(missingParameterErrStatement)
 	}
 
-	crlData, err := crt.DownloadCRL(crlURL)
+	valid, msg, err := crt.ValidateCertificateRevocationList(encryptionCert, attestationCert, ibmIntermediateCert)
 	if err != nil {
-		return "", err
+		return false, "", err
 	}
 
-	return crlData, nil
+	return valid, msg, nil
 }
