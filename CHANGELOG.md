@@ -1,3 +1,13 @@
+## [2.19.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.18.0...v2.19.0) (2026-04-15)
+
+### Features
+
+* add support for template ([3ae7ccd](https://github.com/ibm-hyper-protect/contract-go/commit/3ae7ccd68f1899d811c1b4d500cc7959e2eba309))
+
+### Documentation
+
+* update docs with usage of contract templates ([d1e35bd](https://github.com/ibm-hyper-protect/contract-go/commit/d1e35bdbbd38ae2dbca55da75a395de4aa04b9a3))
+
 ## [2.18.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.17.1...v2.18.0) (2026-04-15)
 
 ### Features
