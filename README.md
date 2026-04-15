@@ -324,9 +324,21 @@ func main() {
 ... attestation certificate document ...
 -----END CERTIFICATE-----`
 
-    // Validate CRL signature and ensure both certificate serials are not revoked
+    // Validate CRL signature and ensure encryption certificate serial is not revoked
     valid, msg, err = certificate.HpcrValidateCertificateRevocationList(
         encCert,
+        intermediateCert,
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+    if !valid {
+        log.Fatalf("Encryption CRL validation failed: %s", msg)
+    }
+    fmt.Printf("%s\n", msg)
+
+    // Validate CRL signature and ensure attestation certificate serial is not revoked
+    valid, msg, err = certificate.HpcrValidateCertificateRevocationList(
         attestationCert,
         intermediateCert,
     )
@@ -334,7 +346,7 @@ func main() {
         log.Fatal(err)
     }
     if !valid {
-        log.Fatalf("CRL validation failed: %s", msg)
+        log.Fatalf("Attestation CRL validation failed: %s", msg)
     }
 
     fmt.Printf("%s\n", msg)

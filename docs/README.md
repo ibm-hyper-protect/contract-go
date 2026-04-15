@@ -495,13 +495,66 @@ Validates an encryption certificate document by checking issuer chain, document 
 
 **Signature:**
 ```go
-func HpcrVerifyEncryptionCertificateDocument(
-    encryptionCert string,
-    ibmIntermediateCert string,
-    digicertIntermediateCert string,
-    digicertRootCert string,
-) (bool, string, error)
+func HpcrVerifyEncryptionCertificateDocument(encryptionCert string, ibmIntermediateCert string, digicertIntermediateCert string, digicertRootCert string) (bool, string, error)
 ```
+
+**Parameters:**
+
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `encryptionCert` | `string` | Required | Encryption certificate document content |
+| `ibmIntermediateCert` | `string` | Required | IBM intermediate certificate content |
+| `digicertIntermediateCert` | `string` | Required | DigiCert intermediate certificate content |
+| `digicertRootCert` | `string` | Required | DigiCert root certificate content |
+
+**Returns:**
+
+| Return | Type | Description |
+|--------|------|-------------|
+| Valid | `bool` | `true` if validation succeeds, `false` otherwise |
+| Message | `string` | Validation result details |
+| Error | `error` | Error with stage-specific reason on failure |
+
+**Example:**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/certificate"
+)
+
+func mustRead(path string) string {
+    b, err := os.ReadFile(path)
+    if err != nil {
+        log.Fatal(err)
+    }
+    return string(b)
+}
+
+func main() {
+    valid, msg, err := certificate.HpcrVerifyEncryptionCertificateDocument(
+        mustRead("ibm-hyper-protect-container-runtime-*-encrypt.crt"),
+        mustRead("ibm-hyper-protect-container-runtime-*-intermediate.crt"),
+        mustRead("DigiCertTrustedG4CodeSigningRSA4096SHA3842021CA1.crt.pem"),
+        mustRead("DigiCertTrustedRootG4.crt.pem"),
+    )
+    if err != nil || !valid {
+        log.Fatalf("Encryption certificate document validation failed: %v", err)
+    }
+
+    fmt.Println(msg)
+}
+```
+
+**Common Errors:**
+- `"required parameter is missing"` - One or more certificate inputs are empty
+- `"CA verify failed - ..."` - Root/intermediate trust chain validation failed
+- `"doc signature verify failed - ..."` - Document signature check failed
+- `"date verify failed - ..."` - Document certificate is expired or not yet valid
 
 ---
 
@@ -513,30 +566,135 @@ Validates an attestation certificate document by checking issuer chain, document
 
 **Signature:**
 ```go
-func HpcrVerifyAttestationCertificateDocument(
-    attestationCert string,
-    ibmIntermediateCert string,
-    digicertIntermediateCert string,
-    digicertRootCert string,
-) (bool, string, error)
+func HpcrVerifyAttestationCertificateDocument(attestationCert string, ibmIntermediateCert string, digicertIntermediateCert string, digicertRootCert string) (bool, string, error)
 ```
+
+**Parameters:**
+
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `attestationCert` | `string` | Required | Attestation certificate document content |
+| `ibmIntermediateCert` | `string` | Required | IBM intermediate certificate content |
+| `digicertIntermediateCert` | `string` | Required | DigiCert intermediate certificate content |
+| `digicertRootCert` | `string` | Required | DigiCert root certificate content |
+
+**Returns:**
+
+| Return | Type | Description |
+|--------|------|-------------|
+| Valid | `bool` | `true` if validation succeeds, `false` otherwise |
+| Message | `string` | Validation result details |
+| Error | `error` | Error with stage-specific reason on failure |
+
+**Example:**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/certificate"
+)
+
+func mustRead(path string) string {
+    b, err := os.ReadFile(path)
+    if err != nil {
+        log.Fatal(err)
+    }
+    return string(b)
+}
+
+func main() {
+    valid, msg, err := certificate.HpcrVerifyAttestationCertificateDocument(
+        mustRead("ibm-hyper-protect-container-runtime-*-attestation.crt"),
+        mustRead("ibm-hyper-protect-container-runtime-*-intermediate.crt"),
+        mustRead("DigiCertTrustedG4CodeSigningRSA4096SHA3842021CA1.crt.pem"),
+        mustRead("DigiCertTrustedRootG4.crt.pem"),
+    )
+    if err != nil || !valid {
+        log.Fatalf("Attestation certificate document validation failed: %v", err)
+    }
+
+    fmt.Println(msg)
+}
+```
+
+**Common Errors:**
+- `"required parameter is missing"` - One or more certificate inputs are empty
+- `"CA verify failed - ..."` - Root/intermediate trust chain validation failed
+- `"doc signature verify failed - ..."` - Document signature check failed
+- `"date verify failed - ..."` - Document certificate is expired or not yet valid
 
 ---
 
 ### HpcrValidateCertificateRevocationList
 
-Validates the CRL (metadata + signature) and ensures both encryption and attestation certificate serials are not revoked.
+Validates the CRL (metadata + signature) and ensures the provided certificate serial is not revoked.
 
 **Package:** `github.com/ibm-hyper-protect/contract-go/v2/certificate`
 
 **Signature:**
 ```go
-func HpcrValidateCertificateRevocationList(
-    encryptionCert string,
-    attestationCert string,
-    ibmIntermediateCert string,
-) (bool, string, error)
+func HpcrValidateCertificateRevocationList(certificateDocument string, ibmIntermediateCert string) (bool, string, error)
 ```
+
+**Parameters:**
+
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `certificateDocument` | `string` | Required | Certificate document content (encryption or attestation) |
+| `ibmIntermediateCert` | `string` | Required | IBM intermediate certificate content used for CRL signature verification |
+
+**Returns:**
+
+| Return | Type | Description |
+|--------|------|-------------|
+| Valid | `bool` | `true` if CRL validation succeeds and the certificate is not revoked |
+| Message | `string` | CRL validation and revocation result details |
+| Error | `error` | Error with stage-specific reason on failure |
+
+**Example:**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/certificate"
+)
+
+func mustRead(path string) string {
+    b, err := os.ReadFile(path)
+    if err != nil {
+        log.Fatal(err)
+    }
+    return string(b)
+}
+
+func main() {
+    encryptionCert := mustRead("ibm-hyper-protect-container-runtime-*-encrypt.crt")
+    intermediateCert := mustRead("ibm-hyper-protect-container-runtime-*-intermediate.crt")
+
+    valid, msg, err := certificate.HpcrValidateCertificateRevocationList(
+        encryptionCert,
+        intermediateCert,
+    )
+    if err != nil || !valid {
+        log.Fatalf("CRL validation failed: %v", err)
+    }
+
+    fmt.Println(msg)
+}
+```
+
+**Common Errors:**
+- `"required parameter is missing"` - One or more certificate inputs are empty
+- `"CRL signature verify failed - ..."` - CRL metadata/signature checks failed
+- `"serial revoked failed - ..."` - The certificate is listed as revoked
 
 ---
 
