@@ -157,7 +157,7 @@ func TestHpcrVerifyAttestationCertificateDocument_EmptyParameters(t *testing.T) 
 
 // Testcase to check if HpcrValidateCertificateRevocationList handles empty parameters
 func TestHpcrValidateCertificateRevocationList_EmptyParameters(t *testing.T) {
-	valid, msg, err := HpcrValidateCertificateRevocationList("", "", "")
+	valid, msg, err := HpcrValidateCertificateRevocationList("", "")
 	assert.Error(t, err)
 	assert.False(t, valid)
 	assert.Empty(t, msg)

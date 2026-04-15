@@ -240,23 +240,22 @@ func HpcrVerifyAttestationCertificateDocument(attestationCert, ibmIntermediateCe
 }
 
 // HpcrValidateCertificateRevocationList validates CRL metadata/signature and checks
-// that both encryption and attestation certificates are not revoked.
+// that a certificate document (encryption or attestation) is not revoked.
 //
 // Parameters:
-//   - encryptionCert: encryption certificate content
-//   - attestationCert: attestation certificate content
+//   - certificateDocument: certificate document content (encryption or attestation)
 //   - ibmIntermediateCert: IBM intermediate certificate content
 //
 // Returns:
-//   - valid: true if CRL validation succeeded and neither certificate is revoked
+//   - valid: true if CRL validation succeeded and certificate is not revoked
 //   - message: Detailed validation message
 //   - error: Error with stage information if validation fails
-func HpcrValidateCertificateRevocationList(encryptionCert, attestationCert, ibmIntermediateCert string) (bool, string, error) {
-	if gen.CheckIfEmpty(encryptionCert, attestationCert, ibmIntermediateCert) {
+func HpcrValidateCertificateRevocationList(certificateDocument, ibmIntermediateCert string) (bool, string, error) {
+	if gen.CheckIfEmpty(certificateDocument, ibmIntermediateCert) {
 		return false, "", fmt.Errorf(missingParameterErrStatement)
 	}
 
-	valid, msg, err := crt.ValidateCertificateRevocationList(encryptionCert, attestationCert, ibmIntermediateCert)
+	valid, msg, err := crt.ValidateCertificateRevocationList(certificateDocument, ibmIntermediateCert)
 	if err != nil {
 		return false, "", err
 	}

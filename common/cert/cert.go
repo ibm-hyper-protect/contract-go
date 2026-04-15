@@ -210,23 +210,17 @@ func validateCertificateDocument(targetCert, ibmIntermediateCert, digicertInterm
 }
 
 // ValidateCertificateRevocationList validates CRL metadata/signature and checks
-// revocation status for both encryption and attestation certificates.
-func ValidateCertificateRevocationList(encryptionCert, attestationCert, ibmIntermediateCert string) (bool, string, error) {
-	if gen.CheckIfEmpty(encryptionCert, attestationCert, ibmIntermediateCert) {
+// revocation status for a certificate document (encryption or attestation).
+func ValidateCertificateRevocationList(certificateDocument, ibmIntermediateCert string) (bool, string, error) {
+	if gen.CheckIfEmpty(certificateDocument, ibmIntermediateCert) {
 		return false, "", fmt.Errorf("required parameter is missing")
 	}
 
-	encryptionCertPath, err := gen.CreateTempFile(encryptionCert)
+	certificatePath, err := gen.CreateTempFile(certificateDocument)
 	if err != nil {
-		return false, "", stageError(stageCRLSignatureVerify, fmt.Sprintf("failed to create temp file for encryption certificate - %v", err))
+		return false, "", stageError(stageCRLSignatureVerify, fmt.Sprintf("failed to create temp file for certificate - %v", err))
 	}
-	defer gen.RemoveTempFile(encryptionCertPath)
-
-	attestationCertPath, err := gen.CreateTempFile(attestationCert)
-	if err != nil {
-		return false, "", stageError(stageCRLSignatureVerify, fmt.Sprintf("failed to create temp file for attestation certificate - %v", err))
-	}
-	defer gen.RemoveTempFile(attestationCertPath)
+	defer gen.RemoveTempFile(certificatePath)
 
 	ibmIntermediatePath, err := gen.CreateTempFile(ibmIntermediateCert)
 	if err != nil {
@@ -234,12 +228,9 @@ func ValidateCertificateRevocationList(encryptionCert, attestationCert, ibmInter
 	}
 	defer gen.RemoveTempFile(ibmIntermediatePath)
 
-	crlURL, err := extractCRLDistributionPointFromCertificate(encryptionCertPath)
+	crlURL, err := extractCRLDistributionPointFromCertificate(certificatePath)
 	if err != nil {
-		crlURL, err = extractCRLDistributionPointFromCertificate(attestationCertPath)
-		if err != nil {
-			return false, "", stageError(stageCRLSignatureVerify, fmt.Sprintf("failed to extract CRL URL - %v", err))
-		}
+		return false, "", stageError(stageCRLSignatureVerify, fmt.Sprintf("failed to extract CRL URL - %v", err))
 	}
 
 	crlPath, err := downloadCRLFromURLToTempFile(crlURL)
@@ -257,23 +248,16 @@ func ValidateCertificateRevocationList(encryptionCert, attestationCert, ibmInter
 		return false, "", stageError(stageCRLSignatureVerify, err.Error())
 	}
 
-	encryptionSerial, err := extractCertificateSerial(encryptionCertPath)
+	serial, err := extractCertificateSerial(certificatePath)
 	if err != nil {
-		return false, "", stageError(stageSerialRevoked, fmt.Sprintf("failed to extract encryption certificate serial - %v", err))
-	}
-	if isCertificateRevoked(crlText, encryptionSerial) {
-		return false, "", stageError(stageSerialRevoked, "encryption certificate is listed in CRL")
+		return false, "", stageError(stageSerialRevoked, fmt.Sprintf("failed to extract certificate serial - %v", err))
 	}
 
-	attestationSerial, err := extractCertificateSerial(attestationCertPath)
-	if err != nil {
-		return false, "", stageError(stageSerialRevoked, fmt.Sprintf("failed to extract attestation certificate serial - %v", err))
-	}
-	if isCertificateRevoked(crlText, attestationSerial) {
-		return false, "", stageError(stageSerialRevoked, "attestation certificate is listed in CRL")
+	if isCertificateRevoked(crlText, serial) {
+		return false, "", stageError(stageSerialRevoked, "certificate is listed in CRL")
 	}
 
-	return true, "CRL is valid and both certificates are not revoked", nil
+	return true, "CRL is valid and certificate is not revoked", nil
 }
 
 // verifyCertificateWithCRLFallback verifies a certificate and falls back to manual CRL download/check when needed.

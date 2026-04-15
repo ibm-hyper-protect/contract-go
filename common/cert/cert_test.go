@@ -309,40 +309,57 @@ func TestValidateAttestationCertificateDocument(t *testing.T) {
 
 func TestValidateCertificateRevocationList(t *testing.T) {
 	testCases := []struct {
-		name       string
-		opts       docFixtureOptions
-		errorStage string
+		name            string
+		opts            docFixtureOptions
+		certificateKind string
+		errorStage      string
 	}{
 		{
-			name: "Valid",
+			name: "ValidEncryption",
 		},
 		{
-			name:       "EncryptionRevoked",
-			opts:       docFixtureOptions{revokeEncryption: true},
-			errorStage: stageSerialRevoked,
+			name:            "ValidAttestation",
+			certificateKind: "attestation",
 		},
 		{
-			name:       "AttestationRevoked",
-			opts:       docFixtureOptions{revokeAttestation: true},
-			errorStage: stageSerialRevoked,
+			name:            "EncryptionRevoked",
+			opts:            docFixtureOptions{revokeEncryption: true},
+			errorStage:      stageSerialRevoked,
+			certificateKind: "encryption",
 		},
 		{
-			name:       "InvalidCRLSignature",
-			opts:       docFixtureOptions{invalidCRLSignature: true},
-			errorStage: stageCRLSignatureVerify,
+			name:            "AttestationRevoked",
+			opts:            docFixtureOptions{revokeAttestation: true},
+			errorStage:      stageSerialRevoked,
+			certificateKind: "attestation",
 		},
 		{
-			name:       "MalformedCRL",
-			opts:       docFixtureOptions{malformedCRL: true},
-			errorStage: stageCRLSignatureVerify,
+			name:            "InvalidCRLSignature",
+			opts:            docFixtureOptions{invalidCRLSignature: true},
+			errorStage:      stageCRLSignatureVerify,
+			certificateKind: "encryption",
 		},
 		{
-			name: "MissingCRLDistributionPoint",
+			name:            "MalformedCRL",
+			opts:            docFixtureOptions{malformedCRL: true},
+			errorStage:      stageCRLSignatureVerify,
+			certificateKind: "encryption",
+		},
+		{
+			name: "MissingCRLDistributionPointEncryption",
 			opts: docFixtureOptions{
-				missingEncryptionCRLDP:  true,
+				missingEncryptionCRLDP: true,
+			},
+			errorStage:      stageCRLSignatureVerify,
+			certificateKind: "encryption",
+		},
+		{
+			name: "MissingCRLDistributionPointAttestation",
+			opts: docFixtureOptions{
 				missingAttestationCRLDP: true,
 			},
-			errorStage: stageCRLSignatureVerify,
+			errorStage:      stageCRLSignatureVerify,
+			certificateKind: "attestation",
 		},
 	}
 
@@ -350,10 +367,13 @@ func TestValidateCertificateRevocationList(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			fixture := newDocValidationFixture(t, tc.opts)
+			certificateDocument := fixture.encryptionCert
+			if tc.certificateKind == "attestation" {
+				certificateDocument = fixture.attestationCert
+			}
 
 			valid, msg, err := ValidateCertificateRevocationList(
-				fixture.encryptionCert,
-				fixture.attestationCert,
+				certificateDocument,
 				fixture.ibmIntermediateCert,
 			)
 
