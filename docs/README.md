@@ -880,7 +880,7 @@ Encrypts plain text using the Hyper Protect encryption format.
 
 **Signature:**
 ```go
-func HpcrTextEncrypted(plainText, hyperProtectOs, encryptionCertificate string) (string, string, string, error)
+func HpcrTextEncrypted(plainText, confidentialComputingOs, encryptionCertificate string) (string, string, string, error)
 ```
 
 **Parameters:**
@@ -888,7 +888,7 @@ func HpcrTextEncrypted(plainText, hyperProtectOs, encryptionCertificate string) 
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
 | `plainText` | `string` | Required | Text to encrypt |
-| `hyperProtectOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
+| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
 | `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest CCRT as default if empty) |
 
 **Returns:**
@@ -929,7 +929,7 @@ func main() {
 **Common Errors:**
 - `"required parameter is empty"` - plainText parameter is missing or empty
 - `"failed to generate encrypted string"` - Encryption operation failed
-- `"failed to fetch encryption certificate"` - Invalid hyperProtectOs value or certificate issue
+- `"failed to fetch encryption certificate"` - Invalid confidentialComputingOs value or certificate issue
 - `"openssl not found"` - OpenSSL not installed or not in PATH
 
 ---
@@ -1211,7 +1211,7 @@ Encrypts JSON data using the Hyper Protect encryption format.
 
 **Signature:**
 ```go
-func HpcrJsonEncrypted(plainJson, hyperProtectOs, encryptionCertificate string) (string, string, string, error)
+func HpcrJsonEncrypted(plainJson, confidentialComputingOs, encryptionCertificate string) (string, string, string, error)
 ```
 
 **Parameters:**
@@ -1219,7 +1219,7 @@ func HpcrJsonEncrypted(plainJson, hyperProtectOs, encryptionCertificate string) 
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
 | `plainJson` | `string` | Required | Valid JSON string to encrypt |
-| `hyperProtectOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
+| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
 | `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest CCRT as default if empty) |
 
 **Returns:**
@@ -1262,7 +1262,7 @@ func main() {
 **Common Errors:**
 - `"contract is not a JSON data"` - Invalid JSON format in plainJson parameter
 - `"failed to generate encrypted JSON"` - Encryption operation failed
-- `"failed to fetch encryption certificate"` - Invalid hyperProtectOs value or certificate issue
+- `"failed to fetch encryption certificate"` - Invalid confidentialComputingOs value or certificate issue
 - `"openssl not found"` - OpenSSL not installed or not in PATH
 
 ---
@@ -1339,7 +1339,7 @@ Creates an encrypted Base64 TGZ archive from a directory.
 
 **Signature:**
 ```go
-func HpcrTgzEncrypted(folderPath, hyperProtectOs, encryptionCertificate string) (string, string, string, error)
+func HpcrTgzEncrypted(folderPath, confidentialComputingOs, encryptionCertificate string) (string, string, string, error)
 ```
 
 **Parameters:**
@@ -1347,7 +1347,7 @@ func HpcrTgzEncrypted(folderPath, hyperProtectOs, encryptionCertificate string) 
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
 | `folderPath` | `string` | Required | Path to folder with compose/pods files |
-| `hyperProtectOs` | `string` | Optional | Platform identifier (defaults to `"ccrt"` if empty) |
+| `confidentialComputingOs` | `string` | Optional | Platform identifier (defaults to `"ccrt"` if empty) |
 | `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest CCRT as default if empty) |
 
 **Returns:**
@@ -1384,7 +1384,7 @@ func main() {
 - `"required parameter is empty"` - folderPath parameter is missing or empty
 - `"folder doesn't exists - <path>"` - Specified folder path does not exist
 - `"failed to generate encrypted tgz"` - Encryption operation failed
-- `"failed to fetch encryption certificate"` - Invalid hyperProtectOs value or certificate issue
+- `"failed to fetch encryption certificate"` - Invalid confidentialComputingOs value or certificate issue
 - `"openssl not found"` - OpenSSL not installed or not in PATH
 
 ---
@@ -1470,7 +1470,7 @@ Generates a signed and encrypted contract ready for deployment to Hyper Protect 
 
 **Signature:**
 ```go
-func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate, privateKey, password string) (string, string, string, error)
+func HpcrContractSignedEncrypted(contract, confidentialComputingOs, encryptionCertificate, privateKey, password string) (string, string, string, error)
 ```
 
 **Parameters:**
@@ -1478,7 +1478,7 @@ func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
 | `contract` | `string` | Required | YAML contract with `env` and `workload` sections |
-| `hyperProtectOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
+| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
 | `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest CCRT as default if empty) |
 | `privateKey` | `string` | Required | RSA private key (PEM format) for signing |
 | `password` | `string` | Optional | Password for encrypted private key (empty string if private key is not encrypted) |
@@ -1596,7 +1596,7 @@ MIIEpAIBAAKCAQEA...
 **Common Errors:**
 - `"schema verification failed"` - Contract does not match required schema
 - `"required parameter is empty"` - contract or privateKey parameter is missing
-- `"failed to fetch encryption certificate"` - Invalid hyperProtectOs value or certificate issue
+- `"failed to fetch encryption certificate"` - Invalid confidentialComputingOs value or certificate issue
 - `"Failed to encrypt contract"` - Encryption certificate has expired or is invalid
 - `"failed to generate public key"` - Invalid private key format
 - `"failed to sign and encrypt contract"` - Signing or encryption operation failed
@@ -1616,7 +1616,7 @@ Generates a signed and encrypted contract with time-based expiration using certi
 
 **Signature:**
 ```go
-func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encryptionCertificate, privateKey, password, cacert, caKey, csrDataStr, csrPemData string, expiryDays int) (string, string, string, error)
+func HpcrContractSignedEncryptedContractExpiry(contract, confidentialComputingOs, encryptionCertificate, privateKey, password, cacert, caKey, csrDataStr, csrPemData string, expiryDays int) (string, string, string, error)
 ```
 
 **Parameters:**
@@ -1624,7 +1624,7 @@ func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encrypt
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
 | `contract` | `string` | Required | YAML contract |
-| `hyperProtectOs` | `string` | Optional | Platform identifier (defaults to `"ccrt"` if empty) |
+| `confidentialComputingOs` | `string` | Optional | Platform identifier (defaults to `"ccrt"` if empty) |
 | `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest CCRT as default if empty) |
 | `privateKey` | `string` | Required | RSA private key for signing |
 | `password` | `string` | Optional | Password for encrypted private key (empty string if private key is not encrypted) |
@@ -2178,9 +2178,9 @@ The library supports three IBM Confidential Computing platforms:
 
 ```go
 const (
-    HyperProtectOsCcrt     = "ccrt"         // IBM Confidential Computing Container Runtime (CCRT)
-    HyperProtectOsCcrv = "ccrv"    // IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)
-    HyperProtectConfidentialContainerCcco = "ccco" // IBM Confidential Computing Containers for Red Hat OpenShift Container Platform (CCCO)
+    ConfidentialComputingOsCcrt     = "ccrt"         // IBM Confidential Computing Container Runtime (CCRT)
+    ConfidentialComputingOsCcrv = "ccrv"    // IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)
+    ConfidentialComputingConfidentialContainerCcco = "ccco" // IBM Confidential Computing Containers for Red Hat OpenShift Container Platform (CCCO)
 )
 ```
 
@@ -2192,7 +2192,7 @@ import "github.com/ibm-hyper-protect/contract-go/v2/common/general"
 // Example usage
 contract.HpcrContractSignedEncrypted(
     contractYAML,
-    general.HyperProtectOsCcrt,  // or "ccrt"
+    general.ConfidentialComputingOsCcrt,  // or "ccrt"
     cert,
     privateKey,
 )

@@ -47,9 +47,9 @@ import (
 const (
 	TempFolderNamePrefix = "ccrt-"
 
-	HyperProtectOsCcrt                    = "ccrt"
-	HyperProtectOsCcrv                    = "ccrv"
-	HyperProtectConfidentialContainerCcco = "ccco"
+	ConfidentialComputingOsCcrt                    = "ccrt"
+	ConfidentialComputingOsCcrv                    = "ccrv"
+	ConfidentialComputingConfidentialContainerCcco = "ccco"
 )
 
 type Contract struct {
@@ -543,17 +543,17 @@ func GetDataFromLatestVersion(jsonData, version string) (string, map[string]stri
 //   - Error if version is invalid
 func FetchEncryptionCertificate(version, encryptionCertificate string) (string, error) {
 	if version == "" {
-		version = HyperProtectOsCcrt
+		version = ConfidentialComputingOsCcrt
 	}
 
 	if encryptionCertificate != "" {
 		return encryptionCertificate, nil
 	} else {
-		if version == HyperProtectOsCcrt {
+		if version == ConfidentialComputingOsCcrt {
 			return cert.EncryptionCertificateHpvs, nil
-		} else if version == HyperProtectOsCcrv {
+		} else if version == ConfidentialComputingOsCcrv {
 			return cert.EncryptionCertificateHpcrRhvs, nil
-		} else if version == HyperProtectConfidentialContainerCcco {
+		} else if version == ConfidentialComputingConfidentialContainerCcco {
 			return cert.EncryptionCertificateHpccPeerPods, nil
 		} else {
 			return "", fmt.Errorf("invalid Hyper Protect version")
@@ -729,11 +729,11 @@ func convertToStringkeys(m map[any]any) map[string]any {
 //   - JSON schema string for contract validation
 //   - Error if version is invalid
 func fetchContractSchema(version string) (string, error) {
-	if version == HyperProtectOsCcrt || version == "" {
+	if version == ConfidentialComputingOsCcrt || version == "" {
 		return sch.ContractSchemaHpvs, nil
-	} else if version == HyperProtectOsCcrv {
+	} else if version == ConfidentialComputingOsCcrv {
 		return sch.ContractSchemaHpcrRhvs, nil
-	} else if version == HyperProtectConfidentialContainerCcco {
+	} else if version == ConfidentialComputingConfidentialContainerCcco {
 		return sch.ContractSchemaCoco, nil
 	} else {
 		return "", fmt.Errorf("invalid Hyper Protect version")

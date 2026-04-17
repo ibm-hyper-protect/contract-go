@@ -299,7 +299,7 @@ func TestGetDataFromLatestVersion(t *testing.T) {
 
 // Testcase to check if FetchEncryptionCertificate() fetches encryption certificate for CCRT
 func TestFetchEncryptionCertificate(t *testing.T) {
-	result, err := FetchEncryptionCertificate(HyperProtectOsCcrt, "")
+	result, err := FetchEncryptionCertificate(ConfidentialComputingOsCcrt, "")
 	if err != nil {
 		t.Errorf("failed to fetch encryption certificate - %v", err)
 	}
@@ -309,7 +309,7 @@ func TestFetchEncryptionCertificate(t *testing.T) {
 
 // Testcase to check if FetchEncryptionCertificate() is able to fetch encryption certificate for CCRV
 func TestFetchEncryptionCertificateRhvs(t *testing.T) {
-	_, err := FetchEncryptionCertificate(HyperProtectOsCcrv, "")
+	_, err := FetchEncryptionCertificate(ConfidentialComputingOsCcrv, "")
 	if err != nil {
 		t.Errorf("failed to fetch encryption certificate - %v", err)
 	}
@@ -317,7 +317,7 @@ func TestFetchEncryptionCertificateRhvs(t *testing.T) {
 
 // Testcase to check if FetchEncryptionCertificate() is able to fetch encryption certificate for CCCO
 func TestFetchEncryptionCertificateCcco(t *testing.T) {
-	_, err := FetchEncryptionCertificate(HyperProtectConfidentialContainerCcco, "")
+	_, err := FetchEncryptionCertificate(ConfidentialComputingConfidentialContainerCcco, "")
 	if err != nil {
 		t.Errorf("failed to fetch encryption certificate - %v", err)
 	}
@@ -375,7 +375,7 @@ func TestFetchContractSchema(t *testing.T) {
 
 // Testcase to check if fetchContractSchema() is able to fetch ccrv contract schema
 func TestFetchContractSchemaRhvs(t *testing.T) {
-	result, err := fetchContractSchema(HyperProtectOsCcrv)
+	result, err := fetchContractSchema(ConfidentialComputingOsCcrv)
 	if err != nil {
 		t.Errorf("failed to fetch contract schema - %v", err)
 	}
@@ -587,7 +587,7 @@ func TestKeyValueInjectorInvalidYaml(t *testing.T) {
 	assert.Error(t, err)
 }
 
-// Testcase to check if FetchEncryptionCertificate() handles invalid hyperProtectOs
+// Testcase to check if FetchEncryptionCertificate() handles invalid confidentialComputingOs
 func TestFetchEncryptionCertificateInvalidOs(t *testing.T) {
 	_, err := FetchEncryptionCertificate("invalid-os", "")
 	assert.Error(t, err)

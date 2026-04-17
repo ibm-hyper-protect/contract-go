@@ -61,11 +61,11 @@ type (
 )
 
 var (
-	// reHyperProtectOS tests if this is a hyper protect image
-	reHyperProtectOS = regexp.MustCompile(`^hyper-protect-[\w-]+-s390x-hpcr$`)
+	// reConfidentialComputingOS tests if this is a confidential computing image
+	reConfidentialComputingOS = regexp.MustCompile(`^hyper-protect-[\w-]+-s390x-hpcr$`)
 
-	// reHyperProtectVersion tests if the name references a valid hyper protect version
-	reHyperProtectName = regexp.MustCompile(`^ibm-hyper-protect-container-runtime-(\d+)-(\d+)-s390x-(\d+)$`)
+	// reConfidentialComputingName tests if the name references a valid confidential computing version
+	reConfidentialComputingName = regexp.MustCompile(`^ibm-hyper-protect-container-runtime-(\d+)-(\d+)-s390x-(\d+)$`)
 )
 
 const (
@@ -99,7 +99,7 @@ func HpcrSelectImage(imageJsonData, versionSpec string) (string, string, string,
 	}
 
 	var images []Image
-	var hyperProtectImages []ImageVersion
+	var confidentialComputingImages []ImageVersion
 
 	err := json.Unmarshal([]byte(imageJsonData), &images)
 	if err != nil {
@@ -138,8 +138,8 @@ func HpcrSelectImage(imageJsonData, versionSpec string) (string, string, string,
 		}
 
 		if IsCandidateImage(image) {
-			versionRegex := reHyperProtectName.FindStringSubmatch(image.Name)
-			hyperProtectImages = append(hyperProtectImages, ImageVersion{
+			versionRegex := reConfidentialComputingName.FindStringSubmatch(image.Name)
+			confidentialComputingImages = append(confidentialComputingImages, ImageVersion{
 				ID:       image.ID,
 				Name:     image.Name,
 				Checksum: image.Checksum,
@@ -148,7 +148,7 @@ func HpcrSelectImage(imageJsonData, versionSpec string) (string, string, string,
 		}
 	}
 
-	return PickLatestImage(hyperProtectImages, versionSpec)
+	return PickLatestImage(confidentialComputingImages, versionSpec)
 }
 
 // IsCandidateImage checks if an image is a valid IBM Confidential Computing Container Runtime (CCRT) image.
@@ -162,7 +162,7 @@ func HpcrSelectImage(imageJsonData, versionSpec string) (string, string, string,
 //   - true if the image is a valid IBM Confidential Computing Container Runtime (CCRT) image, false otherwise
 func IsCandidateImage(img Image) bool {
 	return img.Architecture == "s390x" && img.Status == "available" && img.Visibility == "public" &&
-		reHyperProtectOS.MatchString(img.Os) && reHyperProtectName.MatchString(img.Name)
+		reConfidentialComputingOS.MatchString(img.Os) && reConfidentialComputingName.MatchString(img.Name)
 }
 
 // PickLatestImage selects the latest image from a list of IBM Confidential Computing Container
@@ -173,7 +173,7 @@ func IsCandidateImage(img Image) bool {
 // [HpcrSelectImage] but can also be called directly if you have already filtered the image list.
 //
 // Parameters:
-//   - hyperProtectImages: List of ImageVersion structures containing parsed IBM Confidential Computing images
+//   - confidentialComputingImages: List of ImageVersion structures containing parsed IBM Confidential Computing images
 //   - version: Semantic version constraint (e.g., ">=1.1.0", "~1.1.14"). If empty, returns the
 //     absolute latest version.
 //
@@ -183,15 +183,15 @@ func IsCandidateImage(img Image) bool {
 //   - SHA256 checksum of the image
 //   - Semantic version string (e.g., "1.1.15")
 //   - Error if no matching images found or version constraint is invalid
-func PickLatestImage(hyperProtectImages []ImageVersion, version string) (string, string, string, string, error) {
-	if gen.CheckIfEmpty(hyperProtectImages) {
+func PickLatestImage(confidentialComputingImages []ImageVersion, version string) (string, string, string, string, error) {
+	if gen.CheckIfEmpty(confidentialComputingImages) {
 		return "", "", "", "", fmt.Errorf(emptyParameterErrStatement)
 	}
 
 	var matchingVersions []*semver.Version
 	imageMap := make(map[string]ImageVersion)
 
-	for _, image := range hyperProtectImages {
+	for _, image := range confidentialComputingImages {
 		if image.Version == nil {
 			continue
 		}
