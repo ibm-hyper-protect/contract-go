@@ -105,7 +105,7 @@ func HpcrJson(plainJson string) (string, string, string, error) {
 // Parameters:
 //   - plainText: Text to encrypt (must not be empty)
 //   - confidentialComputingOs: Target platform identifier — "ccrt" (IBM Confidential Computing Container Runtime (CCRT)),
-//     "ccrv" (IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)), or "ccco" (BM Confidential Computing Containers for Red Hat OpenShift (CCCO)).
+//     "ccrv" (IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)), or "ccco" (IBM Confidential Computing Containers for Red Hat OpenShift (CCCO)).
 //     Defaults to "ccrt" if empty.
 //   - encryptionCertificate: PEM-formatted IBM encryption certificate. If empty, the library
 //     uses the embedded default certificate for the specified platform.
@@ -165,7 +165,7 @@ func HpcrTextDecrypted(encryptedText, privateKey, password string) (string, stri
 // Parameters:
 //   - plainJson: Valid JSON string to encrypt
 //   - confidentialComputingOs: Target platform identifier — "ccrt" (IBM Confidential Computing Container Runtime (CCRT)),
-//     "ccrv" (BM Confidential Computing Containers for Red Hat Virtualization Solutions (CCRV)), or "ccco" (BM Confidential Computing Containers for Red Hat OpenShift (CCCO)).
+//     "ccrv" (BM Confidential Computing Containers for Red Hat Virtualization Solutions (CCRV)), or "ccco" (IBM Confidential Computing Containers for Red Hat OpenShift (CCCO)).
 //     Defaults to "ccrt" if empty.
 //   - encryptionCertificate: PEM-formatted IBM encryption certificate. If empty, the library
 //     uses the embedded default certificate for the specified platform.
@@ -272,7 +272,7 @@ func HpcrTgzEncrypted(folderPath, confidentialComputingOs, encryptionCertificate
 // Parameters:
 //   - contract: YAML contract string to validate (must contain workload and env sections)
 //   - version: Platform identifier — "ccrt" (IBM Confidential Computing Container Runtime (CCRT)),
-//     "ccrv" (for Red Hat Virtualization Solutions (CCRV)), or "ccco" (for Red Hat OpenShift (CCCO)).
+//     "ccrv" (IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)), or "ccco" (IBM Confidential Computing Container Runtime for Red Hat OpenShift (CCCO)).
 //     Defaults to "ccrt" if empty.
 //
 // Returns:
@@ -298,7 +298,7 @@ func HpcrVerifyContract(contract, version string) error {
 // Parameters:
 //   - contract: YAML contract string with workload and env sections (and optionally attestationPublicKey)
 //   - confidentialComputingOs: Target platform identifier — "ccrt" (IBM Confidential Computing Container Runtime (CCRT)),
-//     "ccrv" (for Red Hat Virtualization Solutions (CCRV)), or "ccco" (for Red Hat OpenShift (CCCO)).
+//     "ccrv" (IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)), or "ccco" (IBM Confidential Computing Container Runtime for Red Hat OpenShift (CCCO)).
 //     Defaults to "ccrt" if empty.
 //   - encryptionCertificate: PEM-formatted IBM encryption certificate. If empty, the library
 //     uses the embedded default certificate for the specified platform.

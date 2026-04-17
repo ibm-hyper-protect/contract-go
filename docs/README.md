@@ -1347,7 +1347,7 @@ func HpcrTgzEncrypted(folderPath, confidentialComputingOs, encryptionCertificate
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
 | `folderPath` | `string` | Required | Path to folder with compose/pods files |
-| `confidentialComputingOs` | `string` | Optional | Platform identifier (defaults to `"ccrt"` if empty) |
+| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
 | `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest CCRT as default if empty) |
 
 **Returns:**
@@ -1624,7 +1624,7 @@ func HpcrContractSignedEncryptedContractExpiry(contract, confidentialComputingOs
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
 | `contract` | `string` | Required | YAML contract |
-| `confidentialComputingOs` | `string` | Optional | Platform identifier (defaults to `"ccrt"` if empty) |
+| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
 | `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest CCRT as default if empty) |
 | `privateKey` | `string` | Required | RSA private key for signing |
 | `password` | `string` | Optional | Password for encrypted private key (empty string if private key is not encrypted) |
