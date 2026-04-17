@@ -72,7 +72,7 @@ const (
 	emptyParameterErrStatement = "required parameter is empty"
 )
 
-// HpcrSelectImage selects the latest IBM Confidential Computing Container Runtime image from
+// HpcrSelectImage selects the latest IBM Confidential Computing Container Runtime (CCRT) image from
 // IBM Cloud images based on semantic version constraints.
 //
 // Use this function to programmatically select the appropriate runtime image when deploying
@@ -151,7 +151,7 @@ func HpcrSelectImage(imageJsonData, versionSpec string) (string, string, string,
 	return PickLatestImage(hyperProtectImages, versionSpec)
 }
 
-// IsCandidateImage checks if an image is a valid IBM Confidential Computing Container Runtime image.
+// IsCandidateImage checks if an image is a valid IBM Confidential Computing Container Runtime (CCRT) image.
 // It validates that the image meets all requirements: s390x architecture, available status,
 // public visibility, and matches the IBM Confidential Computing OS and naming patterns.
 //
@@ -159,7 +159,7 @@ func HpcrSelectImage(imageJsonData, versionSpec string) (string, string, string,
 //   - img: Image structure parsed from IBM Cloud image JSON
 //
 // Returns:
-//   - true if the image is a valid IBM Confidential Computing Container Runtime image, false otherwise
+//   - true if the image is a valid IBM Confidential Computing Container Runtime (CCRT) image, false otherwise
 func IsCandidateImage(img Image) bool {
 	return img.Architecture == "s390x" && img.Status == "available" && img.Visibility == "public" &&
 		reHyperProtectOS.MatchString(img.Os) && reHyperProtectName.MatchString(img.Name)

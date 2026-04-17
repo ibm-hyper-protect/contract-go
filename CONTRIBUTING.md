@@ -200,7 +200,7 @@ We actively welcome your pull requests! However, please follow this process:
 //
 // Parameters:
 //   - contract: YAML contract string
-//   - hyperProtectOs: Target platform (hpvs, hpcr-rhvs, or hpcc-peerpod)
+//   - hyperProtectOs: Target platform (ccrt, ccrv, or ccco)
 //   - encryptionCertificate: Optional encryption certificate (uses default if empty)
 //   - privateKey: RSA private key for signing
 //

@@ -104,9 +104,9 @@ func HpcrJson(plainJson string) (string, string, string, error) {
 //
 // Parameters:
 //   - plainText: Text to encrypt (must not be empty)
-//   - hyperProtectOs: Target platform identifier — "hpvs" (IBM Confidential Computing Container Runtime),
-//     "hpcr-rhvs" (for Red Hat Virtualization Solutions), or "hpcc-peerpod" (for Red Hat OpenShift).
-//     Defaults to "hpvs" if empty.
+//   - hyperProtectOs: Target platform identifier — "ccrt" (IBM Confidential Computing Container Runtime (CCRT)),
+//     "ccrv" (for Red Hat Virtualization Solutions (CCRV)), or "ccco" (for Red Hat OpenShift (CCCO)).
+//     Defaults to "ccrt" if empty.
 //   - encryptionCertificate: PEM-formatted IBM encryption certificate. If empty, the library
 //     uses the embedded default certificate for the specified platform.
 //
@@ -164,9 +164,9 @@ func HpcrTextDecrypted(encryptedText, privateKey, password string) (string, stri
 //
 // Parameters:
 //   - plainJson: Valid JSON string to encrypt
-//   - hyperProtectOs: Target platform identifier — "hpvs" (IBM Confidential Computing Container Runtime),
-//     "hpcr-rhvs" (for Red Hat Virtualization Solutions), or "hpcc-peerpod" (for Red Hat OpenShift).
-//     Defaults to "hpvs" if empty.
+//   - hyperProtectOs: Target platform identifier — "ccrt" (IBM Confidential Computing Container Runtime (CCRT)),
+//     "ccrv" (for Red Hat Virtualization Solutions (CCRV)), or "ccco" (for Red Hat OpenShift (CCCO)).
+//     Defaults to "ccrt" if empty.
 //   - encryptionCertificate: PEM-formatted IBM encryption certificate. If empty, the library
 //     uses the embedded default certificate for the specified platform.
 //
@@ -234,8 +234,8 @@ func HpcrTgz(folderPath string) (string, string, string, error) {
 //
 // Parameters:
 //   - folderPath: Absolute path to folder containing docker-compose.yaml, pods.yaml, or pod descriptor files
-//   - hyperProtectOs: Target platform identifier — "hpvs", "hpcr-rhvs", or "hpcc-peerpod".
-//     Defaults to "hpvs" if empty.
+//   - hyperProtectOs: Target platform identifier — "ccrt", "ccrv", or "ccco".
+//     Defaults to "ccrt" if empty.
 //   - encryptionCertificate: PEM-formatted IBM encryption certificate. If empty, the library
 //     uses the embedded default certificate for the specified platform.
 //
@@ -271,9 +271,9 @@ func HpcrTgzEncrypted(folderPath, hyperProtectOs, encryptionCertificate string) 
 //
 // Parameters:
 //   - contract: YAML contract string to validate (must contain workload and env sections)
-//   - version: Platform identifier — "hpvs" (IBM Confidential Computing Container Runtime),
-//     "hpcr-rhvs" (for Red Hat Virtualization Solutions), or "hpcc-peerpod" (for Red Hat OpenShift).
-//     Defaults to "hpvs" if empty.
+//   - version: Platform identifier — "ccrt" (IBM Confidential Computing Container Runtime (CCRT)),
+//     "ccrv" (for Red Hat Virtualization Solutions (CCRV)), or "ccco" (for Red Hat OpenShift (CCCO)).
+//     Defaults to "ccrt" if empty.
 //
 // Returns:
 //   - nil if the contract is valid
@@ -297,9 +297,9 @@ func HpcrVerifyContract(contract, version string) error {
 //
 // Parameters:
 //   - contract: YAML contract string with workload and env sections (and optionally attestationPublicKey)
-//   - hyperProtectOs: Target platform identifier — "hpvs" (IBM Confidential Computing Container Runtime),
-//     "hpcr-rhvs" (for Red Hat Virtualization Solutions), or "hpcc-peerpod" (for Red Hat OpenShift).
-//     Defaults to "hpvs" if empty.
+//   - hyperProtectOs: Target platform identifier — "ccrt" (IBM Confidential Computing Container Runtime (CCRT)),
+//     "ccrv" (for Red Hat Virtualization Solutions (CCRV)), or "ccco" (for Red Hat OpenShift (CCCO)).
+//     Defaults to "ccrt" if empty.
 //   - encryptionCertificate: PEM-formatted IBM encryption certificate. If empty, the library
 //     uses the embedded default certificate for the specified platform.
 //   - privateKey: RSA private key (PEM format) for signing the contract.
@@ -357,8 +357,8 @@ func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate
 //
 // Parameters:
 //   - contract: YAML contract string with workload and env sections
-//   - hyperProtectOs: Target platform identifier — "hpvs", "hpcr-rhvs", or "hpcc-peerpod".
-//     Defaults to "hpvs" if empty.
+//   - hyperProtectOs: Target platform identifier — "ccrt", "ccrv", or "ccco".
+//     Defaults to "ccrt" if empty.
 //   - encryptionCertificate: PEM-formatted IBM encryption certificate. If empty, the library
 //     uses the embedded default certificate.
 //   - privateKey: RSA private key (PEM format) for signing the contract
@@ -548,7 +548,7 @@ func HpccInitdata(contract string) (string, string, string, error) {
 //
 // Parameters:
 //   - contract: YAML contract string with workload and env sections
-//   - hyperProtectOs: Target platform — "hpvs", "hpcr-rhvs", or "hpcc-peerpod" (default: hpvs)
+//   - hyperProtectOs: Target platform — "ccrt", "ccrv", or "ccco" (default: ccrt)
 //   - encryptionCertificate: PEM-formatted encryption certificate (optional, uses default if empty)
 //   - privateKey: RSA private key (PEM format) for signing
 //   - password: Optional password to unlock the encrypted private key (empty string "" for unencrypted keys)
@@ -618,7 +618,7 @@ func encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey,
 //
 // Parameters:
 //   - stringText: String data to encrypt (text, JSON, or Base64-encoded TGZ)
-//   - hyperProtectOs: Target platform — "hpvs", "hpcr-rhvs", or "hpcc-peerpod" (default: hpvs)
+//   - hyperProtectOs: Target platform — "ccrt", "ccrv", or "ccco" (default: ccrt)
 //   - encryptionCertificate: PEM-formatted encryption certificate (optional, uses default if empty)
 //
 // Returns:

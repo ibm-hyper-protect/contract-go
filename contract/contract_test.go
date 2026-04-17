@@ -60,7 +60,7 @@ const (
 	sampleCeCsrPath          = "../samples/contract-expiry/csr.pem"
 	sampleContractExpiryDays = 365
 
-	sampleHyperProtectOsVersion = "hpvs"
+	sampleHyperProtectOsVersion = "ccrt"
 
 	encryptedTextPath  = "../samples/decrypt/encrypt.txt"
 	encryptedTextSha   = "df5aa6560eea14e80831fd16b7a4771cc12630912c136fcdb3dda9a1b2d3a23f"
@@ -68,8 +68,8 @@ const (
 	decryptedText      = "hello-world"
 	decryptedTextSha   = "afa27b44d43b02a9fea41d13cedc2e4016cfcf87c5dbf990e593669aa8ce286d"
 
-	sampleSignedEncryptedContract              = "../samples/hpcc/signed-encrypt-hpcc.yaml"
-	sampleGzippedInidata                       = "../samples/hpcc/gzipped-initdata"
+	sampleSignedEncryptedContract              = "../samples/ccco/signed-encrypt-ccco.yaml"
+	sampleGzippedInidata                       = "../samples/ccco/gzipped-initdata"
 	sampleSingedEncryptedContractInputChecksum = "1b6ee574d6061896c23fad0711d1a89b8d9b7748506ab089201db1335605daea"
 
 	sampleCertificate = "../encryption/ibm-confidential-computing-container-runtime-26.2.0-encrypt.crt"

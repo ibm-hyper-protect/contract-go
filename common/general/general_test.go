@@ -88,9 +88,9 @@ MIIFHDBOBgkqhkiG9w0BBQ0wQTApBgkqhkiG9w0BBQwwHAQI...
 -----END ENCRYPTED PRIVATE KEY-----`
 
 	// Sample plain contracts for COCO json schema validation
-	sampleCoCoRegoMissingContract                  = "../../samples/hpcc/plain-contract-missing-regovalidator-section.yaml"
-	sampleCoCoCompleteConfidentialContainerSection = "../../samples/hpcc/plain-contract-complete-confidential-container-section.yaml"
-	sampleCoCoMissingPolicy                        = "../../samples/hpcc/plain-contract-missing-policy.yaml"
+	sampleCoCoRegoMissingContract                  = "../../samples/ccco/plain-contract-missing-regovalidator-section.yaml"
+	sampleCoCoCompleteConfidentialContainerSection = "../../samples/ccco/plain-contract-complete-confidential-container-section.yaml"
+	sampleCoCoMissingPolicy                        = "../../samples/ccco/plain-contract-missing-policy.yaml"
 )
 
 // Testcase to check if CheckIfEmpty() is able to identify empty variables
@@ -297,9 +297,9 @@ func TestGetDataFromLatestVersion(t *testing.T) {
 	assert.Equal(t, data[key], certInfo)
 }
 
-// Testcase to check if FetchEncryptionCertificate() fetches encryption certificate for HPVS
+// Testcase to check if FetchEncryptionCertificate() fetches encryption certificate for CCRT
 func TestFetchEncryptionCertificate(t *testing.T) {
-	result, err := FetchEncryptionCertificate(HyperProtectOsHpvs, "")
+	result, err := FetchEncryptionCertificate(HyperProtectOsCcrt, "")
 	if err != nil {
 		t.Errorf("failed to fetch encryption certificate - %v", err)
 	}
@@ -307,17 +307,17 @@ func TestFetchEncryptionCertificate(t *testing.T) {
 	assert.Equal(t, result, cert.EncryptionCertificateHpvs)
 }
 
-// Testcase to check if FetchEncryptionCertificate() is able to fetch encryption certificate for HPCR RHVS
+// Testcase to check if FetchEncryptionCertificate() is able to fetch encryption certificate for CCRV
 func TestFetchEncryptionCertificateRhvs(t *testing.T) {
-	_, err := FetchEncryptionCertificate(HyperProtectOsHpcrRhvs, "")
+	_, err := FetchEncryptionCertificate(HyperProtectOsCcrv, "")
 	if err != nil {
 		t.Errorf("failed to fetch encryption certificate - %v", err)
 	}
 }
 
-// Testcase to check if FetchEncryptionCertificate() is able to fetch encryption certificate for HPCC peerpods
-func TestFetchEncryptionCertificateHpcc(t *testing.T) {
-	_, err := FetchEncryptionCertificate(HyperProtectConfidentialContainerPeerPods, "")
+// Testcase to check if FetchEncryptionCertificate() is able to fetch encryption certificate for CCCO
+func TestFetchEncryptionCertificateCcco(t *testing.T) {
+	_, err := FetchEncryptionCertificate(HyperProtectConfidentialContainerCcco, "")
 	if err != nil {
 		t.Errorf("failed to fetch encryption certificate - %v", err)
 	}
@@ -373,9 +373,9 @@ func TestFetchContractSchema(t *testing.T) {
 	assert.NotEmpty(t, result)
 }
 
-// Testcase to check if fetchContractSchema() is able to fetch hpcr-rhvs contract schema
+// Testcase to check if fetchContractSchema() is able to fetch ccrv contract schema
 func TestFetchContractSchemaRhvs(t *testing.T) {
-	result, err := fetchContractSchema(HyperProtectOsHpcrRhvs)
+	result, err := fetchContractSchema(HyperProtectOsCcrv)
 	if err != nil {
 		t.Errorf("failed to fetch contract schema - %v", err)
 	}
@@ -710,7 +710,7 @@ func TestVerifyContractWithSchemaValidConfidentialContainers(t *testing.T) {
 	}
 
 	// This SHOULD pass because all required fields are present
-	err = VerifyContractWithSchema(contract, "hpcc-peerpod")
+	err = VerifyContractWithSchema(contract, "ccco")
 
 	assert.NoError(t, err, "Validation should pass when all required fields are present")
 }
@@ -723,7 +723,7 @@ func TestVerifyContractWithSchemaMissingRegoValidator(t *testing.T) {
 		t.Errorf("failed to read contract - %v", err)
 	}
 
-	err = VerifyContractWithSchema(contract, "hpcc-peerpod")
+	err = VerifyContractWithSchema(contract, "ccco")
 
 	assert.Error(t, err, "Validation should fail when regoValidator is missing")
 	assert.Contains(t, err.Error(), "regoValidator", "Error message should mention regoValidator")
@@ -737,7 +737,7 @@ func TestVerifyContractWithSchemaMissingRegoValidatorPolicy(t *testing.T) {
 		t.Errorf("failed to read contract - %v", err)
 	}
 
-	err = VerifyContractWithSchema(contract, "hpcc-peerpod")
+	err = VerifyContractWithSchema(contract, "ccco")
 
 	assert.Error(t, err, "Validation should fail when regoValidator.policy is missing")
 	assert.Contains(t, err.Error(), "policy", "Error message should mention policy")
