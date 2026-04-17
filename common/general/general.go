@@ -45,11 +45,11 @@ import (
 )
 
 const (
-	TempFolderNamePrefix = "hpvs-"
+	TempFolderNamePrefix = "ccrt-"
 
-	HyperProtectOsHpvs                        = "hpvs"
-	HyperProtectOsHpcrRhvs                    = "hpcr-rhvs"
-	HyperProtectConfidentialContainerPeerPods = "hpcc-peerpod"
+	ConfidentialComputingOsCcrt                    = "ccrt"
+	ConfidentialComputingOsCcrv                    = "ccrv"
+	ConfidentialComputingConfidentialContainerCcco = "ccco"
 )
 
 type Contract struct {
@@ -189,7 +189,7 @@ func ReadDataFromFile(filePath string) (string, error) {
 }
 
 // CreateTempFile creates a temporary file with the provided data.
-// It trims whitespace from the data, creates a temp file with the prefix "hpvs-",
+// It trims whitespace from the data, creates a temp file with the prefix "ccrt-",
 // writes the data to it, and returns the file path.
 //
 // Parameters:
@@ -217,7 +217,7 @@ func CreateTempFile(data string) (string, error) {
 }
 
 // CreateTempBinaryFile creates a temporary file with binary data.
-// It creates a temp file with the prefix "hpvs-", writes the binary data to it,
+// It creates a temp file with the prefix "ccrt-", writes the binary data to it,
 // and returns the file path. This function preserves binary data integrity.
 //
 // Parameters:
@@ -532,10 +532,10 @@ func GetDataFromLatestVersion(jsonData, version string) (string, map[string]stri
 
 // FetchEncryptionCertificate retrieves the appropriate encryption certificate for a Hyper Protect platform.
 // If a custom certificate is provided, it returns that. Otherwise, it returns the embedded default
-// certificate for the specified platform version (hpvs, hpcr-rhvs, or hpcc-peerpod).
+// certificate for the specified platform version (ccrt, ccrv, or ccco).
 //
 // Parameters:
-//   - version: Hyper Protect platform version ("hpvs", "hpcr-rhvs", "hpcc-peerpod") - defaults to "hpvs" if empty
+//   - version: Hyper Protect platform version ("ccrt", "ccrv", "ccco") - defaults to "ccrt" if empty
 //   - encryptionCertificate: Custom encryption certificate (PEM format) - uses embedded default if empty
 //
 // Returns:
@@ -543,17 +543,17 @@ func GetDataFromLatestVersion(jsonData, version string) (string, map[string]stri
 //   - Error if version is invalid
 func FetchEncryptionCertificate(version, encryptionCertificate string) (string, error) {
 	if version == "" {
-		version = HyperProtectOsHpvs
+		version = ConfidentialComputingOsCcrt
 	}
 
 	if encryptionCertificate != "" {
 		return encryptionCertificate, nil
 	} else {
-		if version == HyperProtectOsHpvs {
+		if version == ConfidentialComputingOsCcrt {
 			return cert.EncryptionCertificateHpvs, nil
-		} else if version == HyperProtectOsHpcrRhvs {
+		} else if version == ConfidentialComputingOsCcrv {
 			return cert.EncryptionCertificateHpcrRhvs, nil
-		} else if version == HyperProtectConfidentialContainerPeerPods {
+		} else if version == ConfidentialComputingConfidentialContainerCcco {
 			return cert.EncryptionCertificateHpccPeerPods, nil
 		} else {
 			return "", fmt.Errorf("invalid Hyper Protect version")
@@ -629,7 +629,7 @@ func GenerateTgzBase64(folderFilesPath []string) (string, error) {
 //
 // Parameters:
 //   - contract: Contract YAML string to validate
-//   - version: Hyper Protect platform version ("hpvs", "hpcr-rhvs", "hpcc-peerpod") - defaults to "hpvs" if empty
+//   - version: Hyper Protect platform version ("ccrt", "ccrv", "ccco") - defaults to "ccrt" if empty
 //
 // Returns:
 //   - nil if contract is valid
@@ -723,17 +723,17 @@ func convertToStringkeys(m map[any]any) map[string]any {
 // It returns the appropriate JSON schema string based on the platform version.
 //
 // Parameters:
-//   - version: Hyper Protect platform version ("hpvs", "hpcr-rhvs", "hpcc-peerpod") - defaults to "hpvs" if empty
+//   - version: Hyper Protect platform version ("ccrt", "ccrv", "ccco") - defaults to "ccrt" if empty
 //
 // Returns:
 //   - JSON schema string for contract validation
 //   - Error if version is invalid
 func fetchContractSchema(version string) (string, error) {
-	if version == HyperProtectOsHpvs || version == "" {
+	if version == ConfidentialComputingOsCcrt || version == "" {
 		return sch.ContractSchemaHpvs, nil
-	} else if version == HyperProtectOsHpcrRhvs {
+	} else if version == ConfidentialComputingOsCcrv {
 		return sch.ContractSchemaHpcrRhvs, nil
-	} else if version == HyperProtectConfidentialContainerPeerPods {
+	} else if version == ConfidentialComputingConfidentialContainerCcco {
 		return sch.ContractSchemaCoco, nil
 	} else {
 		return "", fmt.Errorf("invalid Hyper Protect version")

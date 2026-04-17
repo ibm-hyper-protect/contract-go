@@ -200,7 +200,7 @@ We actively welcome your pull requests! However, please follow this process:
 //
 // Parameters:
 //   - contract: YAML contract string
-//   - hyperProtectOs: Target platform (hpvs, hpcr-rhvs, or hpcc-peerpod)
+//   - confidentialComputingOs: Target platform (ccrt, ccrv, or ccco)
 //   - encryptionCertificate: Optional encryption certificate (uses default if empty)
 //   - privateKey: RSA private key for signing
 //
@@ -209,7 +209,7 @@ We actively welcome your pull requests! However, please follow this process:
 //   - Input SHA256 checksum
 //   - Output SHA256 checksum
 //   - Error if any operation fails
-func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate, privateKey string) (string, string, string, error) {
+func HpcrContractSignedEncrypted(contract, confidentialComputingOs, encryptionCertificate, privateKey string) (string, string, string, error) {
     // Implementation
 }
 ```

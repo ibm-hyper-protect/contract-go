@@ -27,8 +27,8 @@ import (
 // the platform schema to avoid deployment failures.
 //
 // Supported platforms:
-//   - IBM Confidential Computing Container Runtime (HPVS)
-//   - IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (HPCR-RHVS)
+//   - IBM Confidential Computing Container Runtime (CCRT)
+//   - IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)
 //
 // Parameters:
 //   - network_config: Network configuration in YAML format (see samples/network/network_config.yaml for examples)

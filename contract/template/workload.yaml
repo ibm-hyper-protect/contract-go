@@ -8,13 +8,8 @@ play:
   archive: <base64 TGZ of podman play support files>
 compose:
   archive: <base64 TGZ of docker compose support files>
-images:
-  dct:
-    <docker image name (without the tag, an example is docker.io/redbookuser/s390x:)>:
-      notary: "<notary URL>"
-      publicKey: <docker content trust signed public key>
 volumes:
   <volume key>:
     mount: "<data volume mount path>"
-    seed: "<Passphrase of the LUKS encryption>"
+    seed: "seed_value_with_minimum_15_characters"
     filesystem: "ext4"

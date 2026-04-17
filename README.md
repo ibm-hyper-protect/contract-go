@@ -27,9 +27,9 @@ A Go library for generating, signing, and encrypting deployment contracts for IB
 
 The `contract-go` library automates the provisioning of IBM Confidential Computing solutions:
 
-- **IBM Confidential Computing Container Runtime** (formerly known as Hyper Protect Virtual Servers) — Deploy confidential computing workloads on IBM Z and LinuxONE using IBM Secure Execution for Linux
-- **IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions** (formerly known as Hyper Protect Container Runtime for Red Hat Virtualization Solutions) — Purpose-built for hosting critical, centralized services within tightly controlled virtualized environments on IBM Z
-- **IBM Confidential Computing Containers for Red Hat OpenShift Container Platform** (formerly known as IBM Hyper Protect Confidential Container for Red Hat OpenShift Container Platform) — Deploy isolated workloads using IBM Secure Execution for Linux, integrated with Red Hat OpenShift Container Platform
+- **IBM Confidential Computing Container Runtime (CCRT)** (formerly known as Hyper Protect Virtual Servers) — Deploy confidential computing workloads on IBM Z and LinuxONE using IBM Secure Execution for Linux
+- **IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)** (formerly known as Hyper Protect Container Runtime for Red Hat Virtualization Solutions) — Purpose-built for hosting critical, centralized services within tightly controlled virtualized environments on IBM Z
+- **IBM Confidential Computing Containers for Red Hat OpenShift Container Platform (CCCO)** (formerly known as IBM Hyper Protect Confidential Container for Red Hat OpenShift Container Platform) — Deploy isolated workloads using IBM Secure Execution for Linux, integrated with Red Hat OpenShift Container Platform
 
 This library provides cryptographic operations, contract generation, validation, and management capabilities for deploying workloads in secure enclaves on IBM Z and LinuxONE.
 
@@ -213,7 +213,7 @@ MIIEpAIBAAKCAQEA...
     // Generate signed and encrypted contract
     signedContract, inputHash, outputHash, err := contract.HpcrContractSignedEncrypted(
         contractYAML,
-        "hpvs",              // Platform type (hpvs, hpcr-rhvs, or hpcc-peerpod)
+        "ccrt",              // Platform type (ccrt, ccrv, or ccco)
         "",                  // Use default encryption certificate
         privateKey,          // Your RSA private key
         "",                  // Password for encrypted private key (empty if not encrypted)
@@ -258,7 +258,7 @@ MIIEpAIBAAKCAQEA...
     // Generate signed and encrypted contract with password-protected key
     signedContract, inputHash, outputHash, err := contract.HpcrContractSignedEncrypted(
         contractYAML,
-        "hpvs",
+        "ccrt",
         "",
         encryptedPrivateKey,
         password,  // Provide password for encrypted private key
@@ -404,9 +404,9 @@ Comprehensive documentation is available at:
 
 | Platform | Official Name | Version | Support Status |
 |----------|---------------|---------|----------------|
-| HPVS | IBM Confidential Computing Container Runtime | 2.2.x | Supported |
-| HPCR-RHVS | IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions | 1.1.x | Supported |
-| HPCC-PeerPod | IBM Confidential Computing Containers for Red Hat OpenShift Container Platform | 1.1.x | Supported |
+| CCRT | IBM Confidential Computing Container Runtime (CCRT) | 2.2.x | Supported |
+| CCRV | IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV) | 1.1.x | Supported |
+| CCCO | IBM Confidential Computing Containers for Red Hat OpenShift Container Platform (CCCO) | 1.1.x | Supported |
 
 ## Examples
 
@@ -416,7 +416,7 @@ The [`samples/`](samples/) directory contains example configurations:
 - [Contract with Attestation Public Key](samples/attest_pub_key_contract.yaml)
 - [Workload Configuration](samples/workload.yaml)
 - [Encrypted Contract](samples/sign/contract.enc.yaml)
-- [HPCC Signed & Encrypted Contract](samples/hpcc/signed-encrypt-hpcc.yaml)
+- [CCCO Signed & Encrypted Contract](samples/ccco/signed-encrypt-ccco.yaml)
 - [Docker Compose](samples/tgz/docker-compose.yaml)
 - [Certificate Chain Validation](samples/certificate-chain/)
 

@@ -33,9 +33,9 @@ The encryption process:
 
 | Platform Identifier | Official Name |
 |---------------------|---------------|
-| `hpvs` | IBM Confidential Computing Container Runtime |
-| `hpcr-rhvs` | IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions |
-| `hpcc-peerpod` | IBM Confidential Computing Containers for Red Hat OpenShift Container Platform |
+| `ccrt` | IBM Confidential Computing Container Runtime (CCRT) |
+| `ccrv` | IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV) |
+| `ccco` | IBM Confidential Computing Containers for Red Hat OpenShift Container Platform (CCCO) |
 
 ## Table of Contents
 
@@ -91,10 +91,10 @@ The following functions support an optional `password` parameter for encrypted p
 
 ```go
 // Unencrypted private key - pass empty string
-result, err := contract.HpcrContractSignedEncrypted(contractYAML, "hpvs", "", privateKey, "")
+result, err := contract.HpcrContractSignedEncrypted(contractYAML, "ccrt", "", privateKey, "")
 
 // Encrypted private key - provide password
-result, err := contract.HpcrContractSignedEncrypted(contractYAML, "hpvs", "", encryptedKey, "your-password")
+result, err := contract.HpcrContractSignedEncrypted(contractYAML, "ccrt", "", encryptedKey, "your-password")
 ```
 
 **Create encrypted private key:**
@@ -880,7 +880,7 @@ Encrypts plain text using the Hyper Protect encryption format.
 
 **Signature:**
 ```go
-func HpcrTextEncrypted(plainText, hyperProtectOs, encryptionCertificate string) (string, string, string, error)
+func HpcrTextEncrypted(plainText, confidentialComputingOs, encryptionCertificate string) (string, string, string, error)
 ```
 
 **Parameters:**
@@ -888,8 +888,8 @@ func HpcrTextEncrypted(plainText, hyperProtectOs, encryptionCertificate string) 
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
 | `plainText` | `string` | Required | Text to encrypt |
-| `hyperProtectOs` | `string` | Optional | Platform: `"hpvs"`, `"hpcr-rhvs"`, or `"hpcc-peerpod"` (defaults to `"hpvs"` if empty) |
-| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest HPVS as default if empty) |
+| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest CCRT as default if empty) |
 
 **Returns:**
 
@@ -915,7 +915,7 @@ func main() {
     text := "sensitive data"
 
     // Use default certificate
-    encrypted, inputHash, outputHash, err := contract.HpcrTextEncrypted(text, "hpvs", "")
+    encrypted, inputHash, outputHash, err := contract.HpcrTextEncrypted(text, "ccrt", "")
     if err != nil {
         log.Fatal(err)
     }
@@ -929,7 +929,7 @@ func main() {
 **Common Errors:**
 - `"required parameter is empty"` - plainText parameter is missing or empty
 - `"failed to generate encrypted string"` - Encryption operation failed
-- `"failed to fetch encryption certificate"` - Invalid hyperProtectOs value or certificate issue
+- `"failed to fetch encryption certificate"` - Invalid confidentialComputingOs value or certificate issue
 - `"openssl not found"` - OpenSSL not installed or not in PATH
 
 ---
@@ -1211,7 +1211,7 @@ Encrypts JSON data using the Hyper Protect encryption format.
 
 **Signature:**
 ```go
-func HpcrJsonEncrypted(plainJson, hyperProtectOs, encryptionCertificate string) (string, string, string, error)
+func HpcrJsonEncrypted(plainJson, confidentialComputingOs, encryptionCertificate string) (string, string, string, error)
 ```
 
 **Parameters:**
@@ -1219,8 +1219,8 @@ func HpcrJsonEncrypted(plainJson, hyperProtectOs, encryptionCertificate string) 
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
 | `plainJson` | `string` | Required | Valid JSON string to encrypt |
-| `hyperProtectOs` | `string` | Optional | Platform: `"hpvs"`, `"hpcr-rhvs"`, or `"hpcc-peerpod"` (defaults to `"hpvs"` if empty) |
-| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest HPVS as default if empty) |
+| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest CCRT as default if empty) |
 
 **Returns:**
 
@@ -1250,7 +1250,7 @@ func main() {
         }
     }`
 
-    encrypted, _, _, err := contract.HpcrJsonEncrypted(config, "hpvs", "")
+    encrypted, _, _, err := contract.HpcrJsonEncrypted(config, "ccrt", "")
     if err != nil {
         log.Fatal(err)
     }
@@ -1262,7 +1262,7 @@ func main() {
 **Common Errors:**
 - `"contract is not a JSON data"` - Invalid JSON format in plainJson parameter
 - `"failed to generate encrypted JSON"` - Encryption operation failed
-- `"failed to fetch encryption certificate"` - Invalid hyperProtectOs value or certificate issue
+- `"failed to fetch encryption certificate"` - Invalid confidentialComputingOs value or certificate issue
 - `"openssl not found"` - OpenSSL not installed or not in PATH
 
 ---
@@ -1339,7 +1339,7 @@ Creates an encrypted Base64 TGZ archive from a directory.
 
 **Signature:**
 ```go
-func HpcrTgzEncrypted(folderPath, hyperProtectOs, encryptionCertificate string) (string, string, string, error)
+func HpcrTgzEncrypted(folderPath, confidentialComputingOs, encryptionCertificate string) (string, string, string, error)
 ```
 
 **Parameters:**
@@ -1347,8 +1347,8 @@ func HpcrTgzEncrypted(folderPath, hyperProtectOs, encryptionCertificate string) 
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
 | `folderPath` | `string` | Required | Path to folder with compose/pods files |
-| `hyperProtectOs` | `string` | Optional | Platform identifier (defaults to `"hpvs"` if empty) |
-| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest HPVS as default if empty) |
+| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest CCRT as default if empty) |
 
 **Returns:**
 
@@ -1371,7 +1371,7 @@ import (
 )
 
 func main() {
-    encrypted, _, _, err := contract.HpcrTgzEncrypted("./compose", "hpvs", "")
+    encrypted, _, _, err := contract.HpcrTgzEncrypted("./compose", "ccrt", "")
     if err != nil {
         log.Fatal(err)
     }
@@ -1384,7 +1384,7 @@ func main() {
 - `"required parameter is empty"` - folderPath parameter is missing or empty
 - `"folder doesn't exists - <path>"` - Specified folder path does not exist
 - `"failed to generate encrypted tgz"` - Encryption operation failed
-- `"failed to fetch encryption certificate"` - Invalid hyperProtectOs value or certificate issue
+- `"failed to fetch encryption certificate"` - Invalid confidentialComputingOs value or certificate issue
 - `"openssl not found"` - OpenSSL not installed or not in PATH
 
 ---
@@ -1405,7 +1405,7 @@ func HpcrVerifyContract(contract, version string) error
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
 | `contract` | `string` | Required | YAML contract to validate |
-| `version` | `string` | Optional | Platform: `"hpvs"`, `"hpcr-rhvs"`, or `"hpcc-peerpod"` (defaults to `"hpvs"` if empty) |
+| `version` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
 
 **Returns:**
 
@@ -1438,8 +1438,8 @@ workload: |
     archive: ZGF0YQ==
 `
 
-    // Validate for HPVS
-    err := contract.HpcrVerifyContract(contractYAML, "hpvs")
+    // Validate for CCRT
+    err := contract.HpcrVerifyContract(contractYAML, "ccrt")
     if err != nil {
         log.Fatalf("Contract validation failed: %v", err)
     }
@@ -1470,7 +1470,7 @@ Generates a signed and encrypted contract ready for deployment to Hyper Protect 
 
 **Signature:**
 ```go
-func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate, privateKey, password string) (string, string, string, error)
+func HpcrContractSignedEncrypted(contract, confidentialComputingOs, encryptionCertificate, privateKey, password string) (string, string, string, error)
 ```
 
 **Parameters:**
@@ -1478,8 +1478,8 @@ func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
 | `contract` | `string` | Required | YAML contract with `env` and `workload` sections |
-| `hyperProtectOs` | `string` | Optional | Platform: `"hpvs"`, `"hpcr-rhvs"`, or `"hpcc-peerpod"` (defaults to `"hpvs"` if empty) |
-| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest HPVS as default if empty) |
+| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest CCRT as default if empty) |
 | `privateKey` | `string` | Required | RSA private key (PEM format) for signing |
 | `password` | `string` | Optional | Password for encrypted private key (empty string if private key is not encrypted) |
 
@@ -1523,7 +1523,7 @@ MIIEpAIBAAKCAQEA...
 
     signedContract, inputHash, outputHash, err := contract.HpcrContractSignedEncrypted(
         contractYAML,
-        "hpvs",
+        "ccrt",
         "",         // Use default certificate
         privateKey,
         "",         // No password for unencrypted key
@@ -1570,7 +1570,7 @@ MIIEpAIBAAKCAQEA...
 
     signedContract, inputHash, outputHash, err := contract.HpcrContractSignedEncrypted(
         contractYAML,
-        "hpvs",
+        "ccrt",
         "",         // Use default certificate
         privateKey,
     )
@@ -1596,7 +1596,7 @@ MIIEpAIBAAKCAQEA...
 **Common Errors:**
 - `"schema verification failed"` - Contract does not match required schema
 - `"required parameter is empty"` - contract or privateKey parameter is missing
-- `"failed to fetch encryption certificate"` - Invalid hyperProtectOs value or certificate issue
+- `"failed to fetch encryption certificate"` - Invalid confidentialComputingOs value or certificate issue
 - `"Failed to encrypt contract"` - Encryption certificate has expired or is invalid
 - `"failed to generate public key"` - Invalid private key format
 - `"failed to sign and encrypt contract"` - Signing or encryption operation failed
@@ -1616,7 +1616,7 @@ Generates a signed and encrypted contract with time-based expiration using certi
 
 **Signature:**
 ```go
-func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encryptionCertificate, privateKey, password, cacert, caKey, csrDataStr, csrPemData string, expiryDays int) (string, string, string, error)
+func HpcrContractSignedEncryptedContractExpiry(contract, confidentialComputingOs, encryptionCertificate, privateKey, password, cacert, caKey, csrDataStr, csrPemData string, expiryDays int) (string, string, string, error)
 ```
 
 **Parameters:**
@@ -1624,8 +1624,8 @@ func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encrypt
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
 | `contract` | `string` | Required | YAML contract |
-| `hyperProtectOs` | `string` | Optional | Platform identifier (defaults to `"hpvs"` if empty) |
-| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest HPVS as default if empty) |
+| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest CCRT as default if empty) |
 | `privateKey` | `string` | Required | RSA private key for signing |
 | `password` | `string` | Optional | Password for encrypted private key (empty string if private key is not encrypted) |
 | `cacert` | `string` | Required | CA certificate (PEM format) |
@@ -1695,7 +1695,7 @@ func main() {
     // Generate contract that expires in 90 days
     signedContract, _, _, err := contract.HpcrContractSignedEncryptedContractExpiry(
         contractYAML,
-        "hpvs",
+        "ccrt",
         "",                // Default encryption cert
         privateKey,
         "",                // No password for unencrypted key
@@ -1740,7 +1740,7 @@ func main() {
 
     signedContract, _, _, err := contract.HpcrContractSignedEncryptedContractExpiry(
         contractYAML,
-        "hpvs",
+        "ccrt",
         "",
         privateKey,
         caCert,
@@ -1889,9 +1889,9 @@ func main() {
 ```
 
 **Supported Platforms:**
-- IBM Confidential Computing Container Runtime (HPVS)
-- IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (HPCR-RHVS)
-- IBM Confidential Computing Containers for Red Hat OpenShift Container Platform (HPCC-PeerPod)
+- IBM Confidential Computing Container Runtime (CCRT)
+- IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)
+- IBM Confidential Computing Containers for Red Hat OpenShift Container Platform (CCCO)
 
 **Common Errors:**
 - `"Invalid schema file"` - Invalid YAML format in network configuration
@@ -1948,7 +1948,7 @@ workload: |
 `
 
     // 4. Validate contract
-    err = contract.HpcrVerifyContract(contractYAML, "hpvs")
+    err = contract.HpcrVerifyContract(contractYAML, "ccrt")
     if err != nil {
         log.Fatalf("Contract validation failed: %v", err)
     }
@@ -1960,7 +1960,7 @@ workload: |
 
     signedContract, inputHash, outputHash, err := contract.HpcrContractSignedEncrypted(
         contractYAML,
-        "hpvs",
+        "ccrt",
         cert,
         privateKey,
     )
@@ -2052,7 +2052,7 @@ func main() {
     // Generate contract with 90-day expiry
     signedContract, inputHash, outputHash, err := contract.HpcrContractSignedEncryptedContractExpiry(
         contractYAML,
-        "hpvs",
+        "ccrt",
         "",           // Use default encryption cert
         privateKey,
         caCert,
@@ -2086,7 +2086,7 @@ import (
 func main() {
     // Encrypt plain text
     text := "Hello, Hyper Protect!"
-    encText, _, _, err := contract.HpcrTextEncrypted(text, "hpvs", "")
+    encText, _, _, err := contract.HpcrTextEncrypted(text, "ccrt", "")
     if err != nil {
         log.Fatal(err)
     }
@@ -2094,14 +2094,14 @@ func main() {
 
     // Encrypt JSON
     jsonData := `{"key": "value", "number": 42}`
-    encJSON, _, _, err := contract.HpcrJsonEncrypted(jsonData, "hpvs", "")
+    encJSON, _, _, err := contract.HpcrJsonEncrypted(jsonData, "ccrt", "")
     if err != nil {
         log.Fatal(err)
     }
     fmt.Printf("Encrypted JSON: %s\n", encJSON)
 
     // Encrypt TGZ archive
-    encTGZ, _, _, err := contract.HpcrTgzEncrypted("/path/to/compose/folder", "hpvs", "")
+    encTGZ, _, _, err := contract.HpcrTgzEncrypted("/path/to/compose/folder", "ccrt", "")
     if err != nil {
         log.Fatal(err)
     }
@@ -2149,7 +2149,7 @@ if err != nil {
 3. **Validate Input Before Processing:**
 ```go
 // Validate contract schema before encryption
-err := contract.HpcrVerifyContract(contractYAML, "hpvs")
+err := contract.HpcrVerifyContract(contractYAML, "ccrt")
 if err != nil {
     return fmt.Errorf("invalid contract: %w", err)
 }
@@ -2160,7 +2160,7 @@ signedContract, _, _, err := contract.HpcrContractSignedEncrypted(...)
 
 4. **Use Checksums for Verification:**
 ```go
-encrypted, inputHash, outputHash, err := contract.HpcrTextEncrypted(data, "hpvs", "")
+encrypted, inputHash, outputHash, err := contract.HpcrTextEncrypted(data, "ccrt", "")
 if err != nil {
     return err
 }
@@ -2178,9 +2178,9 @@ The library supports three IBM Confidential Computing platforms:
 
 ```go
 const (
-    HyperProtectOsHpvs     = "hpvs"         // IBM Confidential Computing Container Runtime
-    HyperProtectOsHpcrRhvs = "hpcr-rhvs"    // IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions
-    HyperProtectConfidentialContainerPeerPods = "hpcc-peerpod" // IBM Confidential Computing Containers for Red Hat OpenShift Container Platform
+    ConfidentialComputingOsCcrt     = "ccrt"         // IBM Confidential Computing Container Runtime (CCRT)
+    ConfidentialComputingOsCcrv = "ccrv"    // IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)
+    ConfidentialComputingConfidentialContainerCcco = "ccco" // IBM Confidential Computing Containers for Red Hat OpenShift Container Platform (CCCO)
 )
 ```
 
@@ -2192,7 +2192,7 @@ import "github.com/ibm-hyper-protect/contract-go/v2/common/general"
 // Example usage
 contract.HpcrContractSignedEncrypted(
     contractYAML,
-    general.HyperProtectOsHpvs,  // or "hpvs"
+    general.ConfidentialComputingOsCcrt,  // or "ccrt"
     cert,
     privateKey,
 )
