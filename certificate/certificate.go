@@ -77,7 +77,7 @@ func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version str
 //
 // Use this function to download the IBM encryption certificates required for encrypting
 // contract sections. Each version of the runtime may have a different encryption certificate.
-// The certificates are used to encrypt the random AES password in the "hyper-protect-basic"
+// The certificates are used to encrypt the random AES password in the "contract-basic"
 // encryption format. You can then extract individual certificates using [HpcrGetEncryptionCertificateFromJson].
 //
 // Parameters:

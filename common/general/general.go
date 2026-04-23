@@ -50,6 +50,7 @@ const (
 	ConfidentialComputingOsCcrt                    = "ccrt"
 	ConfidentialComputingOsCcrv                    = "ccrv"
 	ConfidentialComputingConfidentialContainerCcco = "ccco"
+	HyperProtectOsHpvs                             = "hpvs"
 )
 
 type Contract struct {
@@ -451,11 +452,11 @@ func CertificateDownloader(url string) (string, error) {
 }
 
 // GetEncryptPassWorkload extracts the encrypted password and workload from encrypted data.
-// It splits the encrypted data string in "hyper-protect-basic.<password>.<workload>" format
+// It splits the encrypted data string in "contract-basic.<password>.<workload>" format
 // and returns the password and workload components.
 //
 // Parameters:
-//   - encryptedData: Encrypted data in "hyper-protect-basic.<password>.<workload>" format
+//   - encryptedData: Encrypted data in "contract-basic.<password>.<workload>" format
 //
 // Returns:
 //   - Encrypted password (Base64-encoded)
@@ -555,6 +556,8 @@ func FetchEncryptionCertificate(version, encryptionCertificate string) (string, 
 			return cert.EncryptionCertificateHpcrRhvs, nil
 		} else if version == ConfidentialComputingConfidentialContainerCcco {
 			return cert.EncryptionCertificateHpccPeerPods, nil
+		} else if version == HyperProtectOsHpvs {
+			return cert.EncryptionCertificateHpvs, nil
 		} else {
 			return "", fmt.Errorf("invalid Hyper Protect version")
 		}
@@ -729,7 +732,7 @@ func convertToStringkeys(m map[any]any) map[string]any {
 //   - JSON schema string for contract validation
 //   - Error if version is invalid
 func fetchContractSchema(version string) (string, error) {
-	if version == ConfidentialComputingOsCcrt || version == "" {
+	if version == ConfidentialComputingOsCcrt || version == HyperProtectOsHpvs || version == "" {
 		return sch.ContractSchemaHpvs, nil
 	} else if version == ConfidentialComputingOsCcrv {
 		return sch.ContractSchemaHpcrRhvs, nil

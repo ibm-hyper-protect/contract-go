@@ -28,6 +28,7 @@ import (
 
 const (
 	hpcrEncryptPrefix = "hyper-protect-basic."
+	ccrtEncryptPrefix = "contract-basic."
 
 	sampleStringData     = "sashwatk"
 	sampleBase64Data     = "c2FzaHdhdGs="
@@ -180,7 +181,7 @@ func TestHpcrTextEncrypted(t *testing.T) {
 		t.Errorf("failed to generate HPCR encrypted text - %v", err)
 	}
 
-	assert.Contains(t, result, hpcrEncryptPrefix)
+	assert.Contains(t, result, ccrtEncryptPrefix)
 	assert.Equal(t, inputSha256, sampleInputChecksum)
 }
 
@@ -191,7 +192,7 @@ func TestHpcrJsonEncrypted(t *testing.T) {
 		t.Errorf("failed to generate HPCR encrypted JSON - %v", err)
 	}
 
-	assert.Contains(t, result, hpcrEncryptPrefix)
+	assert.Contains(t, result, ccrtEncryptPrefix)
 	assert.Equal(t, inputSha256, sampleInputChecksumJson)
 }
 
@@ -213,7 +214,7 @@ func TestHpcrTgzEncrypted(t *testing.T) {
 		t.Errorf("failed to generated HPCR encrypted TGZ - %v", err)
 	}
 
-	assert.Contains(t, result, hpcrEncryptPrefix)
+	assert.Contains(t, result, ccrtEncryptPrefix)
 	assert.Equal(t, inputSha256, sampleComposeFolderChecksum)
 }
 
@@ -317,10 +318,10 @@ func TestEncryptWrapper(t *testing.T) {
 		t.Errorf("failed to sign and encrypt contract - %v", err)
 	}
 
-	assert.NotContains(t, result, "attestationPublicKey: hyper-protect-basic.")
-	assert.Contains(t, result, "env: hyper-protect-basic.")
+	assert.NotContains(t, result, "attestationPublicKey: contract-basic.")
+	assert.Contains(t, result, "env: contract-basic.")
 	assert.Contains(t, result, "envWorkloadSignature:")
-	assert.Contains(t, result, "workload: hyper-protect-basic.")
+	assert.Contains(t, result, "workload: contract-basic.")
 	assert.NotEmpty(t, result)
 }
 
@@ -336,10 +337,10 @@ func TestEncryptWrapperAttestPubKey(t *testing.T) {
 		t.Errorf("failed to sign and encrypt contract - %v", err)
 	}
 
-	assert.Contains(t, result, "attestationPublicKey: hyper-protect-basic.")
-	assert.Contains(t, result, "env: hyper-protect-basic.")
+	assert.Contains(t, result, "attestationPublicKey: contract-basic.")
+	assert.Contains(t, result, "env: contract-basic.")
 	assert.Contains(t, result, "envWorkloadSignature:")
-	assert.Contains(t, result, "workload: hyper-protect-basic.")
+	assert.Contains(t, result, "workload: contract-basic.")
 	assert.NotEmpty(t, result)
 }
 
@@ -350,7 +351,7 @@ func TestEncrypter(t *testing.T) {
 		t.Errorf("failed to encrypt contract - %v", err)
 	}
 
-	assert.Contains(t, result, hpcrEncryptPrefix)
+	assert.Contains(t, result, ccrtEncryptPrefix)
 }
 
 // Testcase to check if HpcrTextDecrypted() is able to decrypt and generate SHA256 for encrypted string
@@ -534,7 +535,7 @@ func TestHpcrTextEncryptedSuccess(t *testing.T) {
 	assert.NotEmpty(t, encrypted)
 	assert.NotEmpty(t, plainHash)
 	assert.NotEmpty(t, encryptedHash)
-	assert.Contains(t, encrypted, "hyper-protect-basic")
+	assert.Contains(t, encrypted, "contract-basic")
 }
 
 // Testcase to check if HpcrContractSignedEncrypted() handles invalid YAML
@@ -568,7 +569,7 @@ func TestHpcrJsonEncryptedSuccess(t *testing.T) {
 	assert.NotEmpty(t, encrypted)
 	assert.NotEmpty(t, plainHash)
 	assert.NotEmpty(t, encryptedHash)
-	assert.Contains(t, encrypted, "hyper-protect-basic")
+	assert.Contains(t, encrypted, "contract-basic")
 }
 
 // Testcase to check if HpcrText() works with valid text
@@ -755,7 +756,7 @@ func TestHpcrTgzEncryptedSuccess(t *testing.T) {
 	assert.NotEmpty(t, result)
 	assert.NotEmpty(t, inputHash)
 	assert.NotEmpty(t, outputHash)
-	assert.Contains(t, result, "hyper-protect-basic")
+	assert.Contains(t, result, "contract-basic")
 }
 
 // Testcase to check if HpcrTextEncrypted() handles invalid certificate

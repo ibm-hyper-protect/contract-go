@@ -21,13 +21,13 @@ A contract has four valid high-level sections:
 
 ### Encryption Format
 
-Encrypted sections use the format: `hyper-protect-basic.<encrypted-password>.<encrypted-data>`
+Encrypted sections use the format: `contract-basic.<encrypted-password>.<encrypted-data>`
 
 The encryption process:
 1. Generate a random 32-byte AES password
 2. Encrypt the password with the IBM encryption certificate (RSA)
 3. Encrypt the section data with the AES password (AES-256-CBC)
-4. Combine as `hyper-protect-basic.<base64-encrypted-password>.<base64-encrypted-data>`
+4. Combine as `contract-basic.<base64-encrypted-password>.<base64-encrypted-data>`
 
 ### Supported Platforms
 
@@ -127,7 +127,7 @@ func HpcrGetAttestationRecords(data, privateKey, password string) (string, error
 
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
-| `data` | `string` | Required | Encrypted attestation data in the format `hyper-protect-basic.<password>.<data>` |
+| `data` | `string` | Required | Encrypted attestation data in the format `contract-basic.<password>.<data>` |
 | `privateKey` | `string` | Required | RSA private key (PEM format) used to decrypt the password |
 | `password` | `string` | Optional | Password for encrypted private key (empty string if private key is not encrypted) |
 
@@ -151,7 +151,7 @@ import (
 
 func main() {
     // Encrypted attestation data received from HPVS
-    encryptedData := "hyper-protect-basic.aBcD123..."
+    encryptedData := "contract-basic.aBcD123..."
 
     // Your RSA private key
     privateKey := `-----BEGIN RSA PRIVATE KEY-----
@@ -236,7 +236,7 @@ import (
 
 func main() {
     // First, decrypt attestation records
-    encryptedData := "hyper-protect-basic.aBcD123..." // From HPVS
+    encryptedData := "contract-basic.aBcD123..." // From HPVS
     privateKey := `-----BEGIN RSA PRIVATE KEY-----
 MIIEpAIBAAKCAQEA...
 -----END RSA PRIVATE KEY-----`
@@ -895,7 +895,7 @@ func HpcrTextEncrypted(plainText, confidentialComputingOs, encryptionCertificate
 
 | Return | Type | Description |
 |--------|------|-------------|
-| Encrypted Data | `string` | Format: `hyper-protect-basic.<password>.<data>` |
+| Encrypted Data | `string` | Format: `contract-basic.<password>.<data>` |
 | Input Checksum | `string` | SHA256 of original text |
 | Output Checksum | `string` | SHA256 of encrypted output |
 | Error | `error` | Error if encryption fails |
@@ -975,8 +975,8 @@ import (
 
 func main() {
     contractYAML := `
-env: hyper-protect-basic.fdsiufhaogdhup.idsvoijsndojvpnsv
-workload: hyper-protect-basic.jriewcbdpoiew.diewuphfwhfep
+env: contract-basic.fdsiufhaogdhup.idsvoijsndojvpnsv
+workload: contract-basic.jriewcbdpoiew.diewuphfwhfep
 `
     privateKey := `-----BEGIN RSA PRIVATE KEY-----
 MIIEpAIBAAKCAQEA...
@@ -1154,7 +1154,7 @@ func HpcrTextDecrypted(encryptedText, privateKey, password string) (string, stri
 
 | Return | Type | Description |
 |--------|------|-------------|
-| decrypted Data | `string` | Decrypt text in format `hyper-protect-basic.<password>.<data>` |
+| decrypted Data | `string` | Decrypt text in format `contract-basic.<password>.<data>` |
 | Input Checksum | `string` | SHA256 of encrypted text |
 | Output Checksum | `string` | SHA256 of decrypted output |
 | Error | `error` | Error if decryption fails |
@@ -1226,7 +1226,7 @@ func HpcrJsonEncrypted(plainJson, confidentialComputingOs, encryptionCertificate
 
 | Return | Type | Description |
 |--------|------|-------------|
-| Encrypted JSON | `string` | Format: `hyper-protect-basic.<password>.<data>` |
+| Encrypted JSON | `string` | Format: `contract-basic.<password>.<data>` |
 | Input Checksum | `string` | SHA256 of original JSON |
 | Output Checksum | `string` | SHA256 of encrypted output |
 | Error | `error` | Error if not valid JSON or encryption fails |
@@ -1354,7 +1354,7 @@ func HpcrTgzEncrypted(folderPath, confidentialComputingOs, encryptionCertificate
 
 | Return | Type | Description |
 |--------|------|-------------|
-| Encrypted TGZ | `string` | Format: `hyper-protect-basic.<password>.<data>` |
+| Encrypted TGZ | `string` | Format: `contract-basic.<password>.<data>` |
 | Input Checksum | `string` | SHA256 of folder path |
 | Output Checksum | `string` | SHA256 of encrypted output |
 | Error | `error` | Error if folder invalid or encryption fails |
