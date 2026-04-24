@@ -118,10 +118,10 @@ func DecryptWorkload(password, encryptedWorkload string) (string, error) {
 	return result, nil
 }
 
-// DecryptText decrypts encrypted data in hyper-protect-basic.<encrypted-password>.<encrypted-data>
+// DecryptText decrypts encrypted data in contract-basic.<encrypted-password>.<encrypted-data>
 //
 // Parameters:
-//   - data: hyper-protect-basic.<encrypted-password>.<encrypted-data>
+//   - data: contract-basic.<encrypted-password>.<encrypted-data>
 //   - privateKey: Private key to decrypt the data
 //   - password: Optional password to unlock the private key (empty string "" for unencrypted keys)
 //
