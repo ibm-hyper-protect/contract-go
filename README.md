@@ -85,7 +85,7 @@ Learn more:
 
 - **Network Validation**
   - Validate network-config schemas for on-premise deployments
-  - Support HPVS, HPCR RHVS, and HPCC Peer Pod configurations
+  - Support CCRT, CCRV, and CCCO configurations
 
 ## Installation
 
