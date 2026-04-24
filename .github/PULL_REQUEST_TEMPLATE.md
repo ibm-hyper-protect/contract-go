@@ -21,9 +21,10 @@ Fixes #
 
 <!-- Which IBM Confidential Computing platform(s) does this affect? -->
 
-- [ ] HPVS (IBM Confidential Computing Container Runtime)
-- [ ] HPCR-RHVS (IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions)
-- [ ] HPCC-PeerPod (IBM Confidential Computing Containers for Red Hat OpenShift Container Platform)
+- [ ] HPVS (IBM Hyper Protect Virtual Servers for VPC)
+- [ ] CCRT (IBM Confidential Computing Container Runtime)
+- [ ] CCRV (IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions)
+- [ ] CCCO (IBM Confidential Computing Containers for Red Hat OpenShift Container Platform)
 - [ ] All platforms
 - [ ] Not platform-specific
 
