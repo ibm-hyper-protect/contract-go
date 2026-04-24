@@ -150,8 +150,8 @@ import (
 )
 
 func main() {
-    // Encrypted attestation data received from HPVS
-    encryptedData := "contract-basic.aBcD123..."
+    // Encrypted attestation data received from CCRT
+    encryptedData := "hyper-protect-basic.aBcD123..."
 
     // Your RSA private key
     privateKey := `-----BEGIN RSA PRIVATE KEY-----
@@ -236,7 +236,7 @@ import (
 
 func main() {
     // First, decrypt attestation records
-    encryptedData := "contract-basic.aBcD123..." // From HPVS
+    encryptedData := "hyper-protect-basic.aBcD123..." // From CCRT
     privateKey := `-----BEGIN RSA PRIVATE KEY-----
 MIIEpAIBAAKCAQEA...
 -----END RSA PRIVATE KEY-----`
@@ -1838,7 +1838,7 @@ func main() {
 
 ### HpcrVerifyNetworkConfig
 
-Validates network configuration schema for on-premise deployments of HPVS and HPCR RHVS.
+Validates network configuration schema for on-premise deployments of CCRT and CCRV.
 
 **Package:** `github.com/ibm-hyper-protect/contract-go/v2/network`
 

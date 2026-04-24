@@ -1,3 +1,15 @@
+## [2.20.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.19.0...v2.20.0) (2026-04-24)
+
+### Features
+
+* update names to new product names ([5a6973e](https://github.com/ibm-hyper-protect/contract-go/commit/5a6973e5c1ef14b30c6a3fc341a3a696410a5e73))
+
+### Documentation
+
+* fix review comments ([e9258ff](https://github.com/ibm-hyper-protect/contract-go/commit/e9258ff948a63dad4aec1a3a8b99fc876bdbb0b9))
+* fixing review comments ([b343d69](https://github.com/ibm-hyper-protect/contract-go/commit/b343d69565bcec4e18a16a996e111f097b0b96a5))
+* update new naming appreviations ([6fb79c8](https://github.com/ibm-hyper-protect/contract-go/commit/6fb79c8064d0345a45f3fc25a10762d5712f0c5f))
+
 ## [2.19.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.18.0...v2.19.0) (2026-04-15)
 
 ### Features
