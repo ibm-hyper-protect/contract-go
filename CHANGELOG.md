@@ -1,3 +1,9 @@
+## [2.21.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.20.0...v2.21.0) (2026-04-29)
+
+### Features
+
+* add support for depdendabot ([fcdf70d](https://github.com/ibm-hyper-protect/contract-go/commit/fcdf70de7e96a359d124a4cb8917b11a0ad062e5))
+
 ## [2.20.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.19.0...v2.20.0) (2026-04-24)
 
 ### Features
