@@ -1,3 +1,9 @@
+## [2.21.1](https://github.com/ibm-hyper-protect/contract-go/compare/v2.21.0...v2.21.1) (2026-04-30)
+
+### Bug Fixes
+
+* **deps:** update module github.com/masterminds/semver/v3 to v3.5.0 ([#228](https://github.com/ibm-hyper-protect/contract-go/issues/228)) ([28bf82b](https://github.com/ibm-hyper-protect/contract-go/commit/28bf82bc83d041d5d0607b916063c8abebe162ec))
+
 ## [2.21.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.20.0...v2.21.0) (2026-04-29)
 
 ### Features
