@@ -14,9 +14,6 @@ on:
         default: 'true'
         required: false
 
-permissions:
-  contents: read
-
 env:
   # Currently no way to detect automatically
   DEFAULT_BRANCH: main
@@ -27,6 +24,8 @@ jobs:
   commit-lint:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v6
         with:
@@ -71,6 +70,8 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       # full checkout for semantic-release
       - uses: actions/checkout@v6
