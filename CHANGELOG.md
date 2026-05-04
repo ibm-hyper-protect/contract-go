@@ -1,3 +1,9 @@
+## [2.21.2](https://github.com/ibm-hyper-protect/contract-go/compare/v2.21.1...v2.21.2) (2026-05-04)
+
+### Bug Fixes
+
+* Restore permissions for contents in build workflow ([ec9a882](https://github.com/ibm-hyper-protect/contract-go/commit/ec9a882252f22299a78fd15f289784dc5adc7944))
+
 ## [2.21.1](https://github.com/ibm-hyper-protect/contract-go/compare/v2.21.0...v2.21.1) (2026-04-30)
 
 ### Bug Fixes
