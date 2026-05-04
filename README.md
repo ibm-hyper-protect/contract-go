@@ -65,6 +65,8 @@ Learn more:
   - **Validate complete certificate chains** (encryption cert -> intermediate -> root)
   - **Check certificate revocation status** using CRL (Certificate Revocation List)
   - **Download CRLs** from certificate distribution points
+  - **List all available encryption certificate versions** for all the platforms
+  - **Get the list of available encryption certificate versions** for specific platform (ccrt, ccrv, ccco)
 
 - **Contract Generation**
   - Generate Base64-encoded data from text, JSON, initdata annotation and docker compose / podman play archives
@@ -74,6 +76,7 @@ Learn more:
   - Validate contract schemas
   - Decrypt encrypted text in Hyper Protect format
   - Password-protected private key support for decrypting attestation records and generate signed contracts
+  - **Specify certificate version** for encryption operations (optional certVersion parameter)
 
 - **Archive Management**
   - Generate Base64 tar archives of `docker-compose.yaml` or `pods.yaml`

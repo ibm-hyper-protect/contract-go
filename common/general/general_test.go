@@ -298,18 +298,18 @@ func TestGetDataFromLatestVersion(t *testing.T) {
 }
 
 // Testcase to check if FetchEncryptionCertificate() fetches encryption certificate for CCRT
-func TestFetchEncryptionCertificate(t *testing.T) {
-	result, err := FetchEncryptionCertificate(ConfidentialComputingOsCcrt, "")
+func TestFetchEncryptionCertificateCcrt(t *testing.T) {
+	result, err := FetchEncryptionCertificate(ConfidentialComputingOsCcrt, "", "")
 	if err != nil {
 		t.Errorf("failed to fetch encryption certificate - %v", err)
 	}
 
-	assert.Equal(t, result, cert.EncryptionCertificateHpvs)
+	assert.Equal(t, result, cert.LatestEncryptionCertificateCcrt)
 }
 
 // Testcase to check if FetchEncryptionCertificate() is able to fetch encryption certificate for CCRV
-func TestFetchEncryptionCertificateRhvs(t *testing.T) {
-	_, err := FetchEncryptionCertificate(ConfidentialComputingOsCcrv, "")
+func TestFetchEncryptionCertificateCcrv(t *testing.T) {
+	_, err := FetchEncryptionCertificate(ConfidentialComputingOsCcrv, "", "")
 	if err != nil {
 		t.Errorf("failed to fetch encryption certificate - %v", err)
 	}
@@ -317,7 +317,7 @@ func TestFetchEncryptionCertificateRhvs(t *testing.T) {
 
 // Testcase to check if FetchEncryptionCertificate() is able to fetch encryption certificate for CCCO
 func TestFetchEncryptionCertificateCcco(t *testing.T) {
-	_, err := FetchEncryptionCertificate(ConfidentialComputingConfidentialContainerCcco, "")
+	_, err := FetchEncryptionCertificate(ConfidentialComputingOsCcco, "", "")
 	if err != nil {
 		t.Errorf("failed to fetch encryption certificate - %v", err)
 	}
@@ -589,7 +589,7 @@ func TestKeyValueInjectorInvalidYaml(t *testing.T) {
 
 // Testcase to check if FetchEncryptionCertificate() handles invalid confidentialComputingOs
 func TestFetchEncryptionCertificateInvalidOs(t *testing.T) {
-	_, err := FetchEncryptionCertificate("invalid-os", "")
+	_, err := FetchEncryptionCertificate("invalid-os", "", "")
 	assert.Error(t, err)
 }
 

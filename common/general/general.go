@@ -47,9 +47,9 @@ import (
 const (
 	TempFolderNamePrefix = "ccrt-"
 
-	ConfidentialComputingOsCcrt                    = "ccrt"
-	ConfidentialComputingOsCcrv                    = "ccrv"
-	ConfidentialComputingConfidentialContainerCcco = "ccco"
+	ConfidentialComputingOsCcrt = "ccrt"
+	ConfidentialComputingOsCcrv = "ccrv"
+	ConfidentialComputingOsCcco = "ccco"
 )
 
 type Contract struct {
@@ -531,34 +531,72 @@ func GetDataFromLatestVersion(jsonData, version string) (string, map[string]stri
 }
 
 // FetchEncryptionCertificate retrieves the appropriate encryption certificate for a Hyper Protect platform.
-// If a custom certificate is provided, it returns that. Otherwise, it returns the embedded default
-// certificate for the specified platform version (ccrt, ccrv, or ccco).
+// If a custom certificate is provided, it returns that. Otherwise, it returns the embedded certificate
+// for the specified platform (ccrt, ccrv, or ccco) and certificate version.
 //
 // Parameters:
-//   - version: Hyper Protect platform version ("ccrt", "ccrv", "ccco") - defaults to "ccrt" if empty
+//   - confidentialComputingOs: Hyper Protect platform version ("ccrt", "ccrv", "ccco") - defaults to "ccrt" if empty
 //   - encryptionCertificate: Custom encryption certificate (PEM format) - uses embedded default if empty
+//   - certVersion: Certificate version (e.g., "26.2.0", "25.11.0") - uses latest if empty
 //
 // Returns:
 //   - Encryption certificate in PEM format
-//   - Error if version is invalid
-func FetchEncryptionCertificate(version, encryptionCertificate string) (string, error) {
-	if version == "" {
-		version = ConfidentialComputingOsCcrt
+//   - Error if platform or certificate version is invalid
+func FetchEncryptionCertificate(confidentialComputingOs, encryptionCertificate, certVersion string) (string, error) {
+	if confidentialComputingOs == "" {
+		confidentialComputingOs = ConfidentialComputingOsCcrt
 	}
 
+	// Normalize legacy platform names to new names
+	if confidentialComputingOs == "hpvs" {
+		confidentialComputingOs = ConfidentialComputingOsCcrt
+	} else if confidentialComputingOs == "hpcr-rhvs" {
+		confidentialComputingOs = ConfidentialComputingOsCcrv
+	} else if confidentialComputingOs == "hpcc-peerpod" {
+		confidentialComputingOs = ConfidentialComputingOsCcco
+	}
+
+	// If custom certificate is provided, use it
 	if encryptionCertificate != "" {
 		return encryptionCertificate, nil
-	} else {
-		if version == ConfidentialComputingOsCcrt {
-			return cert.EncryptionCertificateHpvs, nil
-		} else if version == ConfidentialComputingOsCcrv {
-			return cert.EncryptionCertificateHpcrRhvs, nil
-		} else if version == ConfidentialComputingConfidentialContainerCcco {
-			return cert.EncryptionCertificateHpccPeerPods, nil
-		} else {
-			return "", fmt.Errorf("invalid Hyper Protect version")
-		}
 	}
+
+	// Validate platform type
+	if confidentialComputingOs != ConfidentialComputingOsCcrt &&
+		confidentialComputingOs != ConfidentialComputingOsCcrv &&
+		confidentialComputingOs != ConfidentialComputingOsCcco {
+		return "", fmt.Errorf("invalid Hyper Protect platform: %s (must be ccrt, ccrv, or ccco)", confidentialComputingOs)
+	}
+
+	var selectedCert string
+	// If no version specified, return latest certificate
+	if certVersion == "" {
+		if confidentialComputingOs == ConfidentialComputingOsCcrt {
+			selectedCert = cert.LatestEncryptionCertificateCcrt
+		} else if confidentialComputingOs == ConfidentialComputingOsCcrv {
+			selectedCert = cert.LatestEncryptionCertificateCcrv
+		} else {
+			selectedCert = cert.LatestEncryptionCertificateCcco
+		}
+		return selectedCert, nil
+	}
+
+	// Fetch specific version from CertificateMap
+	if platformCerts, exists := cert.CertificateMap[confidentialComputingOs]; exists {
+		if certificate, versionExists := platformCerts[certVersion]; versionExists {
+			return certificate, nil
+		}
+		return "", fmt.Errorf("certificate version %s not found for platform %s", certVersion, confidentialComputingOs)
+	}
+
+	return "", fmt.Errorf("no certificates found for platform %s", confidentialComputingOs)
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 // GenerateTgzBase64 creates a compressed tar.gz archive from files and folders.
@@ -729,11 +767,11 @@ func convertToStringkeys(m map[any]any) map[string]any {
 //   - JSON schema string for contract validation
 //   - Error if version is invalid
 func fetchContractSchema(version string) (string, error) {
-	if version == ConfidentialComputingOsCcrt || version == "" {
+	if version == ConfidentialComputingOsCcrt || version == "" || version == "hpvs" {
 		return sch.ContractSchemaHpvs, nil
-	} else if version == ConfidentialComputingOsCcrv {
+	} else if version == ConfidentialComputingOsCcrv || version == "hpcr-rhvs" {
 		return sch.ContractSchemaHpcrRhvs, nil
-	} else if version == ConfidentialComputingConfidentialContainerCcco {
+	} else if version == ConfidentialComputingOsCcco || version == "hpcc-peerpod" {
 		return sch.ContractSchemaCoco, nil
 	} else {
 		return "", fmt.Errorf("invalid Hyper Protect version")

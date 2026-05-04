@@ -806,6 +806,150 @@ The function filters images based on:
 - Operating System: Matches `hyper-protect-*-s390x-hpcr` pattern
 - Name: Matches `ibm-hyper-protect-container-runtime-*` pattern
 
+
+### HpcrListAllAvailableEncCertificates
+
+Lists all available embedded encryption certificate versions for all IBM Confidential Computing platforms. Returns a JSON string containing a map of platform identifiers to their available certificate versions.
+
+**Package:** `github.com/ibm-hyper-protect/contract-go/v2/certificate`
+
+**Signature:**
+```go
+func HpcrListAllAvailableEncCertificates() (string, error)
+```
+
+**Parameters:**
+None
+
+**Returns:**
+
+| Return | Type | Description |
+|--------|------|-------------|
+| Certificates | `string` | JSON string containing map of platform to version arrays |
+| Error | `error` | Error if marshaling fails |
+
+**JSON Structure:**
+```json
+{
+  "ccrt": ["26.2.0", "25.11.0", "25.8.1"],
+  "ccrv": ["26.4.1", "25.11.0", "25.8.1"],
+  "ccco": ["25.12.0", "25.10.0", "25.7.1"]
+}
+```
+
+**Example:**
+```go
+package main
+
+import (
+    "encoding/json"
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/certificate"
+)
+
+func main() {
+    // Get all available certificate versions
+    certsJSON, err := certificate.HpcrListAllAvailableEncCertificates()
+    if err != nil {
+        log.Fatalf("Failed to list certificates: %v", err)
+    }
+
+    // Parse JSON to access versions
+    var certs map[string][]string
+    if err := json.Unmarshal([]byte(certsJSON), &certs); err != nil {
+        log.Fatal(err)
+    }
+
+    // Display available versions by platform
+    for platform, versions := range certs {
+        fmt.Printf("Platform %s has %d versions:\n", platform, len(versions))
+        for _, version := range versions {
+            fmt.Printf("  - %s\n", version)
+        }
+    }
+}
+```
+
+**Use Cases:**
+- Discover available certificate versions before encryption
+- Validate that a required version is available
+- Generate documentation of supported versions
+- Build version selection UI in applications
+
+---
+
+### HpcrGetAvailableEncCertVersions
+
+Retrieves the list of available embedded encryption certificate versions for a specific IBM Confidential Computing platform.
+
+**Package:** `github.com/ibm-hyper-protect/contract-go/v2/certificate`
+
+**Signature:**
+```go
+func HpcrGetAvailableEncCertVersions(osType string) []string
+```
+
+**Parameters:**
+
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `osType` | `string` | Required | Platform identifier: `"ccrt"`, `"ccrv"`, or `"ccco"` (case-insensitive) |
+
+**Returns:**
+
+| Return | Type | Description |
+|--------|------|-------------|
+| Versions | `[]string` | Array of available certificate versions, sorted from newest to oldest |
+
+**Example:**
+```go
+package main
+
+import (
+    "fmt"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/certificate"
+)
+
+func main() {
+    // Get versions for CCRT platform
+    ccrtVersions := certificate.HpcrGetAvailableEncCertVersions("ccrt")
+    fmt.Printf("CCRT versions: %v\n", ccrtVersions)
+    // Output: CCRT versions: [26.2.0 25.11.0 25.8.1]
+
+    // Get versions for CCRV platform
+    ccrvVersions := certificate.HpcrGetAvailableEncCertVersions("ccrv")
+    fmt.Printf("CCRV versions: %v\n", ccrvVersions)
+    // Output: CCRV versions: [26.4.1 25.11.0 25.8.1]
+
+    // Get versions for CCCO platform
+    cccoVersions := certificate.HpcrGetAvailableEncCertVersions("ccco")
+    fmt.Printf("CCCO versions: %v\n", cccoVersions)
+    // Output: CCCO versions: [25.12.0 25.10.0 25.7.1]
+
+    // Case-insensitive
+    versions := certificate.HpcrGetAvailableEncCertVersions("CCRT")
+    fmt.Printf("Versions (uppercase): %v\n", versions)
+
+    // Invalid platform returns empty array
+    invalid := certificate.HpcrGetAvailableEncCertVersions("invalid")
+    fmt.Printf("Invalid platform: %v\n", invalid)
+    // Output: Invalid platform: []
+}
+```
+
+**Use Cases:**
+- List available versions for a specific platform
+- Validate version availability before encryption
+- Implement version selection logic
+- Display platform-specific version options to users
+
+**Related Functions:**
+- [`HpcrListAllAvailableEncCertificates`](#hpcrlistavailableenccertificates) - Get versions for all platforms
+- [`HpcrContractSignedEncrypted`](#hpcrcontractsignedencrypted) - Use specific version with `certVersion` parameter
+
 ---
 
 ## Contract Functions
@@ -1470,7 +1614,7 @@ Generates a signed and encrypted contract ready for deployment to Hyper Protect 
 
 **Signature:**
 ```go
-func HpcrContractSignedEncrypted(contract, confidentialComputingOs, encryptionCertificate, privateKey, password string) (string, string, string, error)
+func HpcrContractSignedEncrypted(contract, confidentialComputingOs, certVersion, encryptionCertificate, privateKey, password string) (string, string, string, error)
 ```
 
 **Parameters:**
@@ -1479,7 +1623,8 @@ func HpcrContractSignedEncrypted(contract, confidentialComputingOs, encryptionCe
 |-----------|------|-------------------|-------------|
 | `contract` | `string` | Required | YAML contract with `env` and `workload` sections |
 | `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
-| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest CCRT as default if empty) |
+| `certVersion` | `string` | Optional | **NEW:** Specific certificate version (e.g., `"26.2.0"`). Uses latest version if empty. Use [`HpcrGetAvailableEncCertVersions`](#hpcrgetavailableenccertversions) to list available versions |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses embedded certificate based on platform and version if empty) |
 | `privateKey` | `string` | Required | RSA private key (PEM format) for signing |
 | `password` | `string` | Optional | Password for encrypted private key (empty string if private key is not encrypted) |
 
@@ -1524,7 +1669,8 @@ MIIEpAIBAAKCAQEA...
     signedContract, inputHash, outputHash, err := contract.HpcrContractSignedEncrypted(
         contractYAML,
         "ccrt",
-        "",         // Use default certificate
+        "",         // Use latest certificate version
+        "",         // Use embedded certificate
         privateKey,
         "",         // No password for unencrypted key
     )
@@ -1533,6 +1679,59 @@ MIIEpAIBAAKCAQEA...
     }
 
     fmt.Printf("Signed Contract:\n%s\n", signedContract)
+    fmt.Printf("Input SHA256: %s\n", inputHash)
+    fmt.Printf("Output SHA256: %s\n", outputHash)
+}
+```
+
+**Example - with specific certificate version:**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/certificate"
+    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+)
+
+func main() {
+    // First, check available versions
+    versions := certificate.HpcrGetAvailableEncCertVersions("ccrt")
+    fmt.Printf("Available CCRT versions: %v\n", versions)
+
+    contractYAML := `
+env: |
+  type: env
+  logging:
+    logRouter:
+      hostname: 5c2d6b69-c7f0-41bd-b69b-240695369d6e.ingress.us-south.logs.cloud.ibm.com
+      iamApiKey: ab00e3c09p1d4ff7fff9f04c12183413
+workload: |
+  type: workload
+  compose:
+    archive: ZGF0YQ==
+`
+
+    privateKey := `-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEA...
+-----END RSA PRIVATE KEY-----`
+
+    // Use specific certificate version
+    signedContract, inputHash, outputHash, err := contract.HpcrContractSignedEncrypted(
+        contractYAML,
+        "ccrt",
+        "26.2.0",    // Specify certificate version
+        "",          // Use embedded certificate
+        privateKey,
+        "",          // No password
+    )
+    if err != nil {
+        log.Fatalf("Failed to generate contract: %v", err)
+    }
+
+    fmt.Printf("Signed Contract with version 26.2.0:\n%s\n", signedContract)
     fmt.Printf("Input SHA256: %s\n", inputHash)
     fmt.Printf("Output SHA256: %s\n", outputHash)
 }
@@ -2180,7 +2379,7 @@ The library supports three IBM Confidential Computing platforms:
 const (
     ConfidentialComputingOsCcrt     = "ccrt"         // IBM Confidential Computing Container Runtime (CCRT)
     ConfidentialComputingOsCcrv = "ccrv"    // IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)
-    ConfidentialComputingConfidentialContainerCcco = "ccco" // IBM Confidential Computing Containers for Red Hat OpenShift Container Platform (CCCO)
+    ConfidentialComputingOsCcco = "ccco" // IBM Confidential Computing Containers for Red Hat OpenShift Container Platform (CCCO)
 )
 ```
 
