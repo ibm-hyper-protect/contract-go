@@ -265,40 +265,72 @@ func HpcrValidateCertificateRevocationList(certificateDocument, ibmIntermediateC
 	return valid, msg, nil
 }
 
-// HpcrListAllAvailableEncCertificates returns all available embedded encryption certificates
-// organized by OS type as a JSON string. Each OS type maps to a slice of available versions
-// sorted in descending order (latest first).
+// HpcrListAvailableEncCertVersions returns available embedded encryption certificate versions
+// as a JSON string. If osType is provided, returns versions for that specific OS type only.
+// If osType is empty, returns versions for all OS types.
 //
-// Use this function to discover which certificate versions are available for each platform
-// without needing to download them from IBM Cloud. This is useful for:
+// Use this function to discover which encryption certificate versions are available without downloading
+// from IBM Cloud. This is useful for:
 //   - Displaying available versions to users
 //   - Validating version inputs before encryption
 //   - Programmatically selecting certificate versions
 //
+// Parameters:
+//   - osType: The operating system type ("ccrt", "ccrv", "ccco") or empty string for all types
+//
 // Returns:
-//   - JSON string with OS types ("ccrt", "ccrv", "ccco") as keys and sorted version arrays as values
-//   - Error if JSON marshaling fails
+//   - JSON string with OS types as keys and sorted version arrays as values (descending order, latest first)
+//   - Error if JSON marshaling fails or if specified osType doesn't exist
 //
-// Example:
+// Examples:
 //
-//	certs, err := certificate.HpcrListAllAvailableEncCertificates()
-//	// Returns: {"ccrt":["26.2.0","25.11.0","25.8.1"],"ccrv":["26.4.1","25.11.0","25.8.1"],"ccco":["25.12.0","25.10.0","25.7.1"]}
-func HpcrListAllAvailableEncCertificates() (string, error) {
+//	// Get all OS types
+//	allCerts, err := certificate.HpcrListAvailableEncCertVersions("")
+//	// Returns: {"ccrt":["26.2.0","25.11.0","25.8.1"],"ccrv":["26.4.1","25.11.0","25.8.1"],"ccco":["25.12.0","25.10.0"]}
+//
+//	// Get specific OS type
+//	ccrtCerts, err := certificate.HpcrListAvailableEncCertVersions("ccrt")
+//	// Returns: {"ccrt":["26.2.0","25.11.0","25.8.1"]}
+func HpcrListAvailableEncCertVersions(osType string) (string, error) {
 	result := make(map[string][]string)
 
-	// Get all OS types from the certificate map
-	for osType := range cert.CertificateMap {
-		versions := make([]string, 0, len(cert.CertificateMap[osType]))
-		for version := range cert.CertificateMap[osType] {
+	// Normalize OS type to lowercase if provided
+	if osType != "" {
+		osType = strings.ToLower(osType)
+
+		// Check if the specified OS type exists
+		osMap, exists := cert.CertificateMap[osType]
+		if !exists {
+			return "", fmt.Errorf("invalid OS type: %s. Valid types are: ccrt, ccrv, ccco", osType)
+		}
+
+		// Get versions for the specified OS type
+		versions := make([]string, 0, len(osMap))
+		for version := range osMap {
 			versions = append(versions, version)
 		}
 
-		// Sort versions in descending order (latest first) using semantic version comparison
+		// Sort versions in descending order (latest first)
 		sort.Slice(versions, func(i, j int) bool {
 			return cert.CompareVersions(versions[i], versions[j]) > 0
 		})
 
 		result[osType] = versions
+	} else {
+		// Get all OS types from the certificate map
+		for osType := range cert.CertificateMap {
+			versions := make([]string, 0, len(cert.CertificateMap[osType]))
+			for version := range cert.CertificateMap[osType] {
+				versions = append(versions, version)
+			}
+
+			// Sort versions in descending order (latest first)
+			sort.Slice(versions, func(i, j int) bool {
+				return cert.CompareVersions(versions[i], versions[j]) > 0
+			})
+
+			result[osType] = versions
+		}
 	}
 
 	// Marshal to JSON
@@ -308,43 +340,4 @@ func HpcrListAllAvailableEncCertificates() (string, error) {
 	}
 
 	return string(jsonBytes), nil
-}
-
-// HpcrGetAvailableEncCertVersions returns a list of all available embedded encryption certificate
-// versions for a specific OS type, sorted in descending order (latest first).
-//
-// Use this function to discover which certificate versions are available for a specific
-// platform (ccrt, ccrv, or ccco) without downloading from IBM Cloud.
-//
-// Parameters:
-//   - osType: The operating system type ("ccrt", "ccrv", or "ccco")
-//
-// Returns:
-//   - Slice of version strings sorted in descending order (latest first)
-//   - Empty slice if OS type is invalid or no versions available
-//
-// Example:
-//
-//	versions := certificate.HpcrGetAvailableEncCertVersions("ccrt")
-//	// Returns: ["26.2.0", "25.11.0", "25.8.1"]
-func HpcrGetAvailableEncCertVersions(osType string) []string {
-	// Normalize OS type to lowercase
-	osType = strings.ToLower(osType)
-
-	osMap, exists := cert.CertificateMap[osType]
-	if !exists {
-		return []string{}
-	}
-
-	versions := make([]string, 0, len(osMap))
-	for version := range osMap {
-		versions = append(versions, version)
-	}
-
-	// Sort versions in descending order (latest first)
-	sort.Slice(versions, func(i, j int) bool {
-		return cert.CompareVersions(versions[i], versions[j]) > 0
-	})
-
-	return versions
 }

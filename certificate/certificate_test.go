@@ -164,9 +164,9 @@ func TestHpcrValidateCertificateRevocationList_EmptyParameters(t *testing.T) {
 	assert.Contains(t, err.Error(), missingParameterErrStatement)
 }
 
-// Testcase to check if HpcrListAllAvailableEncCertificates returns all available certificates
-func TestHpcrListAllAvailableEncCertificates(t *testing.T) {
-	result, err := HpcrListAllAvailableEncCertificates()
+// Testcase to check if HpcrListAvailableEncCertVersions returns all available certificates when osType is empty
+func TestHpcrListAvailableEncCertVersions_AllOsTypes(t *testing.T) {
+	result, err := HpcrListAvailableEncCertVersions("")
 	assert.NoError(t, err)
 	assert.NotEmpty(t, result)
 	assert.Contains(t, result, "ccrt")
@@ -174,35 +174,52 @@ func TestHpcrListAllAvailableEncCertificates(t *testing.T) {
 	assert.Contains(t, result, "ccco")
 }
 
-// Testcase to check if HpcrGetAvailableEncCertVersions returns versions for ccrt
-func TestHpcrGetAvailableEncCertVersions_Ccrt(t *testing.T) {
-	versions := HpcrGetAvailableEncCertVersions("ccrt")
-	assert.NotEmpty(t, versions)
+// Testcase to check if HpcrListAvailableEncCertVersions returns versions for ccrt
+func TestHpcrListAvailableEncCertVersions_Ccrt(t *testing.T) {
+	result, err := HpcrListAvailableEncCertVersions("ccrt")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+	assert.Contains(t, result, "ccrt")
+	assert.NotContains(t, result, "ccrv")
+	assert.NotContains(t, result, "ccco")
 }
 
-// Testcase to check if HpcrGetAvailableEncCertVersions returns versions for ccrv
-func TestHpcrGetAvailableEncCertVersions_Ccrv(t *testing.T) {
-	versions := HpcrGetAvailableEncCertVersions("ccrv")
-	assert.NotEmpty(t, versions)
+// Testcase to check if HpcrListAvailableEncCertVersions returns versions for ccrv
+func TestHpcrListAvailableEncCertVersions_Ccrv(t *testing.T) {
+	result, err := HpcrListAvailableEncCertVersions("ccrv")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+	assert.Contains(t, result, "ccrv")
+	assert.NotContains(t, result, "ccrt")
+	assert.NotContains(t, result, "ccco")
 }
 
-// Testcase to check if HpcrGetAvailableEncCertVersions returns versions for ccco
-func TestHpcrGetAvailableEncCertVersions_Ccco(t *testing.T) {
-	versions := HpcrGetAvailableEncCertVersions("ccco")
-	assert.NotEmpty(t, versions)
+// Testcase to check if HpcrListAvailableEncCertVersions returns versions for ccco
+func TestHpcrListAvailableEncCertVersions_Ccco(t *testing.T) {
+	result, err := HpcrListAvailableEncCertVersions("ccco")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+	assert.Contains(t, result, "ccco")
+	assert.NotContains(t, result, "ccrt")
+	assert.NotContains(t, result, "ccrv")
 }
 
-// Testcase to check if HpcrGetAvailableEncCertVersions handles invalid OS type
-func TestHpcrGetAvailableEncCertVersions_InvalidOsType(t *testing.T) {
-	result := HpcrGetAvailableEncCertVersions("invalid-os")
+// Testcase to check if HpcrListAvailableEncCertVersions handles invalid OS type
+func TestHpcrListAvailableEncCertVersions_InvalidOsType(t *testing.T) {
+	result, err := HpcrListAvailableEncCertVersions("invalid-os")
+	assert.Error(t, err)
 	assert.Empty(t, result)
+	assert.Contains(t, err.Error(), "invalid OS type")
 }
 
-// Testcase to check if HpcrGetAvailableEncCertVersions is case-insensitive
-func TestHpcrGetAvailableEncCertVersions_CaseInsensitive(t *testing.T) {
-	upperResult := HpcrGetAvailableEncCertVersions("CCRT")
-	lowerResult := HpcrGetAvailableEncCertVersions("ccrt")
-	mixedResult := HpcrGetAvailableEncCertVersions("CcRt")
+// Testcase to check if HpcrListAvailableEncCertVersions is case-insensitive
+func TestHpcrListAvailableEncCertVersions_CaseInsensitive(t *testing.T) {
+	upperResult, err1 := HpcrListAvailableEncCertVersions("CCRT")
+	assert.NoError(t, err1)
+	lowerResult, err2 := HpcrListAvailableEncCertVersions("ccrt")
+	assert.NoError(t, err2)
+	mixedResult, err3 := HpcrListAvailableEncCertVersions("CcRt")
+	assert.NoError(t, err3)
 	assert.Equal(t, lowerResult, upperResult)
 	assert.Equal(t, lowerResult, mixedResult)
 }

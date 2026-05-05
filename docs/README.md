@@ -807,37 +807,50 @@ The function filters images based on:
 - Name: Matches `ibm-hyper-protect-container-runtime-*` pattern
 
 
-### HpcrListAllAvailableEncCertificates
+### HpcrListAvailableEncCertVersions
 
-Lists all available embedded encryption certificate versions for all IBM Confidential Computing platforms. Returns a JSON string containing a map of platform identifiers to their available certificate versions.
+Lists available embedded encryption certificate versions for IBM Confidential Computing platforms. Returns a JSON string containing certificate versions for all platforms or a specific platform.
 
 **Package:** `github.com/ibm-hyper-protect/contract-go/v2/certificate`
 
 **Signature:**
 ```go
-func HpcrListAllAvailableEncCertificates() (string, error)
+func HpcrListAvailableEncCertVersions(osType string) (string, error)
 ```
 
 **Parameters:**
-None
+
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `osType` | `string` | Optional | Platform identifier: `"ccrt"`, `"ccrv"`, or `"ccco"` (case-insensitive). Empty string returns all platforms |
 
 **Returns:**
 
 | Return | Type | Description |
 |--------|------|-------------|
 | Certificates | `string` | JSON string containing map of platform to version arrays |
-| Error | `error` | Error if marshaling fails |
+| Error | `error` | Error if marshaling fails or invalid OS type specified |
 
 **JSON Structure:**
+
+All platforms (osType = ""):
 ```json
 {
   "ccrt": ["26.2.0", "25.11.0", "25.8.1"],
   "ccrv": ["26.4.1", "25.11.0", "25.8.1"],
-  "ccco": ["25.12.0", "25.10.0", "25.7.1"]
+  "ccco": ["25.12.0", "25.10.0"]
 }
 ```
 
-**Example:**
+Specific platform (osType = "ccrt"):
+```json
+{
+  "ccrt": ["26.2.0", "25.11.0", "25.8.1"]
+}
+```
+
+**Examples:**
+
 ```go
 package main
 
@@ -850,24 +863,63 @@ import (
 )
 
 func main() {
-    // Get all available certificate versions
-    certsJSON, err := certificate.HpcrListAllAvailableEncCertificates()
+    // Example 1: Get all available certificate versions for all platforms
+    allCertsJSON, err := certificate.HpcrListAvailableEncCertVersions("")
     if err != nil {
         log.Fatalf("Failed to list certificates: %v", err)
     }
 
     // Parse JSON to access versions
-    var certs map[string][]string
-    if err := json.Unmarshal([]byte(certsJSON), &certs); err != nil {
+    var allCerts map[string][]string
+    if err := json.Unmarshal([]byte(allCertsJSON), &allCerts); err != nil {
         log.Fatal(err)
     }
 
     // Display available versions by platform
-    for platform, versions := range certs {
+    for platform, versions := range allCerts {
         fmt.Printf("Platform %s has %d versions:\n", platform, len(versions))
         for _, version := range versions {
             fmt.Printf("  - %s\n", version)
         }
+    }
+
+    // Example 2: Get versions for specific platform (CCRT)
+    ccrtJSON, err := certificate.HpcrListAvailableEncCertVersions("ccrt")
+    if err != nil {
+        log.Fatalf("Failed to get CCRT versions: %v", err)
+    }
+
+    var ccrtCerts map[string][]string
+    json.Unmarshal([]byte(ccrtJSON), &ccrtCerts)
+    fmt.Printf("CCRT versions: %v\n", ccrtCerts["ccrt"])
+    // Output: CCRT versions: [26.2.0 25.11.0 25.8.1]
+
+    // Example 3: Get versions for CCRV platform
+    ccrvJSON, err := certificate.HpcrListAvailableEncCertVersions("ccrv")
+    if err != nil {
+        log.Fatalf("Failed to get CCRV versions: %v", err)
+    }
+    fmt.Println("CCRV certificates:", ccrvJSON)
+
+    // Example 4: Get versions for CCCO platform
+    cccoJSON, err := certificate.HpcrListAvailableEncCertVersions("ccco")
+    if err != nil {
+        log.Fatalf("Failed to get CCCO versions: %v", err)
+    }
+    fmt.Println("CCCO certificates:", cccoJSON)
+
+    // Example 5: Case-insensitive platform names
+    upperJSON, err := certificate.HpcrListAvailableEncCertVersions("CCRT")
+    if err != nil {
+        log.Fatalf("Failed: %v", err)
+    }
+    fmt.Println("Uppercase CCRT:", upperJSON)
+
+    // Example 6: Invalid platform returns error
+    _, err = certificate.HpcrListAvailableEncCertVersions("invalid")
+    if err != nil {
+        fmt.Printf("Expected error: %v\n", err)
+        // Output: Expected error: invalid OS type: invalid. Valid types are: ccrt, ccrv, ccco
     }
 }
 ```
@@ -877,77 +929,9 @@ func main() {
 - Validate that a required version is available
 - Generate documentation of supported versions
 - Build version selection UI in applications
-
----
-
-### HpcrGetAvailableEncCertVersions
-
-Retrieves the list of available embedded encryption certificate versions for a specific IBM Confidential Computing platform.
-
-**Package:** `github.com/ibm-hyper-protect/contract-go/v2/certificate`
-
-**Signature:**
-```go
-func HpcrGetAvailableEncCertVersions(osType string) []string
-```
-
-**Parameters:**
-
-| Parameter | Type | Required/Optional | Description |
-|-----------|------|-------------------|-------------|
-| `osType` | `string` | Required | Platform identifier: `"ccrt"`, `"ccrv"`, or `"ccco"` (case-insensitive) |
-
-**Returns:**
-
-| Return | Type | Description |
-|--------|------|-------------|
-| Versions | `[]string` | Array of available certificate versions, sorted from newest to oldest |
-
-**Example:**
-```go
-package main
-
-import (
-    "fmt"
-
-    "github.com/ibm-hyper-protect/contract-go/v2/certificate"
-)
-
-func main() {
-    // Get versions for CCRT platform
-    ccrtVersions := certificate.HpcrGetAvailableEncCertVersions("ccrt")
-    fmt.Printf("CCRT versions: %v\n", ccrtVersions)
-    // Output: CCRT versions: [26.2.0 25.11.0 25.8.1]
-
-    // Get versions for CCRV platform
-    ccrvVersions := certificate.HpcrGetAvailableEncCertVersions("ccrv")
-    fmt.Printf("CCRV versions: %v\n", ccrvVersions)
-    // Output: CCRV versions: [26.4.1 25.11.0 25.8.1]
-
-    // Get versions for CCCO platform
-    cccoVersions := certificate.HpcrGetAvailableEncCertVersions("ccco")
-    fmt.Printf("CCCO versions: %v\n", cccoVersions)
-    // Output: CCCO versions: [25.12.0 25.10.0 25.7.1]
-
-    // Case-insensitive
-    versions := certificate.HpcrGetAvailableEncCertVersions("CCRT")
-    fmt.Printf("Versions (uppercase): %v\n", versions)
-
-    // Invalid platform returns empty array
-    invalid := certificate.HpcrGetAvailableEncCertVersions("invalid")
-    fmt.Printf("Invalid platform: %v\n", invalid)
-    // Output: Invalid platform: []
-}
-```
-
-**Use Cases:**
-- List available versions for a specific platform
-- Validate version availability before encryption
-- Implement version selection logic
-- Display platform-specific version options to users
+- Filter versions by specific platform
 
 **Related Functions:**
-- [`HpcrListAllAvailableEncCertificates`](#hpcrlistavailableenccertificates) - Get versions for all platforms
 - [`HpcrContractSignedEncrypted`](#hpcrcontractsignedencrypted) - Use specific version with `certVersion` parameter
 
 ---
@@ -1623,7 +1607,7 @@ func HpcrContractSignedEncrypted(contract, confidentialComputingOs, certVersion,
 |-----------|------|-------------------|-------------|
 | `contract` | `string` | Required | YAML contract with `env` and `workload` sections |
 | `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
-| `certVersion` | `string` | Optional | **NEW:** Specific certificate version (e.g., `"26.2.0"`). Uses latest version if empty. Use [`HpcrGetAvailableEncCertVersions`](#hpcrgetavailableenccertversions) to list available versions |
+| `certVersion` | `string` | Optional | **NEW:** Specific certificate version (e.g., `"26.2.0"`). Uses latest version if empty. Use [`HpcrListAvailableEncCertVersions`](#hpcrlistavailableenccertversions) to list available versions |
 | `encryptionCertificate` | `string` | Optional | PEM certificate (uses embedded certificate based on platform and version if empty) |
 | `privateKey` | `string` | Required | RSA private key (PEM format) for signing |
 | `password` | `string` | Optional | Password for encrypted private key (empty string if private key is not encrypted) |
@@ -1689,6 +1673,7 @@ MIIEpAIBAAKCAQEA...
 package main
 
 import (
+    "encoding/json"
     "fmt"
     "log"
 
@@ -1698,8 +1683,14 @@ import (
 
 func main() {
     // First, check available versions
-    versions := certificate.HpcrGetAvailableEncCertVersions("ccrt")
-    fmt.Printf("Available CCRT versions: %v\n", versions)
+    certsJSON, err := certificate.HpcrListAvailableEncCertVersions("ccrt")
+    if err != nil {
+        log.Fatalf("Failed to get versions: %v", err)
+    }
+    
+    var certs map[string][]string
+    json.Unmarshal([]byte(certsJSON), &certs)
+    fmt.Printf("Available CCRT versions: %v\n", certs["ccrt"])
 
     contractYAML := `
 env: |
