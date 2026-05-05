@@ -183,17 +183,22 @@ func EncryptString(password, section string) (string, error) {
 }
 
 // EncryptFinalStr formats the final encrypted section by combining the encrypted password and contract.
-// It returns a string in the format "hyper-protect-basic.<password>.<contract>" which is the
+// It returns a string in the format "contract-basic.<password>.<contract>" which is the
 // standard format for Hyper Protect encrypted data.
 //
 // Parameters:
 //   - encryptedPassword: Base64-encoded encrypted password
 //   - encryptedContract: Base64-encoded encrypted contract data
+//   - confidentialComputingOs: Target platform — "hpvs", "ccrt", "ccrv", or "ccco" (default: ccrt)
 //
 // Returns:
-//   - Formatted string in "hyper-protect-basic.<password>.<contract>" format
-func EncryptFinalStr(encryptedPassword, encryptedContract string) string {
-	return fmt.Sprintf("hyper-protect-basic.%s.%s", encryptedPassword, encryptedContract)
+//   - Formatted string in "contract-basic.<password>.<contract>" format for Confidential Computing encryption
+//   - Formatted string in "hyper-protect-basic.<password>.<contract>" format for HPVS encryption
+func EncryptFinalStr(encryptedPassword, encryptedContract, confidentialComputingOs string) string {
+	if confidentialComputingOs == "hpvs" {
+		return fmt.Sprintf("hyper-protect-basic.%s.%s", encryptedPassword, encryptedContract)
+	}
+	return fmt.Sprintf("contract-basic.%s.%s", encryptedPassword, encryptedContract)
 }
 
 // CreateSigningCert generates a signing certificate using a Certificate Authority (CA).
