@@ -307,20 +307,40 @@ func TestFetchEncryptionCertificateCcrt(t *testing.T) {
 	assert.Equal(t, result, cert.LatestEncryptionCertificateCcrt)
 }
 
-// Testcase to check if FetchEncryptionCertificate() is able to fetch encryption certificate for CCRV
+// Testcase to check if FetchEncryptionCertificate() is able to fetch encryption certificate for CCRV with specific version
 func TestFetchEncryptionCertificateCcrv(t *testing.T) {
-	_, err := FetchEncryptionCertificate(ConfidentialComputingOsCcrv, "", "")
-	if err != nil {
-		t.Errorf("failed to fetch encryption certificate - %v", err)
+	// Dynamically get first available version from the certificate map
+	if ccrvCerts, exists := cert.CertificateMap[ConfidentialComputingOsCcrv]; exists && len(ccrvCerts) > 0 {
+		// Get any available version from the map
+		var testVersion string
+		for version := range ccrvCerts {
+			testVersion = version
+			break
+		}
+
+		// Fetch certificate with specific version
+		result, err := FetchEncryptionCertificate(ConfidentialComputingOsCcrv, "", testVersion)
+		if err != nil {
+			t.Errorf("failed to fetch encryption certificate with version %s - %v", testVersion, err)
+		}
+
+		// Verify we got the correct certificate for the version
+		expectedCert := ccrvCerts[testVersion]
+		assert.Equal(t, expectedCert, result, "Certificate should match the requested version")
+		assert.NotEmpty(t, result, "Certificate should not be empty")
+	} else {
+		t.Skip("No CCRV certificates available for testing")
 	}
 }
 
 // Testcase to check if FetchEncryptionCertificate() is able to fetch encryption certificate for CCCO
 func TestFetchEncryptionCertificateCcco(t *testing.T) {
-	_, err := FetchEncryptionCertificate(ConfidentialComputingOsCcco, "", "")
+	result, err := FetchEncryptionCertificate(ConfidentialComputingOsCcco, "", "")
 	if err != nil {
 		t.Errorf("failed to fetch encryption certificate - %v", err)
 	}
+
+	assert.Equal(t, result, cert.LatestEncryptionCertificateCcco)
 }
 
 // Testcase to check if TestGenerateTgzBase64() is able generate base64 of compose tgz

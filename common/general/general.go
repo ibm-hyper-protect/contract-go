@@ -530,12 +530,12 @@ func GetDataFromLatestVersion(jsonData, version string) (string, map[string]stri
 	return "", nil, fmt.Errorf("no matching version found for the given constraint")
 }
 
-// FetchEncryptionCertificate retrieves the appropriate encryption certificate for a Hyper Protect platform.
+// FetchEncryptionCertificate retrieves the appropriate encryption certificate for a IBM Confidential Computing platform.
 // If a custom certificate is provided, it returns that. Otherwise, it returns the embedded certificate
 // for the specified platform (ccrt, ccrv, or ccco) and certificate version.
 //
 // Parameters:
-//   - confidentialComputingOs: Hyper Protect platform version ("ccrt", "ccrv", "ccco") - defaults to "ccrt" if empty
+//   - confidentialComputingOs: Confidential Computing platform version ("ccrt", "ccrv", "ccco") - defaults to "ccrt" if empty
 //   - encryptionCertificate: Custom encryption certificate (PEM format) - uses embedded default if empty
 //   - certVersion: Certificate version (e.g., "26.2.0", "25.11.0") - uses latest if empty
 //
@@ -547,15 +547,6 @@ func FetchEncryptionCertificate(confidentialComputingOs, encryptionCertificate, 
 		confidentialComputingOs = ConfidentialComputingOsCcrt
 	}
 
-	// Normalize legacy platform names to new names
-	if confidentialComputingOs == "hpvs" {
-		confidentialComputingOs = ConfidentialComputingOsCcrt
-	} else if confidentialComputingOs == "hpcr-rhvs" {
-		confidentialComputingOs = ConfidentialComputingOsCcrv
-	} else if confidentialComputingOs == "hpcc-peerpod" {
-		confidentialComputingOs = ConfidentialComputingOsCcco
-	}
-
 	// If custom certificate is provided, use it
 	if encryptionCertificate != "" {
 		return encryptionCertificate, nil
@@ -565,7 +556,7 @@ func FetchEncryptionCertificate(confidentialComputingOs, encryptionCertificate, 
 	if confidentialComputingOs != ConfidentialComputingOsCcrt &&
 		confidentialComputingOs != ConfidentialComputingOsCcrv &&
 		confidentialComputingOs != ConfidentialComputingOsCcco {
-		return "", fmt.Errorf("invalid Hyper Protect platform: %s (must be ccrt, ccrv, or ccco)", confidentialComputingOs)
+		return "", fmt.Errorf("invalid Confidential Computing platform: %s (must be ccrt, ccrv, or ccco)", confidentialComputingOs)
 	}
 
 	var selectedCert string
@@ -590,13 +581,6 @@ func FetchEncryptionCertificate(confidentialComputingOs, encryptionCertificate, 
 	}
 
 	return "", fmt.Errorf("no certificates found for platform %s", confidentialComputingOs)
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }
 
 // GenerateTgzBase64 creates a compressed tar.gz archive from files and folders.
@@ -661,13 +645,13 @@ func GenerateTgzBase64(folderFilesPath []string) (string, error) {
 	return EncodeToBase64(buf.Bytes()), nil
 }
 
-// VerifyContractWithSchema validates a contract against the schema for a specific Hyper Protect platform.
+// VerifyContractWithSchema validates a contract against the schema for a specific Confidential Computing platform.
 // It parses the contract YAML, retrieves the appropriate schema for the platform version,
 // and validates the contract structure against that schema.
 //
 // Parameters:
 //   - contract: Contract YAML string to validate
-//   - version: Hyper Protect platform version ("ccrt", "ccrv", "ccco") - defaults to "ccrt" if empty
+//   - version: Confidential Computing platform version ("ccrt", "ccrv", "ccco") - defaults to "ccrt" if empty
 //
 // Returns:
 //   - nil if contract is valid
@@ -757,30 +741,30 @@ func convertToStringkeys(m map[any]any) map[string]any {
 	return result
 }
 
-// fetchContractSchema retrieves the embedded contract schema for a specific Hyper Protect platform.
+// fetchContractSchema retrieves the embedded contract schema for a specific Confidential Computing platform.
 // It returns the appropriate JSON schema string based on the platform version.
 //
 // Parameters:
-//   - version: Hyper Protect platform version ("ccrt", "ccrv", "ccco") - defaults to "ccrt" if empty
+//   - version: Confidential Computing platform version ("ccrt", "ccrv", "ccco") - defaults to "ccrt" if empty
 //
 // Returns:
 //   - JSON schema string for contract validation
 //   - Error if version is invalid
 func fetchContractSchema(version string) (string, error) {
-	if version == ConfidentialComputingOsCcrt || version == "" || version == "hpvs" {
-		return sch.ContractSchemaHpvs, nil
-	} else if version == ConfidentialComputingOsCcrv || version == "hpcr-rhvs" {
-		return sch.ContractSchemaHpcrRhvs, nil
-	} else if version == ConfidentialComputingOsCcco || version == "hpcc-peerpod" {
-		return sch.ContractSchemaCoco, nil
+	if version == ConfidentialComputingOsCcrt || version == "" {
+		return sch.ContractSchemaCcrt, nil
+	} else if version == ConfidentialComputingOsCcrv {
+		return sch.ContractSchemaCcrv, nil
+	} else if version == ConfidentialComputingOsCcco {
+		return sch.ContractSchemaCcco, nil
 	} else {
-		return "", fmt.Errorf("invalid Hyper Protect version")
+		return "", fmt.Errorf("invalid Confidential Computing version")
 	}
 }
 
 // VerifyNetworkSchema validates a network configuration YAML against the network schema.
 // It parses the network configuration YAML and validates it against the embedded network schema
-// for on-premise Hyper Protect deployments.
+// for on-premise Confidential Computing deployments.
 //
 // Parameters:
 //   - Network_Config_File: Network configuration YAML string to validate
@@ -927,4 +911,27 @@ func GzipInitData(tomlString string) ([]byte, error) {
 	}
 
 	return buf.Bytes(), nil
+}
+
+// CollectAndSortVersions extracts versions from a certificate map and sorts them
+// in descending order (latest first) using semantic version comparison.
+// This is a utility function used by certificate listing operations.
+//
+// Parameters:
+//   - osMap: Map of version strings to certificate data
+//
+// Returns:
+//   - Slice of version strings sorted in descending order (latest first)
+func CollectAndSortVersions(osMap map[string]string) []string {
+	versions := make([]string, 0, len(osMap))
+	for version := range osMap {
+		versions = append(versions, version)
+	}
+
+	// Sort versions in descending order (latest first)
+	sort.Slice(versions, func(i, j int) bool {
+		return cert.CompareVersions(versions[i], versions[j]) > 0
+	})
+
+	return versions
 }
