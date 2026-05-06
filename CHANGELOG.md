@@ -1,3 +1,11 @@
+## [2.22.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.21.2...v2.22.0) (2026-05-06)
+
+### Features
+
+* addressed review comments ([53a6262](https://github.com/ibm-hyper-protect/contract-go/commit/53a62625add55b9907d6268840b4780bcf21700d))
+* Built-in store for n, n-1, n-2 encryption certs ([e221092](https://github.com/ibm-hyper-protect/contract-go/commit/e2210928468786abea638200f6cdbce815ccbd8b))
+* simplifying listenccertversions function ([131ef7d](https://github.com/ibm-hyper-protect/contract-go/commit/131ef7d1be1bc3088d820cee6adacbfe0af81893))
+
 ## [2.21.2](https://github.com/ibm-hyper-protect/contract-go/compare/v2.21.1...v2.21.2) (2026-05-04)
 
 ### Bug Fixes
