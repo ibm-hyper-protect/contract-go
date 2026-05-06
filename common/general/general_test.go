@@ -298,29 +298,49 @@ func TestGetDataFromLatestVersion(t *testing.T) {
 }
 
 // Testcase to check if FetchEncryptionCertificate() fetches encryption certificate for CCRT
-func TestFetchEncryptionCertificate(t *testing.T) {
-	result, err := FetchEncryptionCertificate(ConfidentialComputingOsCcrt, "")
+func TestFetchEncryptionCertificateCcrt(t *testing.T) {
+	result, err := FetchEncryptionCertificate(ConfidentialComputingOsCcrt, "", "")
 	if err != nil {
 		t.Errorf("failed to fetch encryption certificate - %v", err)
 	}
 
-	assert.Equal(t, result, cert.EncryptionCertificateHpvs)
+	assert.Equal(t, result, cert.LatestEncryptionCertificateCcrt)
 }
 
-// Testcase to check if FetchEncryptionCertificate() is able to fetch encryption certificate for CCRV
-func TestFetchEncryptionCertificateRhvs(t *testing.T) {
-	_, err := FetchEncryptionCertificate(ConfidentialComputingOsCcrv, "")
-	if err != nil {
-		t.Errorf("failed to fetch encryption certificate - %v", err)
+// Testcase to check if FetchEncryptionCertificate() is able to fetch encryption certificate for CCRV with specific version
+func TestFetchEncryptionCertificateCcrv(t *testing.T) {
+	// Dynamically get first available version from the certificate map
+	if ccrvCerts, exists := cert.CertificateMap[ConfidentialComputingOsCcrv]; exists && len(ccrvCerts) > 0 {
+		// Get any available version from the map
+		var testVersion string
+		for version := range ccrvCerts {
+			testVersion = version
+			break
+		}
+
+		// Fetch certificate with specific version
+		result, err := FetchEncryptionCertificate(ConfidentialComputingOsCcrv, "", testVersion)
+		if err != nil {
+			t.Errorf("failed to fetch encryption certificate with version %s - %v", testVersion, err)
+		}
+
+		// Verify we got the correct certificate for the version
+		expectedCert := ccrvCerts[testVersion]
+		assert.Equal(t, expectedCert, result, "Certificate should match the requested version")
+		assert.NotEmpty(t, result, "Certificate should not be empty")
+	} else {
+		t.Skip("No CCRV certificates available for testing")
 	}
 }
 
 // Testcase to check if FetchEncryptionCertificate() is able to fetch encryption certificate for CCCO
 func TestFetchEncryptionCertificateCcco(t *testing.T) {
-	_, err := FetchEncryptionCertificate(ConfidentialComputingConfidentialContainerCcco, "")
+	result, err := FetchEncryptionCertificate(ConfidentialComputingOsCcco, "", "")
 	if err != nil {
 		t.Errorf("failed to fetch encryption certificate - %v", err)
 	}
+
+	assert.Equal(t, result, cert.LatestEncryptionCertificateCcco)
 }
 
 // Testcase to check if TestGenerateTgzBase64() is able generate base64 of compose tgz
@@ -589,7 +609,7 @@ func TestKeyValueInjectorInvalidYaml(t *testing.T) {
 
 // Testcase to check if FetchEncryptionCertificate() handles invalid confidentialComputingOs
 func TestFetchEncryptionCertificateInvalidOs(t *testing.T) {
-	_, err := FetchEncryptionCertificate("invalid-os", "")
+	_, err := FetchEncryptionCertificate("invalid-os", "", "")
 	assert.Error(t, err)
 }
 
