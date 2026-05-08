@@ -116,12 +116,12 @@ func HpcrJson(plainJson string) (string, string, string, error) {
 //   - SHA256 hash of the original text (input checksum)
 //   - SHA256 hash of the encrypted output (output checksum)
 //   - Error if encryption fails or certificate is invalid
-func HpcrTextEncrypted(plainText, confidentialComputingOs, encryptionCertificate, certVersion string) (string, string, string, error) {
+func HpcrTextEncrypted(plainText, confidentialComputingOs, certVersion, encryptionCertificate string) (string, string, string, error) {
 	if gen.CheckIfEmpty(plainText) {
 		return "", "", "", fmt.Errorf(emptyParameterErrStatement)
 	}
 
-	hpcrTextEncryptedStr, err := encrypter(plainText, confidentialComputingOs, encryptionCertificate, certVersion)
+	hpcrTextEncryptedStr, err := encrypter(plainText, confidentialComputingOs, certVersion, encryptionCertificate)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to generate encrypted string - %v", err)
 	}
@@ -177,12 +177,12 @@ func HpcrTextDecrypted(encryptedText, privateKey, password string) (string, stri
 //   - SHA256 hash of the original JSON (input checksum)
 //   - SHA256 hash of the encrypted output (output checksum)
 //   - Error if JSON is invalid or encryption fails
-func HpcrJsonEncrypted(plainJson, confidentialComputingOs, encryptionCertificate, certVersion string) (string, string, string, error) {
+func HpcrJsonEncrypted(plainJson, confidentialComputingOs, certVersion, encryptionCertificate string) (string, string, string, error) {
 	if !gen.IsJSON(plainJson) {
 		return "", "", "", fmt.Errorf("contract is not a JSON data")
 	}
 
-	hpcrJsonEncrypted, err := encrypter(plainJson, confidentialComputingOs, encryptionCertificate, certVersion)
+	hpcrJsonEncrypted, err := encrypter(plainJson, confidentialComputingOs, certVersion, encryptionCertificate)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to generate encrypted JSON - %v", err)
 	}
@@ -247,7 +247,7 @@ func HpcrTgz(folderPath string) (string, string, string, error) {
 //   - SHA256 hash of the folder path (input checksum)
 //   - SHA256 hash of the encrypted output (output checksum)
 //   - Error if folder is invalid or encryption fails
-func HpcrTgzEncrypted(folderPath, confidentialComputingOs, encryptionCertificate, certVersion string) (string, string, string, error) {
+func HpcrTgzEncrypted(folderPath, confidentialComputingOs, certVersion, encryptionCertificate string) (string, string, string, error) {
 	if gen.CheckIfEmpty(folderPath) {
 		return "", "", "", fmt.Errorf(emptyParameterErrStatement)
 	}
@@ -257,7 +257,7 @@ func HpcrTgzEncrypted(folderPath, confidentialComputingOs, encryptionCertificate
 		return "", "", "", err
 	}
 
-	hpcrTgzEncryptedStr, err := encrypter(tgzBase64, confidentialComputingOs, encryptionCertificate, certVersion)
+	hpcrTgzEncryptedStr, err := encrypter(tgzBase64, confidentialComputingOs, certVersion, encryptionCertificate)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to generate encrypted tgz - %v", err)
 	}
@@ -315,7 +315,7 @@ func HpcrVerifyContract(contract, version string) error {
 //   - SHA256 hash of the original contract (input checksum)
 //   - SHA256 hash of the final signed contract (output checksum)
 //   - Error if validation, encryption, or signing fails
-func HpcrContractSignedEncrypted(contract, confidentialComputingOs, encryptionCertificate, privateKey, password, certVersion string) (string, string, string, error) {
+func HpcrContractSignedEncrypted(contract, confidentialComputingOs, certVersion, encryptionCertificate, privateKey, password string) (string, string, string, error) {
 	err := HpcrVerifyContract(contract, confidentialComputingOs)
 	if err != nil {
 		return "", "", "", fmt.Errorf("schema verification failed - %v", err)
@@ -340,7 +340,7 @@ func HpcrContractSignedEncrypted(contract, confidentialComputingOs, encryptionCe
 		return "", "", "", fmt.Errorf("failed to generate public key - %v", err)
 	}
 
-	signedEncryptContract, err := encryptWrapper(contract, confidentialComputingOs, encryptCertificate, privateKey, password, publicKey, certVersion)
+	signedEncryptContract, err := encryptWrapper(contract, confidentialComputingOs, certVersion, encryptCertificate, privateKey, password, publicKey)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to sign and encrypt contract - %v", err)
 	}
@@ -381,7 +381,7 @@ func HpcrContractSignedEncrypted(contract, confidentialComputingOs, encryptionCe
 //   - SHA256 hash of the original contract (input checksum)
 //   - SHA256 hash of the final signed contract (output checksum)
 //   - Error if validation, CSR generation, certificate creation, or signing fails
-func HpcrContractSignedEncryptedContractExpiry(contract, confidentialComputingOs, encryptionCertificate, privateKey, password, cacert, caKey, csrDataStr, csrPemData string, expiryDays int, certVersion string) (string, string, string, error) {
+func HpcrContractSignedEncryptedContractExpiry(contract, confidentialComputingOs, certVersion, encryptionCertificate, privateKey, password, cacert, caKey, csrDataStr, csrPemData string, expiryDays int) (string, string, string, error) {
 	err := HpcrVerifyContract(contract, confidentialComputingOs)
 	if err != nil {
 		return "", "", "", fmt.Errorf("schema verification failed - %v", err)
@@ -400,7 +400,7 @@ func HpcrContractSignedEncryptedContractExpiry(contract, confidentialComputingOs
 		return "", "", "", fmt.Errorf("failed to generate signing certificate - %v", err)
 	}
 
-	finalContract, err := encryptWrapper(contract, confidentialComputingOs, encryptionCertificate, privateKey, password, signingCert, certVersion)
+	finalContract, err := encryptWrapper(contract, confidentialComputingOs, certVersion, encryptionCertificate, privateKey, password, signingCert)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to generate signed and encrypted contract - %v", err)
 	}
@@ -563,7 +563,7 @@ func HpccInitdata(contract string) (string, string, string, error) {
 // Returns:
 //   - Final contract YAML with encrypted workload, env, and envWorkloadSignature
 //   - Error if encryption or signing fails
-func encryptWrapper(contract, confidentialComputingOs, encryptionCertificate, privateKey, password, publicKey, certVersion string) (string, error) {
+func encryptWrapper(contract, confidentialComputingOs, certVersion, encryptionCertificate, privateKey, password, publicKey string) (string, error) {
 	if gen.CheckIfEmpty(contract, privateKey, publicKey) {
 		return "", fmt.Errorf(emptyParameterErrStatement)
 	}
@@ -580,7 +580,7 @@ func encryptWrapper(contract, confidentialComputingOs, encryptionCertificate, pr
 		return "", fmt.Errorf("failed to unmarshal YAML - %v", err)
 	}
 
-	encryptedWorkload, err := encrypter(contractMap["workload"].(string), confidentialComputingOs, encryptCertificate, certVersion)
+	encryptedWorkload, err := encrypter(contractMap["workload"].(string), confidentialComputingOs, certVersion, encryptCertificate)
 	if err != nil {
 		return "", fmt.Errorf("failed to encrypt workload - %v", err)
 	}
@@ -590,7 +590,7 @@ func encryptWrapper(contract, confidentialComputingOs, encryptionCertificate, pr
 		return "", fmt.Errorf("failed to inject signingKey to env - %v", err)
 	}
 
-	encryptedEnv, err := encrypter(updatedEnv, confidentialComputingOs, encryptCertificate, certVersion)
+	encryptedEnv, err := encrypter(updatedEnv, confidentialComputingOs, certVersion, encryptCertificate)
 	if err != nil {
 		return "", fmt.Errorf("failed to encrypt env - %v", err)
 	}
@@ -603,7 +603,7 @@ func encryptWrapper(contract, confidentialComputingOs, encryptionCertificate, pr
 	attestationPublicKey, _ := contractMap["attestationPublicKey"].(string)
 	var encryptedAttestationPublicKey string
 	if attestationPublicKey != "" {
-		encryptedAttestationPublicKey, err = encrypter(attestationPublicKey, confidentialComputingOs, encryptCertificate, certVersion)
+		encryptedAttestationPublicKey, err = encrypter(attestationPublicKey, confidentialComputingOs, certVersion, encryptCertificate)
 		if err != nil {
 			return "", fmt.Errorf("failed to encrypt attestationPublicKey - %v", err)
 		}
@@ -631,7 +631,7 @@ func encryptWrapper(contract, confidentialComputingOs, encryptionCertificate, pr
 // Returns:
 //   - Encrypted string in format "hyper-protect-basic.<encrypted-password>.<encrypted-data>"
 //   - Error if encryption fails or certificate is invalid
-func encrypter(stringText, confidentialComputingOs, encryptionCertificate, certVersion string) (string, error) {
+func encrypter(stringText, confidentialComputingOs, certVersion, encryptionCertificate string) (string, error) {
 	if gen.CheckIfEmpty(stringText) {
 		return "", fmt.Errorf(emptyParameterErrStatement)
 	}
