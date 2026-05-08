@@ -1020,7 +1020,7 @@ Encrypts plain text using the Confidential Computing encryption format.
 
 **Signature:**
 ```go
-func HpcrTextEncrypted(plainText, confidentialComputingOs, encryptionCertificate string) (string, string, string, error)
+func HpcrTextEncrypted(plainText, confidentialComputingOs, certVersion, encryptionCertificate string) (string, string, string, error)
 ```
 
 **Parameters:**
@@ -1029,7 +1029,8 @@ func HpcrTextEncrypted(plainText, confidentialComputingOs, encryptionCertificate
 |-----------|------|-------------------|-------------|
 | `plainText` | `string` | Required | Text to encrypt |
 | `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
-| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest CCRT as default if empty) |
+| `certVersion` | `string` | Optional | Certificate version (e.g., `"26.2.0"`, `"25.11.0"`). Uses latest if empty |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses default for platform if empty) |
 
 **Returns:**
 
@@ -1055,7 +1056,7 @@ func main() {
     text := "sensitive data"
 
     // Use default certificate
-    encrypted, inputHash, outputHash, err := contract.HpcrTextEncrypted(text, "ccrt", "")
+    encrypted, inputHash, outputHash, err := contract.HpcrTextEncrypted(text, "ccrt", "", "")
     if err != nil {
         log.Fatal(err)
     }
@@ -1316,7 +1317,7 @@ func main() {
     privateKey := "...your private key..."
 
     // Use default certificate
-    encrypted, _, _, err := contract.HpcrTextEncrypted(text, "", cert)
+    encrypted, _, _, err := contract.HpcrTextEncrypted(text, "", "", cert)
     if err != nil {
         log.Fatal(err)
     }
@@ -1351,7 +1352,7 @@ Encrypts JSON data using the Confidential Computing encryption format.
 
 **Signature:**
 ```go
-func HpcrJsonEncrypted(plainJson, confidentialComputingOs, encryptionCertificate string) (string, string, string, error)
+func HpcrJsonEncrypted(plainJson, confidentialComputingOs, certVersion, encryptionCertificate string) (string, string, string, error)
 ```
 
 **Parameters:**
@@ -1360,7 +1361,8 @@ func HpcrJsonEncrypted(plainJson, confidentialComputingOs, encryptionCertificate
 |-----------|------|-------------------|-------------|
 | `plainJson` | `string` | Required | Valid JSON string to encrypt |
 | `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
-| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest CCRT as default if empty) |
+| `certVersion` | `string` | Optional | Certificate version (e.g., `"26.2.0"`, `"25.11.0"`). Uses latest if empty |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses default for platform if empty) |
 
 **Returns:**
 
@@ -1390,7 +1392,7 @@ func main() {
         }
     }`
 
-    encrypted, _, _, err := contract.HpcrJsonEncrypted(config, "ccrt", "")
+    encrypted, _, _, err := contract.HpcrJsonEncrypted(config, "ccrt", "", "")
     if err != nil {
         log.Fatal(err)
     }
@@ -1479,7 +1481,7 @@ Creates an encrypted Base64 TGZ archive from a directory.
 
 **Signature:**
 ```go
-func HpcrTgzEncrypted(folderPath, confidentialComputingOs, encryptionCertificate string) (string, string, string, error)
+func HpcrTgzEncrypted(folderPath, confidentialComputingOs, certVersion, encryptionCertificate string) (string, string, string, error)
 ```
 
 **Parameters:**
@@ -1488,7 +1490,8 @@ func HpcrTgzEncrypted(folderPath, confidentialComputingOs, encryptionCertificate
 |-----------|------|-------------------|-------------|
 | `folderPath` | `string` | Required | Path to folder with compose/pods files |
 | `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
-| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest CCRT as default if empty) |
+| `certVersion` | `string` | Optional | Certificate version (e.g., `"26.2.0"`, `"25.11.0"`). Uses latest if empty |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses default for platform if empty) |
 
 **Returns:**
 
@@ -1511,7 +1514,7 @@ import (
 )
 
 func main() {
-    encrypted, _, _, err := contract.HpcrTgzEncrypted("./compose", "ccrt", "")
+    encrypted, _, _, err := contract.HpcrTgzEncrypted("./compose", "ccrt", "", "")
     if err != nil {
         log.Fatal(err)
     }
@@ -1773,8 +1776,10 @@ MIIEpAIBAAKCAQEA...
     signedContract, inputHash, outputHash, err := contract.HpcrContractSignedEncrypted(
         contractYAML,
         "ccrt",
-        "",         // Use default certificate
+        "",          // Use default certificate version
+        "",          // Use embedded certificate
         privateKey,
+        "",          // No password
     )
     if err != nil {
         log.Fatalf("Failed to generate contract: %v", err)
@@ -1818,7 +1823,7 @@ Generates a signed and encrypted contract with time-based expiration using certi
 
 **Signature:**
 ```go
-func HpcrContractSignedEncryptedContractExpiry(contract, confidentialComputingOs, encryptionCertificate, privateKey, password, cacert, caKey, csrDataStr, csrPemData string, expiryDays int) (string, string, string, error)
+func HpcrContractSignedEncryptedContractExpiry(contract, confidentialComputingOs, certVersion, encryptionCertificate, privateKey, password, cacert, caKey, csrDataStr, csrPemData string, expiryDays int) (string, string, string, error)
 ```
 
 **Parameters:**
@@ -1827,7 +1832,8 @@ func HpcrContractSignedEncryptedContractExpiry(contract, confidentialComputingOs
 |-----------|------|-------------------|-------------|
 | `contract` | `string` | Required | YAML contract |
 | `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
-| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest CCRT as default if empty) |
+| `certVersion` | `string` | Optional | Certificate version (e.g., `"26.2.0"`, `"25.11.0"`). Uses latest if empty |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses default for platform if empty) |
 | `privateKey` | `string` | Required | RSA private key for signing |
 | `password` | `string` | Optional | Password for encrypted private key (empty string if private key is not encrypted) |
 | `cacert` | `string` | Required | CA certificate (PEM format) |
@@ -1898,6 +1904,7 @@ func main() {
     signedContract, _, _, err := contract.HpcrContractSignedEncryptedContractExpiry(
         contractYAML,
         "ccrt",
+        "",                // Default cert version
         "",                // Default encryption cert
         privateKey,
         "",                // No password for unencrypted key
@@ -1943,8 +1950,10 @@ func main() {
     signedContract, _, _, err := contract.HpcrContractSignedEncryptedContractExpiry(
         contractYAML,
         "ccrt",
-        "",
+        "",                // Default cert version
+        "",                // Default encryption cert
         privateKey,
+        "",                 // No password for unencrypted key
         caCert,
         caKey,
         "",                 // No CSR parameters
@@ -2163,8 +2172,10 @@ workload: |
     signedContract, inputHash, outputHash, err := contract.HpcrContractSignedEncrypted(
         contractYAML,
         "ccrt",
+        "",           // Default cert version
         cert,
         privateKey,
+        "",           // No password for unencrypted key
     )
     if err != nil {
         log.Fatal(err)
@@ -2255,8 +2266,10 @@ func main() {
     signedContract, inputHash, outputHash, err := contract.HpcrContractSignedEncryptedContractExpiry(
         contractYAML,
         "ccrt",
+        "",           // Default cert version
         "",           // Use default encryption cert
         privateKey,
+        "",           // No password for unencrypted key
         caCert,
         caKey,
         string(csrJSON),
@@ -2288,7 +2301,7 @@ import (
 func main() {
     // Encrypt plain text
     text := "Hello, Confidential Computing!"
-    encText, _, _, err := contract.HpcrTextEncrypted(text, "ccrt", "")
+    encText, _, _, err := contract.HpcrTextEncrypted(text, "ccrt", "", "")
     if err != nil {
         log.Fatal(err)
     }
@@ -2296,14 +2309,14 @@ func main() {
 
     // Encrypt JSON
     jsonData := `{"key": "value", "number": 42}`
-    encJSON, _, _, err := contract.HpcrJsonEncrypted(jsonData, "ccrt", "")
+    encJSON, _, _, err := contract.HpcrJsonEncrypted(jsonData, "ccrt", "", "")
     if err != nil {
         log.Fatal(err)
     }
     fmt.Printf("Encrypted JSON: %s\n", encJSON)
 
     // Encrypt TGZ archive
-    encTGZ, _, _, err := contract.HpcrTgzEncrypted("/path/to/compose/folder", "ccrt", "")
+    encTGZ, _, _, err := contract.HpcrTgzEncrypted("/path/to/compose/folder", "ccrt", "", "")
     if err != nil {
         log.Fatal(err)
     }
@@ -2362,7 +2375,7 @@ signedContract, _, _, err := contract.HpcrContractSignedEncrypted(...)
 
 4. **Use Checksums for Verification:**
 ```go
-encrypted, inputHash, outputHash, err := contract.HpcrTextEncrypted(data, "ccrt", "")
+encrypted, inputHash, outputHash, err := contract.HpcrTextEncrypted(data, "ccrt", "", "")
 if err != nil {
     return err
 }
@@ -2395,8 +2408,10 @@ import "github.com/ibm-hyper-protect/contract-go/v2/common/general"
 contract.HpcrContractSignedEncrypted(
     contractYAML,
     general.ConfidentialComputingOsCcrt,  // or "ccrt"
-    cert,
+    "",                                    // certVersion (empty for default)
+    "",                                    // encryptionCertificate (empty for embedded)
     privateKey,
+    "",                                    // password (empty if no password)
 )
 ```
 
