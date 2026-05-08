@@ -217,7 +217,8 @@ MIIEpAIBAAKCAQEA...
     signedContract, inputHash, outputHash, err := contract.HpcrContractSignedEncrypted(
         contractYAML,
         "ccrt",              // Platform type (ccrt, ccrv, or ccco)
-        "",                  // Use default encryption certificate
+        "",                  // Certificate version (empty for default)
+        "",                  // Encryption certificate (empty for embedded)
         privateKey,          // Your RSA private key
         "",                  // Password for encrypted private key (empty if not encrypted)
     )
@@ -262,9 +263,10 @@ MIIEpAIBAAKCAQEA...
     signedContract, inputHash, outputHash, err := contract.HpcrContractSignedEncrypted(
         contractYAML,
         "ccrt",
-        "",
+        "",                  // Certificate version (empty for default)
+        "",                  // Encryption certificate (empty for embedded)
         encryptedPrivateKey,
-        password,  // Provide password for encrypted private key
+        password,            // Provide password for encrypted private key
     )
     if err != nil {
         log.Fatal(err)
