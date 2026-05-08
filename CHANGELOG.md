@@ -4,7 +4,7 @@
 
 * addressed review comments ([53a6262](https://github.com/ibm-hyper-protect/contract-go/commit/53a62625add55b9907d6268840b4780bcf21700d))
 * Built-in store for n, n-1, n-2 encryption certs ([e221092](https://github.com/ibm-hyper-protect/contract-go/commit/e2210928468786abea638200f6cdbce815ccbd8b))
-* simplifying listenccertversions function ([131ef7d](https://github.com/ibm-hyper-protect/contract-go/commit/131ef7d1be1bc3088d820cee6adacbfe0af81893))
+* simplifying listenCertVersions function ([131ef7d](https://github.com/ibm-hyper-protect/contract-go/commit/131ef7d1be1bc3088d820cee6adacbfe0af81893))
 
 ## [2.21.2](https://github.com/ibm-hyper-protect/contract-go/compare/v2.21.1...v2.21.2) (2026-05-04)
 
@@ -22,7 +22,7 @@
 
 ### Features
 
-* add support for depdendabot ([fcdf70d](https://github.com/ibm-hyper-protect/contract-go/commit/fcdf70de7e96a359d124a4cb8917b11a0ad062e5))
+* add support for dependabot ([fcdf70d](https://github.com/ibm-hyper-protect/contract-go/commit/fcdf70de7e96a359d124a4cb8917b11a0ad062e5))
 
 ## [2.20.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.19.0...v2.20.0) (2026-04-24)
 
@@ -34,7 +34,7 @@
 
 * fix review comments ([e9258ff](https://github.com/ibm-hyper-protect/contract-go/commit/e9258ff948a63dad4aec1a3a8b99fc876bdbb0b9))
 * fixing review comments ([b343d69](https://github.com/ibm-hyper-protect/contract-go/commit/b343d69565bcec4e18a16a996e111f097b0b96a5))
-* update new naming appreviations ([6fb79c8](https://github.com/ibm-hyper-protect/contract-go/commit/6fb79c8064d0345a45f3fc25a10762d5712f0c5f))
+* update new naming abbreviations ([6fb79c8](https://github.com/ibm-hyper-protect/contract-go/commit/6fb79c8064d0345a45f3fc25a10762d5712f0c5f))
 
 ## [2.19.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.18.0...v2.19.0) (2026-04-15)
 
@@ -213,7 +213,7 @@
 ### Features
 
 * add support for attestation public key ([9a5cd17](https://github.com/ibm-hyper-protect/contract-go/commit/9a5cd174a7402a32542798f98d131412422aa1bf))
-* update go version and node versionm ([2bb0780](https://github.com/ibm-hyper-protect/contract-go/commit/2bb07806ce41df539a5c4ff5377dc6051bbc98e7))
+* update go version and node version ([2bb0780](https://github.com/ibm-hyper-protect/contract-go/commit/2bb07806ce41df539a5c4ff5377dc6051bbc98e7))
 
 ### Documentation
 
@@ -249,7 +249,7 @@
 
 * Added New TestCase for GzipInitdata function ([b0ab41b](https://github.com/ibm-hyper-protect/contract-go/commit/b0ab41b54940e17fbd0c926ddf683b59857ca5fe))
 * Initdata Support for HPCC Peerpod ([755d3da](https://github.com/ibm-hyper-protect/contract-go/commit/755d3da9d65858e454efc16dac558e1299178505))
-* Resloved the review comments ([58d562a](https://github.com/ibm-hyper-protect/contract-go/commit/58d562ab81f63228c60582f85eccdec4c55747ee))
+* Resolved the review comments ([58d562a](https://github.com/ibm-hyper-protect/contract-go/commit/58d562ab81f63228c60582f85eccdec4c55747ee))
 
 ### Tests
 
