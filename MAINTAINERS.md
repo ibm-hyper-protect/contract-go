@@ -101,7 +101,7 @@ We welcome community members who demonstrate consistent, high-quality contributi
 
 Maintainers who have stepped down or moved to emeritus status are recognized here for their contributions:
 
-_No emeritus maintainers at this time._
+1. Carsten Leue - [@CarstenLeue](https://github.com/CarstenLeue)
 
 ## Contact
 
