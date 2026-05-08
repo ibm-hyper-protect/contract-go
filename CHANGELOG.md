@@ -1,3 +1,19 @@
+## [2.23.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.22.0...v2.23.0) (2026-05-08)
+
+### Features
+
+* add Rohit Singh as official Maintainer ([cbd9fb6](https://github.com/ibm-hyper-protect/contract-go/commit/cbd9fb6045a9f79dbd66e96a6f34fd2a386b476c))
+* some more changes ([bbe21f8](https://github.com/ibm-hyper-protect/contract-go/commit/bbe21f84fdadf67926fc7a01e7073093205c84ae))
+
+### Bug Fixes
+
+* changelog spell mistakes ([d858efc](https://github.com/ibm-hyper-protect/contract-go/commit/d858efcf035465eee290d5a0b5d0be1b51826d7e))
+
+### Documentation
+
+* Add Carsten has Emeritus Maintainer ([961d0de](https://github.com/ibm-hyper-protect/contract-go/commit/961d0de50ab2cc4dc7c63457b44caf5cd5d97402))
+* Update README & user documentation ([26d02cc](https://github.com/ibm-hyper-protect/contract-go/commit/26d02cc704ddd005fd5615ecdcdad0fd99b85421))
+
 ## [2.22.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.21.2...v2.22.0) (2026-05-06)
 
 ### Features
