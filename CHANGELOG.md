@@ -1,3 +1,13 @@
+## [2.24.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.23.0...v2.24.0) (2026-05-22)
+
+### Features
+
+* add encryption cert for 26.5.0 ([f72991a](https://github.com/ibm-hyper-protect/contract-go/commit/f72991aff5aa000fdd6ee2af7a5e42d74601dc19))
+
+### Miscellaneous Chores
+
+* **deps:** update docker.io/library/hello-world docker digest to 0e760fd ([#232](https://github.com/ibm-hyper-protect/contract-go/issues/232)) ([b097ce1](https://github.com/ibm-hyper-protect/contract-go/commit/b097ce174a36a9e5fed78677cecab3b7ac8278c2))
+
 ## [2.23.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.22.0...v2.23.0) (2026-05-08)
 
 ### Features
