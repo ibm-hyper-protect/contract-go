@@ -1,3 +1,9 @@
+## [2.25.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.24.0...v2.25.0) (2026-05-22)
+
+### Features
+
+* Added ccrv latest version 26.5.0 ([f35a85c](https://github.com/ibm-hyper-protect/contract-go/commit/f35a85cdbc959dd01a8811e9d16f15f324a15d51))
+
 ## [2.24.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.23.0...v2.24.0) (2026-05-22)
 
 ### Features
