@@ -1,3 +1,9 @@
+## [2.26.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.25.0...v2.26.0) (2026-05-25)
+
+### Features
+
+* Support Sealed Secret Creation in Contract-go ([908c819](https://github.com/ibm-hyper-protect/contract-go/commit/908c819f585ab65635039e6df5ed998ddd3c703a))
+
 ## [2.25.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.24.0...v2.25.0) (2026-05-22)
 
 ### Features
