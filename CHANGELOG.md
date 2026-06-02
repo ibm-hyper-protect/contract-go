@@ -1,3 +1,9 @@
+## [2.27.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.26.0...v2.27.0) (2026-06-02)
+
+### Features
+
+* add encryption cert 26.4.0 for CCCO-1.2.1 ([39e9bda](https://github.com/ibm-hyper-protect/contract-go/commit/39e9bda392222a1886f83a34fff8a762b2e20410))
+
 ## [2.26.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.25.0...v2.26.0) (2026-05-25)
 
 ### Features
