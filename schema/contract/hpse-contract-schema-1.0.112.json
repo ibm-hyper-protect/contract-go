@@ -41,6 +41,9 @@
           "title": "Workload",
           "description": "Specification of application portions.",
           "properties": {
+            "compose": {
+              "$ref": "#/allOf/1/$defs/compose"
+            },
             "play": {
               "$ref": "#/allOf/1/$defs/play"
             },
@@ -52,6 +55,12 @@
             }
           },
           "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "compose"
+              ]
+            },
             {
               "type": "object",
               "required": [
@@ -81,6 +90,20 @@
               "VARIABLE": "value",
               "PORT": "value"
             }
+          ]
+        },
+        "compose": {
+          "type": "object",
+          "title": "Docker Compose",
+          "description": "Specification of configuration options for docker compose.",
+          "properties": {
+            "archive": {
+              "$ref": "#/allOf/1/$defs/tgz"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "archive"
           ]
         },
         "play": {
@@ -7474,6 +7497,62 @@
               }
             }
           }
+        },
+        {
+          "env": {
+            "volumes": {
+              "test": {
+                "seed": "ThisIsAValidEnv123",
+                "grep11": {
+                  "address": "grep11-server.example.com:9876",
+                  "clientCert": "Q0VSVA==",
+                  "clientKey": "S0VZ",
+                  "caCert": "Q0E=",
+                  "metadata": {
+                    "aesKeyBlob": "Qk9MQg=="
+                  }
+                }
+              }
+            }
+          },
+          "workload": {
+            "volumes": {
+              "test": {
+                "mount": "/mnt/data",
+                "filesystem": "ext4",
+                "seed": "ThisIsAValidWorkload123"
+              }
+            }
+          }
+        },
+        {
+          "env": {
+            "volumes": {
+              "test": {
+                "uv-secret-id": "index-1",
+                "uv-previous-secret-id": "index-2",
+                "grep11": {
+                  "address": "grep11-server.example.com:9876",
+                  "clientCert": "Q0VSVA==",
+                  "clientKey": "S0VZ",
+                  "caCert": "Q0E=",
+                  "metadata": {
+                    "aesKeyBlob": "Qk9MQg==",
+                    "previousaesKeyBlob": "UFJFVkJPTEI="
+                  }
+                }
+              }
+            }
+          },
+          "workload": {
+            "volumes": {
+              "test": {
+                "mount": "/mnt/data",
+                "filesystem": "ext4",
+                "seed": "ThisIsAValidWorkload123"
+              }
+            }
+          }
         }
       ],
       "$defs": {
@@ -7537,6 +7616,20 @@
                 "volumeID": "ICIC UUID",
                 "seed": "ThisIsAValidPass123"
               }
+            },
+            {
+              "test": {
+                "uv-secret-id": "index-1",
+                "grep11": {
+                  "address": "grep11-server.example.com:9876",
+                  "clientCert": "Q0VSVA==",
+                  "clientKey": "S0VZ",
+                  "caCert": "Q0E=",
+                  "metadata": {
+                    "aesKeyBlob": "Qk9MQg=="
+                  }
+                }
+              }
             }
           ]
         },
@@ -7551,8 +7644,17 @@
             "previousSeed": {
               "$ref": "#/allOf/3/$defs/previousSeed"
             },
+            "uv-secret-id": {
+              "$ref": "#/allOf/3/$defs/uvSecretId"
+            },
+            "uv-previous-secret-id": {
+              "$ref": "#/allOf/3/$defs/uvPreviousSecretId"
+            },
             "kms": {
               "$ref": "#/allOf/3/$defs/kms"
+            },
+            "grep11": {
+              "$ref": "#/allOf/3/$defs/grep11Endpoint"
             },
             "kmsTimeout": {
               "$ref": "#/allOf/3/$defs/kmsTimeout"
@@ -7567,8 +7669,17 @@
               "$ref": "#/allOf/3/$defs/volumeID"
             }
           },
-          "required": [
-            "seed"
+          "oneOf": [
+            {
+              "required": [
+                "seed"
+              ]
+            },
+            {
+              "required": [
+                "uv-secret-id"
+              ]
+            }
           ],
           "additionalProperties": false
         },
@@ -7617,6 +7728,28 @@
             "ThisIsAValidPass123",
             "mypassword!@#2024",
             "1234567890ABCDEF"
+          ]
+        },
+        "uvSecretId": {
+          "type": "string",
+          "title": "UV Secret ID",
+          "description": "Reference to UV secret index for volume encryption",
+          "pattern": "^index-[1-8]$",
+          "examples": [
+            "index-1",
+            "index-2",
+            "index-8"
+          ]
+        },
+        "uvPreviousSecretId": {
+          "type": "string",
+          "title": "UV Previous Secret ID",
+          "description": "Reference to previous UV secret index for volume re-encryption",
+          "pattern": "^index-[1-8]$",
+          "examples": [
+            "index-1",
+            "index-2",
+            "index-8"
           ]
         },
         "filesystem": {
@@ -7681,30 +7814,93 @@
           "minItems": 1,
           "maxItems": 5,
           "items": {
-            "type": "object",
-            "properties": {
-              "apiKey": {
-                "$ref": "#/allOf/3/$defs/apiKey"
-              },
-              "crn": {
-                "$ref": "#/allOf/3/$defs/crn"
-              },
-              "type": {
-                "type": "string",
-                "description": "Type of endpoint to use, e.g. 'public' or 'private'.",
-                "enum": [
-                  "public",
-                  "private"
-                ],
-                "default": "public"
-              }
-            },
-            "required": [
-              "apiKey",
-              "crn"
-            ],
-            "additionalProperties": false
+            "$ref": "#/allOf/3/$defs/kmsEndpoint"
           }
+        },
+        "grep11": {
+          "$ref": "#/allOf/3/$defs/grep11Endpoint"
+        },
+        "kmsEndpoint": {
+          "type": "object",
+          "properties": {
+            "apiKey": {
+              "$ref": "#/allOf/3/$defs/apiKey"
+            },
+            "crn": {
+              "$ref": "#/allOf/3/$defs/crn"
+            },
+            "type": {
+              "type": "string",
+              "description": "Type of endpoint to use, e.g. 'public' or 'private'.",
+              "enum": [
+                "public",
+                "private"
+              ],
+              "default": "public"
+            }
+          },
+          "required": [
+            "apiKey",
+            "crn"
+          ],
+          "additionalProperties": false
+        },
+        "grep11Endpoint": {
+          "type": "object",
+          "properties": {
+            "address": {
+              "$ref": "#/allOf/3/$defs/grep11Address"
+            },
+            "clientCert": {
+              "$ref": "#/allOf/3/$defs/base64Material"
+            },
+            "clientKey": {
+              "$ref": "#/allOf/3/$defs/base64Material"
+            },
+            "caCert": {
+              "$ref": "#/allOf/3/$defs/base64Material"
+            },
+            "metadata": {
+              "$ref": "#/allOf/3/$defs/grep11Metadata"
+            }
+          },
+          "required": [
+            "address",
+            "clientCert",
+            "clientKey",
+            "caCert",
+            "metadata"
+          ],
+          "additionalProperties": false
+        },
+        "grep11Metadata": {
+          "type": "object",
+          "properties": {
+            "aesKeyBlob": {
+              "$ref": "#/allOf/3/$defs/base64Material"
+            },
+            "previousaesKeyBlob": {
+              "$ref": "#/allOf/3/$defs/base64Material"
+            }
+          },
+          "required": [
+            "aesKeyBlob"
+          ],
+          "allOf": [
+            {
+              "if": {
+                "required": [
+                  "previousaesKeyBlob"
+                ]
+              },
+              "then": {
+                "required": [
+                  "aesKeyBlob"
+                ]
+              }
+            }
+          ],
+          "additionalProperties": false
         },
         "apiKey": {
           "type": "string",
@@ -7722,6 +7918,26 @@
           "pattern": "^crn:(v\\d+):(bluemix|staging):(public|dedicated|local):([^:]+):([^:]+):([^:]+):([^:]+):key:(.+)$",
           "examples": [
             "crn:v1:bluemix:public:hs-crypto:us-south:a/b3crnexampleaf4a09142ad425fhjuyee8:cbe0caff-cfb6-4082-b0ae-c31bc3164bd7:key:795b174c-d6dd-4example-crn-1f78152juf35"
+          ]
+        },
+        "grep11Address": {
+          "type": "string",
+          "title": "GREP11 server address",
+          "description": "GREP11 server address in format hostname:port or IP:port.",
+          "pattern": "^((([a-zA-Z0-9-]+\\.)*[a-zA-Z0-9-]+)|((25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})(\\.(25[0-5]|2[0-4][0-9]|1?[0-9]{1,2})){3})):[0-9]{1,5}$",
+          "examples": [
+            "grep11-server.example.com:9876",
+            "192.168.1.100:9876"
+          ]
+        },
+        "base64Material": {
+          "type": "string",
+          "title": "Base64 material",
+          "description": "Base64-encoded certificate, key, or wrapped AES blob material.",
+          "minLength": 1,
+          "pattern": "^[A-Za-z0-9+/=]+$",
+          "examples": [
+            "QkFTRTY0X0RBVEE="
           ]
         },
         "kmsTimeout": {
