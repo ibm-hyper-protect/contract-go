@@ -41,9 +41,6 @@
           "title": "Workload",
           "description": "Specification of application portions.",
           "properties": {
-            "compose": {
-              "$ref": "#/allOf/1/$defs/compose"
-            },
             "play": {
               "$ref": "#/allOf/1/$defs/play"
             },
@@ -55,12 +52,6 @@
             }
           },
           "oneOf": [
-            {
-              "type": "object",
-              "required": [
-                "compose"
-              ]
-            },
             {
               "type": "object",
               "required": [
@@ -90,20 +81,6 @@
               "VARIABLE": "value",
               "PORT": "value"
             }
-          ]
-        },
-        "compose": {
-          "type": "object",
-          "title": "Docker Compose",
-          "description": "Specification of configuration options for docker compose.",
-          "properties": {
-            "archive": {
-              "$ref": "#/allOf/1/$defs/tgz"
-            }
-          },
-          "additionalProperties": false,
-          "required": [
-            "archive"
           ]
         },
         "play": {
