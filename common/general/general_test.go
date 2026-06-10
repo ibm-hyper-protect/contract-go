@@ -365,7 +365,7 @@ func TestVerifyContractWithSchema(t *testing.T) {
 		t.Errorf("failed to read contract - %v", err)
 	}
 
-	err = VerifyContractWithSchema(contract, "")
+	err = VerifyContractWithSchema(contract, "", "")
 	if err != nil {
 		t.Errorf("schema verification failed - %v", err)
 	}
@@ -378,7 +378,7 @@ func TestVerifyContractWithSchemaInvalid(t *testing.T) {
 		t.Errorf("failed to read contract - %v", err)
 	}
 
-	err = VerifyContractWithSchema(contract, "")
+	err = VerifyContractWithSchema(contract, "", "")
 
 	assert.Error(t, err)
 }
@@ -730,7 +730,7 @@ func TestVerifyContractWithSchemaValidConfidentialContainers(t *testing.T) {
 	}
 
 	// This SHOULD pass because all required fields are present
-	err = VerifyContractWithSchema(contract, "ccco")
+	err = VerifyContractWithSchema(contract, "ccco", "")
 
 	assert.NoError(t, err, "Validation should pass when all required fields are present")
 }
@@ -743,7 +743,7 @@ func TestVerifyContractWithSchemaMissingRegoValidator(t *testing.T) {
 		t.Errorf("failed to read contract - %v", err)
 	}
 
-	err = VerifyContractWithSchema(contract, "ccco")
+	err = VerifyContractWithSchema(contract, "ccco", "")
 
 	assert.Error(t, err, "Validation should fail when regoValidator is missing")
 	assert.Contains(t, err.Error(), "regoValidator", "Error message should mention regoValidator")
@@ -757,7 +757,7 @@ func TestVerifyContractWithSchemaMissingRegoValidatorPolicy(t *testing.T) {
 		t.Errorf("failed to read contract - %v", err)
 	}
 
-	err = VerifyContractWithSchema(contract, "ccco")
+	err = VerifyContractWithSchema(contract, "ccco", "")
 
 	assert.Error(t, err, "Validation should fail when regoValidator.policy is missing")
 	assert.Contains(t, err.Error(), "policy", "Error message should mention policy")
