@@ -6,6 +6,8 @@ on:
       - main
 
   pull_request:
+    branches:
+      - main
 
   workflow_dispatch:
     inputs:
@@ -21,6 +23,130 @@ env:
   NODE_VERSION: 25.5.0
 
 jobs:
+  verify-commit-signatures:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Verify new commits are signed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Verifying commit signatures"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          
+          # Determine which commits to check based on event type
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "Event: Pull Request #${{ github.event.pull_request.number }}"
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            COMMITS=$(git rev-list $BASE_SHA..$HEAD_SHA)
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            echo "Event: Push to ${{ github.ref_name }}"
+            # For push events, check commits in this push
+            BEFORE="${{ github.event.before }}"
+            AFTER="${{ github.event.after }}"
+            
+            # Handle initial push (no before commit)
+            if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
+              # First push to branch - check only the latest commit
+              COMMITS="${AFTER}"
+            else
+              # Get commits between before and after
+              COMMITS=$(git rev-list $BEFORE..$AFTER)
+            fi
+          else
+            echo "Event: ${{ github.event_name }}"
+            # For other events, check HEAD commit only
+            COMMITS="${{ github.sha }}"
+          fi
+          
+          COMMIT_COUNT=$(echo "$COMMITS" | wc -l | tr -d ' ')
+          echo "Commits to verify: $COMMIT_COUNT"
+          echo ""
+          
+          UNSIGNED_COMMITS=()
+          VERIFIED_COUNT=0
+          FAILED_COUNT=0
+          
+          # Check each commit
+          for commit in $COMMITS; do
+            SHORT_SHA=$(echo $commit | cut -c1-7)
+            COMMIT_MSG=$(git log --format=%s -n 1 $commit)
+            AUTHOR=$(git log --format='%an <%ae>' -n 1 $commit)
+            
+            # Use GitHub API to check verification status
+            VERIFICATION=$(gh api repos/${{ github.repository }}/commits/$commit --jq '.commit.verification')
+            VERIFIED=$(echo "$VERIFICATION" | jq -r '.verified')
+            REASON=$(echo "$VERIFICATION" | jq -r '.reason')
+            
+            if [ "$VERIFIED" = "true" ]; then
+              echo "$SHORT_SHA - Signed and verified"
+              echo "   Author: $AUTHOR"
+              echo "   Message: $COMMIT_MSG"
+              VERIFIED_COUNT=$((VERIFIED_COUNT + 1))
+            else
+              echo "$SHORT_SHA - NOT SIGNED or verification failed"
+              echo "   Author: $AUTHOR"
+              echo "   Message: $COMMIT_MSG"
+              echo "   Reason: $REASON"
+              UNSIGNED_COMMITS+=("$SHORT_SHA")
+              FAILED_COUNT=$((FAILED_COUNT + 1))
+            fi
+            echo ""
+          done
+          
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Summary:"
+          echo "   Verified commits: $VERIFIED_COUNT"
+          echo "   Unsigned commits: $FAILED_COUNT"
+          echo ""
+          
+          if [ $FAILED_COUNT -gt 0 ]; then
+            echo "VERIFICATION FAILED!"
+            echo ""
+            echo "The following commits are not signed:"
+            for commit in "${UNSIGNED_COMMITS[@]}"; do
+              echo "  - $commit"
+            done
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "How to sign commits:"
+            echo ""
+            echo "1. Generate a GPG key (if you don't have one):"
+            echo "   gpg --full-generate-key"
+            echo ""
+            echo "2. List your GPG keys:"
+            echo "   gpg --list-secret-keys --keyid-format=long"
+            echo ""
+            echo "3. Export your public key:"
+            echo "   gpg --armor --export YOUR_KEY_ID"
+            echo ""
+            echo "4. Add the public key to GitHub:"
+            echo "   Settings → SSH and GPG keys → New GPG key"
+            echo ""
+            echo "5. Configure Git to sign commits:"
+            echo "   git config --global user.signingkey YOUR_KEY_ID"
+            echo "   git config --global commit.gpgsign true"
+            echo ""
+            echo "6. Sign your commits:"
+            echo "   git commit -S -m \"your message\""
+            echo ""
+            echo "For more information, visit:"
+            echo "https://docs.github.com/en/authentication/managing-commit-signature-verification"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            exit 1
+          fi
+          
+          echo "All new commits are properly signed and verified!"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
   commit-lint:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
