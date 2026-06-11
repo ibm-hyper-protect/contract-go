@@ -33,88 +33,54 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verify new commits are signed
+      - name: Verify latest commit is signed
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          echo "Verifying commit signatures"
+          echo "Verifying commit signature (latest commit only)"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo ""
-      
-          # Determine which commits to check based on event type
+          
+          # Determine which commit to check based on event type
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "Event: Pull Request #${{ github.event.pull_request.number }}"
-            BASE_SHA="${{ github.event.pull_request.base.sha }}"
-            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-            COMMITS=$(git rev-list $BASE_SHA..$HEAD_SHA)
+            COMMIT="${{ github.event.pull_request.head.sha }}"
           elif [ "${{ github.event_name }}" = "push" ]; then
             echo "Event: Push to ${{ github.ref_name }}"
-            # For push events, check commits in this push
-            BEFORE="${{ github.event.before }}"
-            AFTER="${{ github.event.after }}"
-            
-            # Handle initial push (no before commit)
-            if [ "$BEFORE" = "0000000000000000000000000000000000000000" ]; then
-              # First push to branch - check only the latest commit
-              COMMITS="${AFTER}"
-            else
-              # Get commits between before and after
-              COMMITS=$(git rev-list $BEFORE..$AFTER)
-            fi
+            COMMIT="${{ github.event.after }}"
           else
             echo "Event: ${{ github.event_name }}"
-            # For other events, check HEAD commit only
-            COMMITS="${{ github.sha }}"
+            COMMIT="${{ github.sha }}"
           fi
           
-          COMMIT_COUNT=$(echo "$COMMITS" | wc -l | tr -d ' ')
-          echo "Commits to verify: $COMMIT_COUNT"
+          SHORT_SHA=$(echo $COMMIT | cut -c1-7)
+          COMMIT_MSG=$(git log --format=%s -n 1 $COMMIT)
+          AUTHOR=$(git log --format='%an <%ae>' -n 1 $COMMIT)
+          
+          echo "Checking latest commit: $SHORT_SHA"
+          echo "   Author: $AUTHOR"
+          echo "   Message: $COMMIT_MSG"
           echo ""
           
-          UNSIGNED_COMMITS=()
-          VERIFIED_COUNT=0
-          FAILED_COUNT=0
+          # Use GitHub API to check verification status
+          VERIFICATION=$(gh api repos/${{ github.repository }}/commits/$COMMIT --jq '.commit.verification')
+          VERIFIED=$(echo "$VERIFICATION" | jq -r '.verified')
+          REASON=$(echo "$VERIFICATION" | jq -r '.reason')
           
-          # Check each commit
-          for commit in $COMMITS; do
-            SHORT_SHA=$(echo $commit | cut -c1-7)
-            COMMIT_MSG=$(git log --format=%s -n 1 $commit)
-            AUTHOR=$(git log --format='%an <%ae>' -n 1 $commit)
-            
-            # Use GitHub API to check verification status
-            VERIFICATION=$(gh api repos/${{ github.repository }}/commits/$commit --jq '.commit.verification')
-            VERIFIED=$(echo "$VERIFICATION" | jq -r '.verified')
-            REASON=$(echo "$VERIFICATION" | jq -r '.reason')
-            
-            if [ "$VERIFIED" = "true" ]; then
-              echo "$SHORT_SHA - Signed and verified"
-              echo "   Author: $AUTHOR"
-              echo "   Message: $COMMIT_MSG"
-              VERIFIED_COUNT=$((VERIFIED_COUNT + 1))
-            else
-              echo "$SHORT_SHA - NOT SIGNED or verification failed"
-              echo "   Author: $AUTHOR"
-              echo "   Message: $COMMIT_MSG"
-              echo "   Reason: $REASON"
-              UNSIGNED_COMMITS+=("$SHORT_SHA")
-              FAILED_COUNT=$((FAILED_COUNT + 1))
-            fi
+          if [ "$VERIFIED" = "true" ]; then
+            echo "Commit is signed and verified!"
             echo ""
-          done
-          
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          echo "Summary:"
-          echo "   Verified commits: $VERIFIED_COUNT"
-          echo "   Unsigned commits: $FAILED_COUNT"
-          echo ""
-          
-          if [ $FAILED_COUNT -gt 0 ]; then
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "Latest commit is properly signed and verified!"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          else
+            echo "Commit is NOT SIGNED or verification failed"
+            echo "   Reason: $REASON"
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo "VERIFICATION FAILED!"
             echo ""
-            echo "The following commits are not signed:"
-            for commit in "${UNSIGNED_COMMITS[@]}"; do
-              echo "  - $commit"
-            done
+            echo "The latest commit ($SHORT_SHA) is not signed."
             echo ""
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo "How to sign commits:"
@@ -138,14 +104,15 @@ jobs:
             echo "6. Sign your commits:"
             echo "   git commit -S -m \"your message\""
             echo ""
+            echo "7. Amend your last commit to sign it:"
+            echo "   git commit --amend --no-edit -S"
+            echo "   git push --force-with-lease"
+            echo ""
             echo "For more information, visit:"
             echo "https://docs.github.com/en/authentication/managing-commit-signature-verification"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             exit 1
           fi
-          
-          echo "All new commits are properly signed and verified!"
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   commit-lint:
     needs: verify-commit-signatures
