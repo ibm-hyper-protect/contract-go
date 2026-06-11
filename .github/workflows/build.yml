@@ -148,6 +148,7 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
   commit-lint:
+    needs: verify-commit-signatures
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     permissions:
@@ -195,6 +196,8 @@ jobs:
           echo "Commit message is valid!"
 
   build:
+    needs: [verify-commit-signatures, commit-lint]
+    if: always() && (needs.verify-commit-signatures.result == 'success') && (needs.commit-lint.result == 'success' || needs.commit-lint.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: read
