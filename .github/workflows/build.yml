@@ -40,7 +40,7 @@ jobs:
           echo "Verifying commit signature (latest commit only)"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo ""
-          
+        
           # Determine which commit to check based on event type
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "Event: Pull Request #${{ github.event.pull_request.number }}"
