@@ -9,6 +9,7 @@ Thank you for considering contributing to `contract-go`! We appreciate your time
 - [Getting Started](#getting-started)
 - [Development Workflow](#development-workflow)
 - [Coding Standards](#coding-standards)
+- [Commit Signing](#commit-signing)
 - [Commit Messages](#commit-messages)
 - [Pull Request Process](#pull-request-process)
 - [Testing](#testing)
@@ -213,6 +214,137 @@ func HpcrContractSignedEncrypted(contract, confidentialComputingOs, encryptionCe
     // Implementation
 }
 ```
+
+## Commit Signing
+
+**All commits to this repository MUST be signed with GPG or SSH keys.** This ensures the authenticity and integrity of code contributions.
+
+### Why Commit Signing?
+
+- **Authentication**: Proves commits are from legitimate team members
+- **Integrity**: Detects if commits have been tampered with
+- **Non-repudiation**: Authors cannot deny making signed commits
+- **Compliance**: Meets security requirements for regulated industries
+
+### Quick Setup
+
+#### Option 1: GPG Signing (Recommended)
+
+**1. Generate GPG Key**
+```bash
+gpg --full-generate-key
+```
+- Select: `(1) RSA and RSA`
+- Key size: `4096` bits
+- Expiration: `1y` (1 year recommended)
+- Enter your name and **GitHub email address**
+
+**2. Get Your Key ID**
+```bash
+gpg --list-secret-keys --keyid-format=long
+```
+Your key ID is after `rsa4096/` (e.g., `3AA5C34371567BD2`)
+
+**3. Export Public Key**
+```bash
+gpg --armor --export YOUR_KEY_ID
+```
+Copy the entire output (including BEGIN and END lines)
+
+**4. Add to GitHub**
+- Go to: https://github.com/settings/keys
+- Click "New GPG key"
+- Paste your public key
+- Click "Add GPG key"
+
+**5. Configure Git (Local - This Repo Only)**
+```bash
+cd contract-go
+git config --local commit.gpgsign true
+git config --local user.signingkey YOUR_KEY_ID
+git config --local user.email "your-github-email@example.com"
+```
+
+**6. Fix GPG TTY Issue (macOS/Linux)**
+```bash
+echo 'export GPG_TTY=$(tty)' >> ~/.zshrc  # or ~/.bashrc
+source ~/.zshrc
+```
+
+#### Option 2: SSH Signing (Git 2.34+)
+
+**1. Generate SSH Key** (if you don't have one)
+```bash
+ssh-keygen -t ed25519 -C "your-github-email@example.com"
+```
+
+**2. Add to GitHub**
+- Copy your public key: `cat ~/.ssh/id_ed25519.pub`
+- Go to: https://github.com/settings/keys
+- Click "New SSH key"
+- Select "Signing Key" as type
+- Paste your public key
+
+**3. Configure Git (Local - This Repo Only)**
+```bash
+cd contract-go
+git config --local gpg.format ssh
+git config --local user.signingkey ~/.ssh/id_ed25519.pub
+git config --local commit.gpgsign true
+```
+
+### Making Signed Commits
+
+Once configured, commits are signed automatically:
+```bash
+git commit -m "feat: add new feature"
+```
+
+Or explicitly sign:
+```bash
+git commit -S -m "feat: add new feature"
+```
+
+### Verify Your Commit is Signed
+
+```bash
+# Check last commit
+git log --show-signature -1
+
+# Should show:
+# gpg: Good signature from "Your Name <your-email@example.com>"
+```
+
+### Troubleshooting
+
+#### "gpg failed to sign the data"
+```bash
+export GPG_TTY=$(tty)
+git commit -m "your message"
+```
+
+#### Email Mismatch
+Ensure your Git email matches your GPG key email:
+```bash
+git config --local user.email "your-github-email@example.com"
+```
+
+#### Sign Previous Commit
+```bash
+git commit --amend --no-edit -S
+git push --force-with-lease
+```
+
+### Important Notes
+
+- **Local configuration only**: Signing is enabled only for this repository
+- **Other repos unaffected**: Your other repositories won't require signing
+- **Pipeline enforcement**: PRs with unsigned commits will fail CI/CD checks
+- **Squash and merge**: Only the latest commit needs to be signed
+
+### Need Help?
+
+See detailed guide: [COMMIT_SIGNING.md](COMMIT_SIGNING.md)
 
 ## Commit Messages
 
