@@ -40,7 +40,7 @@ jobs:
           echo "Verifying commit signatures"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo ""
-          
+      
           # Determine which commits to check based on event type
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             echo "Event: Pull Request #${{ github.event.pull_request.number }}"
