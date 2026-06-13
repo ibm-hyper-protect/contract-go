@@ -70,6 +70,7 @@ Learn more:
 
 - **Contract Generation**
   - Generate Base64-encoded data from text, JSON, initdata annotation and docker compose / podman play archives
+  - Generate gzipped and encoded initdata for IBM Confidential Computing Container For Red Hat OpenShift Container Platform. Supports both Peerpod and Baremetal solution
   - Create signed and encrypted & signed contracts
   - Support contract expiry with CSR (Certificate Signing Request)
   - Load built-in workload and env contract templates

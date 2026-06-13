@@ -1997,20 +1997,20 @@ func main() {
 
 ### HpccInitdata
 
-Generates gzipped and encoded initdata string.
-
+Generates gzipped and encoded initdata string. Supports for both peerpod and baremetal solution
 **Package:** `github.com/ibm-hyper-protect/contract-go/v2/contract`
 
 **Signature:**
 ```go
-func HpccInitdata(contract string) (string, string, string, error)
+func HpccInitdata(contract, encodedHdrBin string) (string, string, string, error)
 ```
 
 **Parameters:**
 
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
-| `contract`| `string`| `Required`| Yaml contract |
+| `contract`| `string`| `Required`| Signed and encrypted YAML contract |
+| `encodedHdrBin`| `string`| `Optional`| Base64-encoded SE header for baremetal solution. Pass empty string `""` for peerpod solution |
 
 **Returns:**
 
@@ -2021,38 +2021,79 @@ func HpccInitdata(contract string) (string, string, string, error)
 | Output Checksum | `string` | SHA256 of gzipped & encoded initdata string |
 | Error | `error` | Error if validation, zipping or encoding fails |
 
-**Example:**
+**Example 1: Peerpod Solution (Without SE Header)**
 ```go
 package main
 
 import (
     "fmt"
     "log"
-    "os"
 
     "github.com/ibm-hyper-protect/contract-go/v2/contract"
 )
 
 func main() {
-    contractYAML := `...your contract...`
+    contractYAML := `...your signed and encrypted contract...`
 
-    encodedString, _, _, err := contract.HpccInitdata(
-       contractYAML
+    // Pass empty string for encodedHdrBin for standard deployments
+    encodedString, inputHash, outputHash, err := contract.HpccInitdata(
+        contractYAML,
+        "", // No SE header for standard deployment
     )
     if err != nil {
         log.Fatal(err)
     }
 
     fmt.Printf("Gzipped & Encoded initdata string is generated!\n")
+    fmt.Printf("Input SHA256: %s\n", inputHash)
+    fmt.Printf("Output SHA256: %s\n", outputHash)
 }
 ```
+
+**Example 2: Baremetal Solution (With SE Header)**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+)
+
+func main() {
+    contractYAML := `...your signed and encrypted contract...`
+    
+    // Base64-encoded SE header for baremetal deployment
+    encodedHdrBin := "VGVzdCBiYXNlNjQgaGVkZXIgb2YgaW1hZ2UgZ2V0dGluZyB1c2VkCg=="
+
+    encodedString, inputHash, outputHash, err := contract.HpccInitdata(
+        contractYAML,
+        encodedHdrBin, // Provide base64-encoded SE header for baremetal deployment
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("Gzipped & Encoded initdata string with SE header is generated!\n")
+    fmt.Printf("Input SHA256: %s\n", inputHash)
+    fmt.Printf("Output SHA256: %s\n", outputHash)
+}
+```
+
 **Supported Platforms:**
-- HPCC Peer Pod (Hyper Protect Confidential Container Peer Pods)'
+- CCCO (IBM Confidential Computing Containers for Red Hat OpenShift Container Platform).
+- Supports for both Peerpod and Baremetal Solutions.
+
+**Template Selection:**
+- When `encodedHdrBin` is empty: Uses standard TOML template without sehdr bin 
+- When `encodedHdrBin` is provided: Uses standard TOML template with `boot: | sehdr:` section containing the base64-encoded SE header
 
 **Common Errors:**
+- `"required parameter is empty"` - Contract parameter is empty
 - `"failed while parsing the template toml"` - Error while parsing the template initdata toml file
 - `"failed while creating initdata.toml"` - Failed while replacing encrypted contract in initdata.toml file
-- `"failed while gzipping initdata"` - Failed while compressing the content of inidata.toml file
+- `"failed while gzipping initdata"` - Failed while compressing the content of initdata.toml file
 
 
 ---

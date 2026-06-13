@@ -69,7 +69,9 @@ const (
 	decryptedTextSha   = "afa27b44d43b02a9fea41d13cedc2e4016cfcf87c5dbf990e593669aa8ce286d"
 
 	sampleSignedEncryptedContract              = "../samples/ccco/signed-encrypt-ccco.yaml"
-	sampleGzippedInidata                       = "../samples/ccco/gzipped-initdata"
+	sampleGzippedInitdata                      = "../samples/ccco/gzipped-initdata"
+	sampleBase64EndcodedHeaderString           = "VGVzdCBiYXNlNjQgaGVkZXIgb2YgaW1hZ2UgZ2V0dGluZyB1c2VkCg=="
+	sampleBaremetalGzippedInitdata             = "../samples/ccco/baremetal-gzipped-initdata"
 	sampleSingedEncryptedContractInputChecksum = "1b6ee574d6061896c23fad0711d1a89b8d9b7748506ab089201db1335605daea"
 
 	sampleCertificate = "../encryption/ccrt/ibm-confidential-computing-container-runtime-26.2.0-encrypt.crt"
@@ -403,12 +405,12 @@ func TestHpccInitdata(t *testing.T) {
 		t.Errorf("failed to read content from encrypted contract - %v", err)
 	}
 
-	encodedString, inputCheckSum, _, err := HpccInitdata(inputData)
+	encodedString, inputCheckSum, _, err := HpccInitdata(inputData, "")
 	if err != nil {
 		t.Errorf("failed to gzipped encoded initdata - %v", err)
 	}
 
-	expectedGzippedInitdata, err := gen.ReadDataFromFile(sampleGzippedInidata)
+	expectedGzippedInitdata, err := gen.ReadDataFromFile(sampleGzippedInitdata)
 	if err != nil {
 		t.Errorf("failed to read gzipped-initdata file - %v", err)
 	}
@@ -417,9 +419,34 @@ func TestHpccInitdata(t *testing.T) {
 	assert.Equal(t, sampleSingedEncryptedContractInputChecksum, inputCheckSum, "Checksum does not match with expected input checksum of encrypted contract")
 }
 
+// Testcase to check HpccInitdata() is able to gzip data with HDR binary(sehdr bin).
+func TestHpccInitdataWithHdrBinary(t *testing.T) {
+	if !gen.CheckFileFolderExists(sampleSignedEncryptedContract) {
+		t.Errorf("failed, file does not exits on defined path")
+	}
+
+	inputData, err := gen.ReadDataFromFile(sampleSignedEncryptedContract)
+	if err != nil {
+		t.Errorf("failed to read content from encrypted contract - %v", err)
+	}
+
+	encodedString, inputCheckSum, _, err := HpccInitdata(inputData, sampleBase64EndcodedHeaderString)
+	if err != nil {
+		t.Errorf("failed to gzipped encoded initdata with HDR binary - %v", err)
+	}
+
+	expectedBaremetalGzippedInitdata, err := gen.ReadDataFromFile(sampleBaremetalGzippedInitdata)
+	if err != nil {
+		t.Errorf("failed to read baremetal-gzipped-initdata file - %v", err)
+	}
+
+	assert.Equal(t, expectedBaremetalGzippedInitdata, encodedString, "Encoded gzipped initdata string with HDR binary does not match with expected baremetal gzipped initdata")
+	assert.Equal(t, sampleSingedEncryptedContractInputChecksum, inputCheckSum, "Checksum does not match with expected input checksum of encrypted contract")
+}
+
 // Testcase to check HpccInitdata() is able to handle empty contract case.
 func TestHpccInitdataEmptyContract(t *testing.T) {
-	_, _, _, err := HpccInitdata("")
+	_, _, _, err := HpccInitdata("", "")
 	assert.EqualError(t, err, emptyParameterErrStatement)
 }
 

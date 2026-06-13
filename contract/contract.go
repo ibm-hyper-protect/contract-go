@@ -39,14 +39,31 @@ const (
 	envTemplateFilePath      = "env.yaml"
 )
 
-// HPCC initdata.toml file template.
+// HPCC initdata.toml file template without sehdr bin.
 const tomlTemplate = `
 algorithm = "sha384"
 version = "0.1.0"
 
 [data]
-"contract.yaml" = '''{{ . }}'''
+"contract.yaml" = '''{{ .Contract }}'''
 `
+
+// HPCC initdata.toml file template with sehdr bin.
+const tomlTemplateWithHdr = `
+algorithm = "sha384"
+version = "0.1.0"
+
+[data]
+"contract.yaml" = '''{{ .Contract }}
+boot: |
+    sehdr: {{ .HdrBin }}'''
+`
+
+// tomlTemplateData holds the data for TOML template execution.
+type tomlTemplateData struct {
+	Contract string
+	HdrBin   string
+}
 
 // HpcrText encodes plain text to Base64 with integrity checksums.
 //
@@ -526,13 +543,14 @@ func HpcrContractTemplate(templateType string) (string, error) {
 // Parameters:
 //   - contract: Signed and encrypted contract string (output from [HpcrContractSignedEncrypted]
 //     or [HpcrContractSignedEncryptedContractExpiry]). Must contain workload and env sections.
+//   - encodedHdrBin: Optional Base64-encoded HDR binary string.
 //
 // Returns:
-//   - Gzipped and Base64-encoded initdata string (ready for peer pod VM creation)
+//   - Gzipped and Base64-encoded initdata string
 //   - SHA256 hash of the original contract (input checksum)
 //   - SHA256 hash of the encoded initdata string (output checksum)
 //   - Error if the contract is empty, template parsing fails, or gzip/encoding fails
-func HpccInitdata(contract string) (string, string, string, error) {
+func HpccInitdata(contract, encodedHdrBin string) (string, string, string, error) {
 
 	var buf bytes.Buffer
 
@@ -540,12 +558,26 @@ func HpccInitdata(contract string) (string, string, string, error) {
 		return "", "", "", fmt.Errorf(emptyParameterErrStatement)
 	}
 
-	tmpl, err := template.New("toml").Parse(tomlTemplate)
+	// Prepare template data
+	templateData := tomlTemplateData{
+		Contract: contract,
+		HdrBin:   encodedHdrBin,
+	}
+
+	// Select appropriate template based on whether HDR binary is provided
+	var selectedTemplate string
+	if encodedHdrBin != "" {
+		selectedTemplate = tomlTemplateWithHdr
+	} else {
+		selectedTemplate = tomlTemplate
+	}
+
+	tmpl, err := template.New("toml").Parse(selectedTemplate)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed while parsing the template toml %v", err)
 	}
 
-	err = tmpl.Execute(&buf, contract)
+	err = tmpl.Execute(&buf, templateData)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed while creating initdata.toml %v", err)
 	}
