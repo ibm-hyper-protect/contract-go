@@ -236,14 +236,18 @@ func HpcrTgz(folderPath string) (string, string, string, error) {
 //
 // Parameters:
 //   - folderPath: Absolute path to folder containing docker-compose.yaml, pods.yaml, or pod descriptor files
-//   - confidentialComputingOs: Target platform identifier — "ccrt", "ccrv", or "ccco".
+//   - confidentialComputingOs: Target platform identifier — "ccrt" (IBM Confidential Computing Container Runtime (CCRT)),
+//     "ccrv" (IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)),
+//     "ccco" (IBM Confidential Computing Containers for Red Hat OpenShift (CCCO)), or
+//     "hpvs" (IBM Hyper Protect Virtual Servers (HPVS)).
 //     Defaults to "ccrt" if empty.
 //   - encryptionCertificate: PEM-formatted IBM encryption certificate. If empty, the library
 //     uses the embedded default certificate for the specified platform.
 //   - certVersion: Certificate version (e.g., "26.2.0", "25.11.0"). Uses latest if empty.
 //
 // Returns:
-//   - Encrypted TGZ in format "contract-basic.<encrypted-password>.<encrypted-data>"
+//   - Encrypted TGZ in format "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV/CCCO
+//     or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for HPVS
 //   - SHA256 hash of the folder path (input checksum)
 //   - SHA256 hash of the encrypted output (output checksum)
 //   - Error if folder is invalid or encryption fails
@@ -361,7 +365,10 @@ func HpcrContractSignedEncrypted(contract, confidentialComputingOs, certVersion,
 //
 // Parameters:
 //   - contract: YAML contract string with workload and env sections
-//   - confidentialComputingOs: Target platform identifier — "ccrt", "ccrv", or "ccco".
+//   - confidentialComputingOs: Target platform identifier — "ccrt" (IBM Confidential Computing Container Runtime (CCRT)),
+//     "ccrv" (IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)),
+//     "ccco" (IBM Confidential Computing Containers for Red Hat OpenShift (CCCO)), or
+//     "hpvs" (IBM Hyper Protect Virtual Servers (HPVS)).
 //     Defaults to "ccrt" if empty.
 //   - encryptionCertificate: PEM-formatted IBM encryption certificate. If empty, the library
 //     uses the embedded default certificate.
