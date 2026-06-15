@@ -50,6 +50,7 @@ const (
 	ConfidentialComputingOsCcrt = "ccrt"
 	ConfidentialComputingOsCcrv = "ccrv"
 	ConfidentialComputingOsCcco = "ccco"
+	HyperProtectOsHpvs          = "hpvs"
 )
 
 type Contract struct {
@@ -544,7 +545,7 @@ func GetDataFromLatestVersion(jsonData, version string) (string, map[string]stri
 //   - Error if platform or certificate version is invalid
 func FetchEncryptionCertificate(confidentialComputingOs, encryptionCertificate, certVersion string) (string, error) {
 	if confidentialComputingOs == "" {
-		confidentialComputingOs = ConfidentialComputingOsCcrt
+		confidentialComputingOs = HyperProtectOsHpvs
 	}
 
 	// If custom certificate is provided, use it
@@ -555,8 +556,9 @@ func FetchEncryptionCertificate(confidentialComputingOs, encryptionCertificate, 
 	// Validate platform type
 	if confidentialComputingOs != ConfidentialComputingOsCcrt &&
 		confidentialComputingOs != ConfidentialComputingOsCcrv &&
-		confidentialComputingOs != ConfidentialComputingOsCcco {
-		return "", fmt.Errorf("invalid Confidential Computing platform: %s (must be ccrt, ccrv, or ccco)", confidentialComputingOs)
+		confidentialComputingOs != ConfidentialComputingOsCcco &&
+		confidentialComputingOs != HyperProtectOsHpvs {
+		return "", fmt.Errorf("invalid Confidential Computing platform: %s (must be ccrt, ccrv, ccco, or hpvs)", confidentialComputingOs)
 	}
 
 	var selectedCert string
@@ -566,8 +568,10 @@ func FetchEncryptionCertificate(confidentialComputingOs, encryptionCertificate, 
 			selectedCert = cert.LatestEncryptionCertificateCcrt
 		} else if confidentialComputingOs == ConfidentialComputingOsCcrv {
 			selectedCert = cert.LatestEncryptionCertificateCcrv
-		} else {
+		} else if confidentialComputingOs == ConfidentialComputingOsCcco {
 			selectedCert = cert.LatestEncryptionCertificateCcco
+		} else {
+			selectedCert = cert.LatestEncryptionCertificateHpvs
 		}
 		return selectedCert, nil
 	}

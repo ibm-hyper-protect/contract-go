@@ -29,6 +29,7 @@ const (
 	OsTypeCcrt = "ccrt"
 	OsTypeCcrv = "ccrv"
 	OsTypeCcco = "ccco"
+	OsTypeHpvs = "hpvs"
 )
 
 // Embed all certificate directories
@@ -36,6 +37,7 @@ const (
 //go:embed ccrt/*.crt
 //go:embed ccrv/*.crt
 //go:embed ccco/*.crt
+//go:embed hpvs/*.crt
 var certFS embed.FS
 
 // CertificateMap holds the mapping of OS type and version to certificate content.
@@ -47,6 +49,7 @@ var (
 	LatestEncryptionCertificateCcrt string
 	LatestEncryptionCertificateCcrv string
 	LatestEncryptionCertificateCcco string
+	LatestEncryptionCertificateHpvs string
 )
 
 var initOnce sync.Once
@@ -60,16 +63,19 @@ func init() {
 		CertificateMap[OsTypeCcrt] = make(map[string]string)
 		CertificateMap[OsTypeCcrv] = make(map[string]string)
 		CertificateMap[OsTypeCcco] = make(map[string]string)
+		CertificateMap[OsTypeHpvs] = make(map[string]string)
 
 		// Load certificates from each directory
 		loadCertificatesFromDir(OsTypeCcrt)
 		loadCertificatesFromDir(OsTypeCcrv)
 		loadCertificatesFromDir(OsTypeCcco)
+		loadCertificatesFromDir(OsTypeHpvs)
 
 		// Set latest certificate variables
 		LatestEncryptionCertificateCcrt = getLatestCertificate(OsTypeCcrt)
 		LatestEncryptionCertificateCcrv = getLatestCertificate(OsTypeCcrv)
 		LatestEncryptionCertificateCcco = getLatestCertificate(OsTypeCcco)
+		LatestEncryptionCertificateHpvs = getLatestCertificate(OsTypeHpvs)
 	})
 }
 

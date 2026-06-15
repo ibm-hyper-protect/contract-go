@@ -240,7 +240,7 @@ func HpcrTgz(folderPath string) (string, string, string, error) {
 //     "ccrv" (IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)),
 //     "ccco" (IBM Confidential Computing Containers for Red Hat OpenShift (CCCO)), or
 //     "hpvs" (IBM Hyper Protect Virtual Servers (HPVS)).
-//     Defaults to "ccrt" if empty.
+//     Defaults to "hpvs" if empty.
 //   - encryptionCertificate: PEM-formatted IBM encryption certificate. If empty, the library
 //     uses the embedded default certificate for the specified platform.
 //   - certVersion: Certificate version (e.g., "26.2.0", "25.11.0"). Uses latest if empty.
@@ -369,7 +369,7 @@ func HpcrContractSignedEncrypted(contract, confidentialComputingOs, certVersion,
 //     "ccrv" (IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)),
 //     "ccco" (IBM Confidential Computing Containers for Red Hat OpenShift (CCCO)), or
 //     "hpvs" (IBM Hyper Protect Virtual Servers (HPVS)).
-//     Defaults to "ccrt" if empty.
+//     Defaults to "hpvs" if empty.
 //   - encryptionCertificate: PEM-formatted IBM encryption certificate. If empty, the library
 //     uses the embedded default certificate.
 //   - privateKey: RSA private key (PEM format) for signing the contract

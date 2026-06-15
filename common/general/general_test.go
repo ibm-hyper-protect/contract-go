@@ -343,6 +343,16 @@ func TestFetchEncryptionCertificateCcco(t *testing.T) {
 	assert.Equal(t, result, cert.LatestEncryptionCertificateCcco)
 }
 
+// Testcase to check if FetchEncryptionCertificate() is able to fetch encryption certificate for HPVS
+func TestFetchEncryptionCertificateHpvs(t *testing.T) {
+	result, err := FetchEncryptionCertificate(HyperProtectOsHpvs, "", "")
+	if err != nil {
+		t.Errorf("failed to fetch encryption certificate - %v", err)
+	}
+
+	assert.Equal(t, result, cert.LatestEncryptionCertificateHpvs)
+}
+
 // Testcase to check if TestGenerateTgzBase64() is able generate base64 of compose tgz
 func TestGenerateTgzBase64(t *testing.T) {
 	filesFoldersList, err := ListFoldersAndFiles(sampleComposeFolder)

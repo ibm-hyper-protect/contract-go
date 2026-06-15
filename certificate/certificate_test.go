@@ -224,16 +224,15 @@ func TestHpcrListAvailableEncCertVersions_CaseInsensitive(t *testing.T) {
 	assert.Equal(t, lowerResult, mixedResult)
 }
 
-// Testcase to check if HpcrListAvailableEncCertVersions supports "hpvs" as alias for "ccrt"
-func TestHpcrListAvailableEncCertVersions_HpvsAlias(t *testing.T) {
-	hpvsResult, err1 := HpcrListAvailableEncCertVersions("hpvs", "json")
-	assert.NoError(t, err1)
-	ccrtResult, err2 := HpcrListAvailableEncCertVersions("ccrt", "json")
-	assert.NoError(t, err2)
-	// Both should return the same result (ccrt certificates)
-	assert.Equal(t, ccrtResult, hpvsResult)
-	assert.Contains(t, hpvsResult, "ccrt")
-	assert.NotContains(t, hpvsResult, "hpvs")
+// Testcase to check if HpcrListAvailableEncCertVersions supports "hpvs" as a separate platform
+func TestHpcrListAvailableEncCertVersions_Hpvs(t *testing.T) {
+	hpvsResult, err := HpcrListAvailableEncCertVersions("hpvs", "json")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, hpvsResult)
+	assert.Contains(t, hpvsResult, "hpvs")
+	assert.NotContains(t, hpvsResult, "ccrt")
+	assert.NotContains(t, hpvsResult, "ccrv")
+	assert.NotContains(t, hpvsResult, "ccco")
 }
 
 // Testcase to check if HpcrListAvailableEncCertVersions returns YAML format

@@ -275,7 +275,7 @@ func HpcrValidateCertificateRevocationList(certificateDocument, ibmIntermediateC
 //   - Programmatically selecting certificate versions
 //
 // Parameters:
-//   - osType: The operating system type ("ccrt", "ccrv", "ccco") or empty string for all types
+//   - osType: The operating system type ("ccrt", "ccrv", "ccco", "hpvs") or empty string for all types
 //   - formatType: Output format — "json" or "yaml" (defaults to "json" if empty)
 //
 // Returns:
@@ -286,15 +286,14 @@ func HpcrValidateCertificateRevocationList(certificateDocument, ibmIntermediateC
 //
 //	// Get all OS types in JSON format
 //	allCerts, err := certificate.HpcrListAvailableEncCertVersions("", "json")
-//	// Returns: {"ccrt":["26.2.0","25.11.0","25.8.1"],"ccrv":["26.4.1","25.11.0","25.8.1"],"ccco":["25.12.0","25.10.0"]}
+//	// Returns: {"ccrt":["26.2.0","25.11.0"],"ccrv":["26.4.1","25.11.0"],"ccco":["25.12.0","25.10.0"],"hpvs":["26.5.0","26.2.0"]}
 //
 //	// Get specific OS type in YAML format
-//	ccrtCerts, err := certificate.HpcrListAvailableEncCertVersions("ccrt", "yaml")
+//	hpvsCerts, err := certificate.HpcrListAvailableEncCertVersions("hpvs", "yaml")
 //	// Returns:
-//	// ccrt:
+//	// hpvs:
+//	//   - 26.5.0
 //	//   - 26.2.0
-//	//   - 25.11.0
-//	//   - 25.8.1
 //
 //	// Default to JSON if format not specified
 //	certs, err := certificate.HpcrListAvailableEncCertVersions("", "")
@@ -315,15 +314,10 @@ func HpcrListAvailableEncCertVersions(osType, formatType string) (string, error)
 	if osType != "" {
 		osType = strings.ToLower(osType)
 
-		// Support legacy platform name "hpvs" as alias for "ccrt"
-		if osType == "hpvs" {
-			osType = "ccrt"
-		}
-
 		// Check if the specified OS type exists
 		osMap, exists := cert.CertificateMap[osType]
 		if !exists {
-			return "", fmt.Errorf("invalid OS type: %s. Valid types are: ccrt, ccrv, ccco, hpvs (alias for ccrt)", osType)
+			return "", fmt.Errorf("invalid OS type: %s. Valid types are: ccrt, ccrv, ccco, hpvs", osType)
 		}
 
 		result[osType] = gen.CollectAndSortVersions(osMap)

@@ -1369,7 +1369,7 @@ func HpcrJsonEncrypted(plainJson, confidentialComputingOs, certVersion, encrypti
 |-----------|------|-------------------|-------------|
 | `plainJson` | `string` | Required | Valid JSON string to encrypt |
 | `certVersion` | `string` | Optional | Certificate version (e.g., `"26.2.0"`, `"25.11.0"`). Uses latest if empty |
-| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, `"ccco"`, or `"hpvs"` (defaults to `"ccrt"` if empty) |
+| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, `"ccco"`, or `"hpvs"` (defaults to `"hpvs"` if empty) |
 | `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest certificate for platform if empty) |
 
 **Returns:**
@@ -1498,7 +1498,7 @@ func HpcrTgzEncrypted(folderPath, confidentialComputingOs, certVersion, encrypti
 |-----------|------|-------------------|-------------|
 | `folderPath` | `string` | Required | Path to folder with compose/pods files |
 | `certVersion` | `string` | Optional | Certificate version (e.g., `"26.2.0"`, `"25.11.0"`). Uses latest if empty |
-| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, `"ccco"`, or `"hpvs"` (defaults to `"ccrt"` if empty) |
+| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, `"ccco"`, or `"hpvs"` (defaults to `"hpvs"` if empty) |
 | `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest certificate for platform if empty) |
 
 **Returns:**
@@ -1630,7 +1630,7 @@ func HpcrContractSignedEncrypted(contract, confidentialComputingOs, certVersion,
 |-----------|------|-------------------|-------------|
 | `contract` | `string` | Required | YAML contract with `env` and `workload` sections |
 | `certVersion` | `string` | Optional | Specific certificate version (e.g., `"26.2.0"`). Uses latest version if empty. Use [`HpcrListAvailableEncCertVersions`](#hpcrlistavailableenccertversions) to list available versions |
-| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, `"ccco"`, or `"hpvs"` (defaults to `"ccrt"` if empty) |
+| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, `"ccco"`, or `"hpvs"` (defaults to `"hpvs"` if empty) |
 | `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest certificate for platform if empty) |
 | `privateKey` | `string` | Required | RSA private key (PEM format) for signing |
 | `password` | `string` | Optional | Password for encrypted private key (empty string if private key is not encrypted) |
