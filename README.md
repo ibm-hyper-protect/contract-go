@@ -65,6 +65,8 @@ Learn more:
   - **Validate complete certificate chains** (encryption cert -> intermediate -> root)
   - **Check certificate revocation status** using CRL (Certificate Revocation List)
   - **Download CRLs** from certificate distribution points
+  - **List all available encryption certificate versions** for all the platforms
+  - **Get the list of available encryption certificate versions** for specific platform (ccrt, ccrv, ccco)
 
 - **Contract Generation**
   - Generate Base64-encoded data from text, JSON, initdata annotation and docker compose / podman play archives
@@ -74,6 +76,7 @@ Learn more:
   - Validate contract schemas
   - Decrypt encrypted text in Hyper Protect format
   - Password-protected private key support for decrypting attestation records and generate signed contracts
+  - **Specify certificate version** for encryption operations (optional certVersion parameter)
 
 - **Archive Management**
   - Generate Base64 tar archives of `docker-compose.yaml` or `pods.yaml`
@@ -86,6 +89,14 @@ Learn more:
 - **Network Validation**
   - Validate network-config schemas for on-premise deployments
   - Support CCRT, CCRV, and CCCO configurations
+
+- **Sealed Secret Management**
+  - Create sealed secrets for workload and environment configurations
+  - Automatic RSA key pair generation for encryption and signing
+  - AES-256-GCM encryption with RSA key wrapping
+  - RSA-SHA512 digital signatures for integrity
+  - JWS (JSON Web Signature) compact serialization format
+  - Compatible with Go crypto packages for decryption
 
 ## Installation
 
@@ -214,7 +225,8 @@ MIIEpAIBAAKCAQEA...
     signedContract, inputHash, outputHash, err := contract.HpcrContractSignedEncrypted(
         contractYAML,
         "ccrt",              // Platform type (ccrt, ccrv, or ccco)
-        "",                  // Use default encryption certificate
+        "",                  // Certificate version (empty for default)
+        "",                  // Encryption certificate (empty for embedded)
         privateKey,          // Your RSA private key
         "",                  // Password for encrypted private key (empty if not encrypted)
     )
@@ -259,9 +271,10 @@ MIIEpAIBAAKCAQEA...
     signedContract, inputHash, outputHash, err := contract.HpcrContractSignedEncrypted(
         contractYAML,
         "ccrt",
-        "",
+        "",                  // Certificate version (empty for default)
+        "",                  // Encryption certificate (empty for embedded)
         encryptedPrivateKey,
-        password,  // Provide password for encrypted private key
+        password,            // Provide password for encrypted private key
     )
     if err != nil {
         log.Fatal(err)
@@ -389,6 +402,59 @@ func main() {
     }
 
     fmt.Printf("%s\n", msg)
+}
+```
+
+### Seal Secrets
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/secrets"
+)
+
+func main() {
+    // Example 1: Seal a workload secret with auto-generated keys
+    sealedSecret, decryptionKey, verificationKey, inputHash, encryptedHash, err := secrets.HpccSealedSecret(
+        "my-database-password",
+        "workload",
+        "",  // Auto-generate encryption key
+        "",  // Auto-generate signing key
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Println("Sealed Secret:", sealedSecret)
+    fmt.Println("Decryption Key:", decryptionKey)
+    fmt.Println("Verification Key:", verificationKey)
+    fmt.Println("Input SHA256:", inputHash)
+    fmt.Println("Encrypted SHA256:", encryptedHash)
+
+    // Example 2: Seal a secret with provided key strings (PEM format)
+    encryptionKeyPEM := `-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEA...
+-----END RSA PRIVATE KEY-----`
+
+    signingKeyPEM := `-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEA...
+-----END RSA PRIVATE KEY-----`
+
+    sealedSecret2, _, _, _, _, err := secrets.HpccSealedSecret(
+        "my-api-key",
+        "env",
+        encryptionKeyPEM,  // Provide encryption key as PEM string
+        signingKeyPEM,     // Provide signing key as PEM string
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Println("Sealed Secret with Custom Keys:", sealedSecret2)
 }
 ```
 

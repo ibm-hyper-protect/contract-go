@@ -26,6 +26,7 @@ import (
 
 	crt "github.com/ibm-hyper-protect/contract-go/v2/common/cert"
 	gen "github.com/ibm-hyper-protect/contract-go/v2/common/general"
+	cert "github.com/ibm-hyper-protect/contract-go/v2/encryption"
 )
 
 const (
@@ -261,4 +262,93 @@ func HpcrValidateCertificateRevocationList(certificateDocument, ibmIntermediateC
 	}
 
 	return valid, msg, nil
+}
+
+// HpcrListAvailableEncCertVersions returns available embedded encryption certificate versions
+// in JSON or YAML format. If osType is provided, returns versions for that specific OS type only.
+// If osType is empty, returns versions for all OS types.
+//
+// Use this function to discover which encryption certificate versions are available without downloading
+// from IBM Cloud. This is useful for:
+//   - Displaying available versions to users
+//   - Validating version inputs before encryption
+//   - Programmatically selecting certificate versions
+//
+// Parameters:
+//   - osType: The operating system type ("ccrt", "ccrv", "ccco") or empty string for all types
+//   - formatType: Output format — "json" or "yaml" (defaults to "json" if empty)
+//
+// Returns:
+//   - JSON or YAML string with OS types as keys and sorted version arrays as values (descending order, latest first)
+//   - Error if marshaling fails, invalid format specified, or if specified osType doesn't exist
+//
+// Examples:
+//
+//	// Get all OS types in JSON format
+//	allCerts, err := certificate.HpcrListAvailableEncCertVersions("", "json")
+//	// Returns: {"ccrt":["26.2.0","25.11.0","25.8.1"],"ccrv":["26.4.1","25.11.0","25.8.1"],"ccco":["25.12.0","25.10.0"]}
+//
+//	// Get specific OS type in YAML format
+//	ccrtCerts, err := certificate.HpcrListAvailableEncCertVersions("ccrt", "yaml")
+//	// Returns:
+//	// ccrt:
+//	//   - 26.2.0
+//	//   - 25.11.0
+//	//   - 25.8.1
+//
+//	// Default to JSON if format not specified
+//	certs, err := certificate.HpcrListAvailableEncCertVersions("", "")
+func HpcrListAvailableEncCertVersions(osType, formatType string) (string, error) {
+	// Default to JSON if format not specified
+	if formatType == "" {
+		formatType = defaultFormat
+	}
+
+	// Validate format type
+	if formatType != formatJson && formatType != formatYaml {
+		return "", fmt.Errorf("invalid output format: %s. Valid formats are: json, yaml", formatType)
+	}
+
+	result := make(map[string][]string)
+
+	// Normalize OS type to lowercase if provided
+	if osType != "" {
+		osType = strings.ToLower(osType)
+
+		// Support legacy platform name "hpvs" as alias for "ccrt"
+		if osType == "hpvs" {
+			osType = "ccrt"
+		}
+
+		// Check if the specified OS type exists
+		osMap, exists := cert.CertificateMap[osType]
+		if !exists {
+			return "", fmt.Errorf("invalid OS type: %s. Valid types are: ccrt, ccrv, ccco, hpvs (alias for ccrt)", osType)
+		}
+
+		result[osType] = gen.CollectAndSortVersions(osMap)
+	} else {
+		// Get all OS types from the certificate map
+		for osType, osMap := range cert.CertificateMap {
+			result[osType] = gen.CollectAndSortVersions(osMap)
+		}
+	}
+
+	// Marshal to requested format
+	switch formatType {
+	case formatJson:
+		jsonBytes, err := json.Marshal(result)
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal JSON - %v", err)
+		}
+		return string(jsonBytes), nil
+	case formatYaml:
+		yamlBytes, err := yaml.Marshal(result)
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal YAML - %v", err)
+		}
+		return string(yamlBytes), nil
+	default:
+		return "", fmt.Errorf("invalid output format")
+	}
 }

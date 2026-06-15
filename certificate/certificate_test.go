@@ -163,3 +163,102 @@ func TestHpcrValidateCertificateRevocationList_EmptyParameters(t *testing.T) {
 	assert.Empty(t, msg)
 	assert.Contains(t, err.Error(), missingParameterErrStatement)
 }
+
+// Testcase to check if HpcrListAvailableEncCertVersions returns all available certificates when osType is empty (JSON)
+func TestHpcrListAvailableEncCertVersions_AllOsTypes(t *testing.T) {
+	result, err := HpcrListAvailableEncCertVersions("", "json")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+	assert.Contains(t, result, "ccrt")
+	assert.Contains(t, result, "ccrv")
+	assert.Contains(t, result, "ccco")
+}
+
+// Testcase to check if HpcrListAvailableEncCertVersions returns versions for ccrt (JSON)
+func TestHpcrListAvailableEncCertVersions_Ccrt(t *testing.T) {
+	result, err := HpcrListAvailableEncCertVersions("ccrt", "json")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+	assert.Contains(t, result, "ccrt")
+	assert.NotContains(t, result, "ccrv")
+	assert.NotContains(t, result, "ccco")
+}
+
+// Testcase to check if HpcrListAvailableEncCertVersions returns versions for ccrv (JSON)
+func TestHpcrListAvailableEncCertVersions_Ccrv(t *testing.T) {
+	result, err := HpcrListAvailableEncCertVersions("ccrv", "json")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+	assert.Contains(t, result, "ccrv")
+	assert.NotContains(t, result, "ccrt")
+	assert.NotContains(t, result, "ccco")
+}
+
+// Testcase to check if HpcrListAvailableEncCertVersions returns versions for ccco (JSON)
+func TestHpcrListAvailableEncCertVersions_Ccco(t *testing.T) {
+	result, err := HpcrListAvailableEncCertVersions("ccco", "json")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+	assert.Contains(t, result, "ccco")
+	assert.NotContains(t, result, "ccrt")
+	assert.NotContains(t, result, "ccrv")
+}
+
+// Testcase to check if HpcrListAvailableEncCertVersions handles invalid OS type
+func TestHpcrListAvailableEncCertVersions_InvalidOsType(t *testing.T) {
+	result, err := HpcrListAvailableEncCertVersions("invalid-os", "json")
+	assert.Error(t, err)
+	assert.Empty(t, result)
+	assert.Contains(t, err.Error(), "invalid OS type")
+}
+
+// Testcase to check if HpcrListAvailableEncCertVersions is case-insensitive
+func TestHpcrListAvailableEncCertVersions_CaseInsensitive(t *testing.T) {
+	upperResult, err1 := HpcrListAvailableEncCertVersions("CCRT", "json")
+	assert.NoError(t, err1)
+	lowerResult, err2 := HpcrListAvailableEncCertVersions("ccrt", "json")
+	assert.NoError(t, err2)
+	mixedResult, err3 := HpcrListAvailableEncCertVersions("CcRt", "json")
+	assert.NoError(t, err3)
+	assert.Equal(t, lowerResult, upperResult)
+	assert.Equal(t, lowerResult, mixedResult)
+}
+
+// Testcase to check if HpcrListAvailableEncCertVersions supports "hpvs" as alias for "ccrt"
+func TestHpcrListAvailableEncCertVersions_HpvsAlias(t *testing.T) {
+	hpvsResult, err1 := HpcrListAvailableEncCertVersions("hpvs", "json")
+	assert.NoError(t, err1)
+	ccrtResult, err2 := HpcrListAvailableEncCertVersions("ccrt", "json")
+	assert.NoError(t, err2)
+	// Both should return the same result (ccrt certificates)
+	assert.Equal(t, ccrtResult, hpvsResult)
+	assert.Contains(t, hpvsResult, "ccrt")
+	assert.NotContains(t, hpvsResult, "hpvs")
+}
+
+// Testcase to check if HpcrListAvailableEncCertVersions returns YAML format
+func TestHpcrListAvailableEncCertVersions_YamlFormat(t *testing.T) {
+	result, err := HpcrListAvailableEncCertVersions("ccrt", "yaml")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+	assert.Contains(t, result, "ccrt:")
+	assert.Contains(t, result, "- ")
+}
+
+// Testcase to check if HpcrListAvailableEncCertVersions defaults to JSON when format is empty
+func TestHpcrListAvailableEncCertVersions_DefaultFormat(t *testing.T) {
+	result, err := HpcrListAvailableEncCertVersions("ccrt", "")
+	assert.NoError(t, err)
+	assert.NotEmpty(t, result)
+	// JSON format should have quotes and brackets
+	assert.Contains(t, result, "{")
+	assert.Contains(t, result, "\"ccrt\"")
+}
+
+// Testcase to check if HpcrListAvailableEncCertVersions handles invalid format
+func TestHpcrListAvailableEncCertVersions_InvalidFormat(t *testing.T) {
+	result, err := HpcrListAvailableEncCertVersions("ccrt", "xml")
+	assert.Error(t, err)
+	assert.Empty(t, result)
+	assert.Contains(t, err.Error(), "invalid output format")
+}
