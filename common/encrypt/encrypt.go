@@ -195,7 +195,7 @@ func EncryptString(password, section string) (string, error) {
 //   - Formatted string in "contract-basic.<password>.<contract>" format for Confidential Computing encryption
 //   - Formatted string in "hyper-protect-basic.<password>.<contract>" format for HPVS encryption
 func EncryptFinalStr(encryptedPassword, encryptedContract, confidentialComputingOs string) string {
-	if confidentialComputingOs == "hpvs" {
+	if confidentialComputingOs == "hpvs" || confidentialComputingOs == "ccco" {
 		return fmt.Sprintf("hyper-protect-basic.%s.%s", encryptedPassword, encryptedContract)
 	}
 	return fmt.Sprintf("contract-basic.%s.%s", encryptedPassword, encryptedContract)

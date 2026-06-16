@@ -469,6 +469,17 @@ func TestEncryptFinalStrSuccess(t *testing.T) {
 	assert.Contains(t, result, encryptedContract)
 }
 
+func TestEncryptFinalStrSuccessCcco(t *testing.T) {
+	encryptedPassword := "encryptedpass"
+	encryptedContract := "encryptedcontract"
+
+	result := EncryptFinalStr(encryptedPassword, encryptedContract, "ccco")
+	assert.NotEmpty(t, result)
+	assert.Contains(t, result, "hyper-protect-basic")
+	assert.Contains(t, result, encryptedPassword)
+	assert.Contains(t, result, encryptedContract)
+}
+
 // Testcase to check if EncryptString() works with valid inputs
 func TestEncryptStringValidInputs(t *testing.T) {
 	password := "testpassword123"
