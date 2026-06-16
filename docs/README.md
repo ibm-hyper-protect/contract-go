@@ -23,10 +23,10 @@ A contract has four valid high-level sections:
 
 Encrypted sections use one of two formats depending on the target platform:
 
-**For Confidential Computing (CCRT, CCRV, CCCO):**
+**For Confidential Computing (CCRT, CCRV):**
 `contract-basic.<encrypted-password>.<encrypted-data>`
 
-**For Hyper Protect Virtual Servers (HPVS):**
+**For Confidential Computing Containers and Hyper Protect Virtual Servers (CCCO, HPVS):**
 `hyper-protect-basic.<encrypted-password>.<encrypted-data>`
 
 The encryption process:
@@ -41,7 +41,7 @@ The encryption process:
 |---------------------|---------------|-------------------|
 | `ccrt` | IBM Confidential Computing Container Runtime (CCRT) | `contract-basic` |
 | `ccrv` | IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV) | `contract-basic` |
-| `ccco` | IBM Confidential Computing Containers for Red Hat OpenShift Container Platform (CCCO) | `contract-basic` |
+| `ccco` | IBM Confidential Computing Containers for Red Hat OpenShift Container Platform (CCCO) | `hyper-protect-basic` |
 | `hpvs` | IBM Hyper Protect Virtual Servers (HPVS) | `hyper-protect-basic` |
 
 ## Table of Contents
