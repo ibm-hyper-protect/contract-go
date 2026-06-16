@@ -523,14 +523,14 @@ func TestHpcrTextEncryptedEmptyText(t *testing.T) {
 	assert.Contains(t, err.Error(), emptyParameterErrStatement)
 }
 
-// Testcase to check if HpcrTextEncrypted() works with valid text
+// Testcase to check if HpcrTextEncrypted() works with valid text (empty OS defaults to hyper-protect-basic)
 func TestHpcrTextEncryptedSuccess(t *testing.T) {
 	encrypted, plainHash, encryptedHash, err := HpcrTextEncrypted("test text", "", "", "")
 	assert.NoError(t, err)
 	assert.NotEmpty(t, encrypted)
 	assert.NotEmpty(t, plainHash)
 	assert.NotEmpty(t, encryptedHash)
-	assert.Contains(t, encrypted, "contract-basic")
+	assert.Contains(t, encrypted, "hyper-protect-basic")
 }
 
 // Testcase to check if HpcrContractSignedEncrypted() handles invalid YAML
@@ -556,7 +556,7 @@ func TestHpcrContractSignedEncryptedMissingWorkload(t *testing.T) {
 	assert.Error(t, err)
 }
 
-// Testcase to check if HpcrJsonEncrypted() works with valid JSON
+// Testcase to check if HpcrJsonEncrypted() works with valid JSON (empty OS defaults to hyper-protect-basic)
 func TestHpcrJsonEncryptedSuccess(t *testing.T) {
 	validJson := `{"key": "value"}`
 	encrypted, plainHash, encryptedHash, err := HpcrJsonEncrypted(validJson, "", "", "")
@@ -564,7 +564,7 @@ func TestHpcrJsonEncryptedSuccess(t *testing.T) {
 	assert.NotEmpty(t, encrypted)
 	assert.NotEmpty(t, plainHash)
 	assert.NotEmpty(t, encryptedHash)
-	assert.Contains(t, encrypted, "contract-basic")
+	assert.Contains(t, encrypted, "hyper-protect-basic")
 }
 
 // Testcase to check if HpcrText() works with valid text

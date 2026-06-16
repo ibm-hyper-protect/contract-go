@@ -749,13 +749,13 @@ func convertToStringkeys(m map[any]any) map[string]any {
 // It returns the appropriate JSON schema string based on the platform version.
 //
 // Parameters:
-//   - version: Confidential Computing platform version ("ccrt", "ccrv", "ccco") - defaults to "ccrt" if empty
+//   - version: Confidential Computing platform version ("ccrt", "ccrv", "ccco", "hpvs") - defaults to "ccrt" if empty
 //
 // Returns:
 //   - JSON schema string for contract validation
 //   - Error if version is invalid
 func fetchContractSchema(version string) (string, error) {
-	if version == ConfidentialComputingOsCcrt || version == "" {
+	if version == ConfidentialComputingOsCcrt || version == HyperProtectOsHpvs || version == "" {
 		return sch.ContractSchemaCcrt, nil
 	} else if version == ConfidentialComputingOsCcrv {
 		return sch.ContractSchemaCcrv, nil
