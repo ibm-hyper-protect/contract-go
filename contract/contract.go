@@ -98,8 +98,10 @@ func HpcrJson(plainJson string) (string, string, string, error) {
 // HpcrTextEncrypted encrypts plain text using the IBM Confidential Computing encryption format.
 //
 // Use this function to encrypt individual contract sections (workload or env) before assembling
-// the final contract YAML. The output follows the format "contract-basic.<encrypted-password>.<encrypted-data>",
-// where the password is RSA-encrypted with the IBM encryption certificate and the data is
+// the final contract YAML. The output format depends on the platform:
+// "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV, or
+// "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS.
+// The password is RSA-encrypted with the IBM encryption certificate and the data is
 // AES-256-CBC encrypted with the password.
 //
 // Parameters:
@@ -112,7 +114,8 @@ func HpcrJson(plainJson string) (string, string, string, error) {
 //   - certVersion: Encryption Certificate version (e.g., "26.2.0", "25.11.0"). Uses latest if empty.
 //
 // Returns:
-//   - Encrypted data in format "contract-basic.<encrypted-password>.<encrypted-data>"
+//   - Encrypted data in format "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV
+//     or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS
 //   - SHA256 hash of the original text (input checksum)
 //   - SHA256 hash of the encrypted output (output checksum)
 //   - Error if encryption fails or certificate is invalid
@@ -133,10 +136,12 @@ func HpcrTextEncrypted(plainText, confidentialComputingOs, certVersion, encrypti
 //
 // Use this function to decrypt text that was encrypted using [HpcrTextEncrypted] or the equivalent
 // openssl-based encryption process documented in the IBM Confidential Computing documentation.
-// The input must be in the format "contract-basic.<encrypted-password>.<encrypted-data>".
+// The input must be in the format "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV
+// or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS.
 //
 // Parameters:
-//   - encryptedText: Encrypted text in format "contract-basic.<encrypted-password>.<encrypted-data>"
+//   - encryptedText: Encrypted text in format "contract-basic.<encrypted-password>.<encrypted-data>" (CCRT/CCRV)
+//     or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" (CCCO/HPVS)
 //   - privateKey: RSA private key (PEM format) corresponding to the encryption certificate used during encryption
 //   - password: Optional password to unlock the encrypted private key (empty string "" for unencrypted keys)
 //
@@ -161,7 +166,9 @@ func HpcrTextDecrypted(encryptedText, privateKey, password string) (string, stri
 // HpcrJsonEncrypted encrypts JSON data using the IBM Confidential Computing encryption format.
 //
 // Use this function to encrypt JSON-formatted contract sections. The JSON is validated before
-// encryption. The output follows the format "contract-basic.<encrypted-password>.<encrypted-data>".
+// encryption. The output format depends on the platform:
+// "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV, or
+// "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS.
 //
 // Parameters:
 //   - plainJson: Valid JSON string to encrypt
@@ -173,7 +180,8 @@ func HpcrTextDecrypted(encryptedText, privateKey, password string) (string, stri
 //   - certVersion: Certificate version (e.g., "26.2.0", "25.11.0"). Uses latest if empty.
 //
 // Returns:
-//   - Encrypted JSON in format "contract-basic.<encrypted-password>.<encrypted-data>"
+//   - Encrypted JSON in format "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV
+//     or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS
 //   - SHA256 hash of the original JSON (input checksum)
 //   - SHA256 hash of the encrypted output (output checksum)
 //   - Error if JSON is invalid or encryption fails
@@ -246,8 +254,8 @@ func HpcrTgz(folderPath string) (string, string, string, error) {
 //   - certVersion: Certificate version (e.g., "26.2.0", "25.11.0"). Uses latest if empty.
 //
 // Returns:
-//   - Encrypted TGZ in format "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV/CCCO
-//     or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for HPVS
+//   - Encrypted TGZ in format "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV
+//     or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS
 //   - SHA256 hash of the folder path (input checksum)
 //   - SHA256 hash of the encrypted output (output checksum)
 //   - Error if folder is invalid or encryption fails
@@ -627,7 +635,8 @@ func encryptWrapper(contract, confidentialComputingOs, certVersion, encryptionCe
 // encrypter is an internal helper that encrypts any string using the IBM Confidential Computing
 // encryption format. It generates a random AES-256 password, encrypts the password with the
 // IBM encryption certificate (RSA), encrypts the data with the password (AES-256-CBC), and
-// returns the result in the format "contract-basic.<encrypted-password>.<encrypted-data>".
+// returns the result in the format "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV
+// or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS.
 //
 // Parameters:
 //   - stringText: String data to encrypt (text, JSON, or Base64-encoded TGZ)
@@ -636,7 +645,8 @@ func encryptWrapper(contract, confidentialComputingOs, certVersion, encryptionCe
 //   - certVersion: Encryption Certificate version (e.g., "26.2.0", "25.11.0"). Uses latest if empty.
 //
 // Returns:
-//   - Encrypted string in format "contract-basic.<encrypted-password>.<encrypted-data>"
+//   - Encrypted string in format "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV
+//     or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS
 //   - Error if encryption fails or certificate is invalid
 func encrypter(stringText, confidentialComputingOs, certVersion, encryptionCertificate string) (string, error) {
 	if gen.CheckIfEmpty(stringText) {
