@@ -37,7 +37,8 @@ const (
 // the original contract.
 //
 // Parameters:
-//   - data: Encrypted attestation data in the format "hyper-protect-basic.<encrypted-password>.<encrypted-data>"
+//   - data: Encrypted attestation data in the format "contract-basic.<encrypted-password>.<encrypted-data>" (CCRT/CCRV)
+//     or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" (CCCO/HPVS)
 //   - privateKey: RSA private key (PEM format) corresponding to the attestationPublicKey used in the contract
 //   - password: Optional password to unlock the private key if it's encrypted (empty string "" for unencrypted keys)
 //

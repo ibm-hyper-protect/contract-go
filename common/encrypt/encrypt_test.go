@@ -156,7 +156,7 @@ func TestEncryptString(t *testing.T) {
 	assert.NotEmpty(t, result, "Encrypted workload did not get generated")
 }
 
-// Testcase to check if EncryptFinalStr() is able to generate hyper-protect-basic.<password>.<workload>
+// Testcase to check if EncryptFinalStr() is able to generate hyper-protect-basic.<password>.<workload> for empty OS (default)
 func TestEncryptFinalStr(t *testing.T) {
 	var contractMap map[string]interface{}
 
@@ -190,7 +190,7 @@ func TestEncryptFinalStr(t *testing.T) {
 		t.Errorf("failed to encrypt workload - %v", err)
 	}
 
-	finalWorkload := EncryptFinalStr(encryptedRandomPassword, encryptedWorkload)
+	finalWorkload := EncryptFinalStr(encryptedRandomPassword, encryptedWorkload, "")
 
 	assert.NotEmpty(t, finalWorkload, "Final workload did not get generated")
 	assert.Contains(t, finalWorkload, "hyper-protect-basic.")
@@ -303,14 +303,14 @@ func TestSignContract(t *testing.T) {
 	if err != nil {
 		t.Errorf("failed to encrypt workload - %v", err)
 	}
-	finalWorkload := EncryptFinalStr(encryptedPassword, encryptedWorkload)
+	finalWorkload := EncryptFinalStr(encryptedPassword, encryptedWorkload, "ccrt")
 
 	encryptedEnv, err := EncryptContract(password, contractMap["env"].(string))
 	if err != nil {
 		t.Errorf("failed to encrypt env - %v", err)
 	}
 
-	finalEnv := EncryptFinalStr(encryptedPassword, encryptedEnv)
+	finalEnv := EncryptFinalStr(encryptedPassword, encryptedEnv, "ccrt")
 
 	workloadEnvSignature, err := SignContract(finalWorkload, finalEnv, privateKey, "")
 	if err != nil {
@@ -462,7 +462,18 @@ func TestEncryptFinalStrSuccess(t *testing.T) {
 	encryptedPassword := "encryptedpass"
 	encryptedContract := "encryptedcontract"
 
-	result := EncryptFinalStr(encryptedPassword, encryptedContract)
+	result := EncryptFinalStr(encryptedPassword, encryptedContract, "hpvs")
+	assert.NotEmpty(t, result)
+	assert.Contains(t, result, "hyper-protect-basic")
+	assert.Contains(t, result, encryptedPassword)
+	assert.Contains(t, result, encryptedContract)
+}
+
+func TestEncryptFinalStrSuccessCcco(t *testing.T) {
+	encryptedPassword := "encryptedpass"
+	encryptedContract := "encryptedcontract"
+
+	result := EncryptFinalStr(encryptedPassword, encryptedContract, "ccco")
 	assert.NotEmpty(t, result)
 	assert.Contains(t, result, "hyper-protect-basic")
 	assert.Contains(t, result, encryptedPassword)
@@ -811,13 +822,13 @@ func TestSignContractWithEncryptedPrivateKey(t *testing.T) {
 	if err != nil {
 		t.Errorf("failed to encrypt workload - %v", err)
 	}
-	finalWorkload := EncryptFinalStr(encryptedPassword, encryptedWorkload)
+	finalWorkload := EncryptFinalStr(encryptedPassword, encryptedWorkload, "ccrv")
 
 	encryptedEnv, err := EncryptContract(password, contractMap["env"].(string))
 	if err != nil {
 		t.Errorf("failed to encrypt env - %v", err)
 	}
-	finalEnv := EncryptFinalStr(encryptedPassword, encryptedEnv)
+	finalEnv := EncryptFinalStr(encryptedPassword, encryptedEnv, "ccrv")
 
 	privateKey, err := gen.ReadDataFromFile(encryptedPrivateKeyPath)
 	if err != nil {

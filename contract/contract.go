@@ -98,8 +98,10 @@ func HpcrJson(plainJson string) (string, string, string, error) {
 // HpcrTextEncrypted encrypts plain text using the IBM Confidential Computing encryption format.
 //
 // Use this function to encrypt individual contract sections (workload or env) before assembling
-// the final contract YAML. The output follows the format "hyper-protect-basic.<encrypted-password>.<encrypted-data>",
-// where the password is RSA-encrypted with the IBM encryption certificate and the data is
+// the final contract YAML. The output format depends on the platform:
+// "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV, or
+// "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS.
+// The password is RSA-encrypted with the IBM encryption certificate and the data is
 // AES-256-CBC encrypted with the password.
 //
 // Parameters:
@@ -112,7 +114,8 @@ func HpcrJson(plainJson string) (string, string, string, error) {
 //   - certVersion: Encryption Certificate version (e.g., "26.2.0", "25.11.0"). Uses latest if empty.
 //
 // Returns:
-//   - Encrypted data in format "hyper-protect-basic.<encrypted-password>.<encrypted-data>"
+//   - Encrypted data in format "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV
+//     or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS
 //   - SHA256 hash of the original text (input checksum)
 //   - SHA256 hash of the encrypted output (output checksum)
 //   - Error if encryption fails or certificate is invalid
@@ -133,10 +136,12 @@ func HpcrTextEncrypted(plainText, confidentialComputingOs, certVersion, encrypti
 //
 // Use this function to decrypt text that was encrypted using [HpcrTextEncrypted] or the equivalent
 // openssl-based encryption process documented in the IBM Confidential Computing documentation.
-// The input must be in the format "hyper-protect-basic.<encrypted-password>.<encrypted-data>".
+// The input must be in the format "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV
+// or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS.
 //
 // Parameters:
-//   - encryptedText: Encrypted text in format "hyper-protect-basic.<encrypted-password>.<encrypted-data>"
+//   - encryptedText: Encrypted text in format "contract-basic.<encrypted-password>.<encrypted-data>" (CCRT/CCRV)
+//     or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" (CCCO/HPVS)
 //   - privateKey: RSA private key (PEM format) corresponding to the encryption certificate used during encryption
 //   - password: Optional password to unlock the encrypted private key (empty string "" for unencrypted keys)
 //
@@ -161,7 +166,9 @@ func HpcrTextDecrypted(encryptedText, privateKey, password string) (string, stri
 // HpcrJsonEncrypted encrypts JSON data using the IBM Confidential Computing encryption format.
 //
 // Use this function to encrypt JSON-formatted contract sections. The JSON is validated before
-// encryption. The output follows the format "hyper-protect-basic.<encrypted-password>.<encrypted-data>".
+// encryption. The output format depends on the platform:
+// "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV, or
+// "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS.
 //
 // Parameters:
 //   - plainJson: Valid JSON string to encrypt
@@ -173,7 +180,8 @@ func HpcrTextDecrypted(encryptedText, privateKey, password string) (string, stri
 //   - certVersion: Certificate version (e.g., "26.2.0", "25.11.0"). Uses latest if empty.
 //
 // Returns:
-//   - Encrypted JSON in format "hyper-protect-basic.<encrypted-password>.<encrypted-data>"
+//   - Encrypted JSON in format "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV
+//     or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS
 //   - SHA256 hash of the original JSON (input checksum)
 //   - SHA256 hash of the encrypted output (output checksum)
 //   - Error if JSON is invalid or encryption fails
@@ -236,14 +244,18 @@ func HpcrTgz(folderPath string) (string, string, string, error) {
 //
 // Parameters:
 //   - folderPath: Absolute path to folder containing docker-compose.yaml, pods.yaml, or pod descriptor files
-//   - confidentialComputingOs: Target platform identifier — "ccrt", "ccrv", or "ccco".
-//     Defaults to "ccrt" if empty.
+//   - confidentialComputingOs: Target platform identifier — "ccrt" (IBM Confidential Computing Container Runtime (CCRT)),
+//     "ccrv" (IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)),
+//     "ccco" (IBM Confidential Computing Containers for Red Hat OpenShift (CCCO)), or
+//     "hpvs" (IBM Hyper Protect Virtual Servers (HPVS)).
+//     Defaults to "hpvs" if empty.
 //   - encryptionCertificate: PEM-formatted IBM encryption certificate. If empty, the library
 //     uses the embedded default certificate for the specified platform.
 //   - certVersion: Certificate version (e.g., "26.2.0", "25.11.0"). Uses latest if empty.
 //
 // Returns:
-//   - Encrypted TGZ in format "hyper-protect-basic.<encrypted-password>.<encrypted-data>"
+//   - Encrypted TGZ in format "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV
+//     or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS
 //   - SHA256 hash of the folder path (input checksum)
 //   - SHA256 hash of the encrypted output (output checksum)
 //   - Error if folder is invalid or encryption fails
@@ -361,8 +373,11 @@ func HpcrContractSignedEncrypted(contract, confidentialComputingOs, certVersion,
 //
 // Parameters:
 //   - contract: YAML contract string with workload and env sections
-//   - confidentialComputingOs: Target platform identifier — "ccrt", "ccrv", or "ccco".
-//     Defaults to "ccrt" if empty.
+//   - confidentialComputingOs: Target platform identifier — "ccrt" (IBM Confidential Computing Container Runtime (CCRT)),
+//     "ccrv" (IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)),
+//     "ccco" (IBM Confidential Computing Containers for Red Hat OpenShift (CCCO)), or
+//     "hpvs" (IBM Hyper Protect Virtual Servers (HPVS)).
+//     Defaults to "hpvs" if empty.
 //   - encryptionCertificate: PEM-formatted IBM encryption certificate. If empty, the library
 //     uses the embedded default certificate.
 //   - privateKey: RSA private key (PEM format) for signing the contract
@@ -620,16 +635,18 @@ func encryptWrapper(contract, confidentialComputingOs, certVersion, encryptionCe
 // encrypter is an internal helper that encrypts any string using the IBM Confidential Computing
 // encryption format. It generates a random AES-256 password, encrypts the password with the
 // IBM encryption certificate (RSA), encrypts the data with the password (AES-256-CBC), and
-// returns the result in the format "hyper-protect-basic.<encrypted-password>.<encrypted-data>".
+// returns the result in the format "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV
+// or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS.
 //
 // Parameters:
 //   - stringText: String data to encrypt (text, JSON, or Base64-encoded TGZ)
-//   - confidentialComputingOs: Target platform — "ccrt", "ccrv", or "ccco" (default: ccrt)
+//   - confidentialComputingOs: Target platform — "hpvs", "ccrt", "ccrv", or "ccco" (default: ccrt)
 //   - encryptionCertificate: PEM-formatted encryption certificate (optional, uses default if empty)
 //   - certVersion: Encryption Certificate version (e.g., "26.2.0", "25.11.0"). Uses latest if empty.
 //
 // Returns:
-//   - Encrypted string in format "hyper-protect-basic.<encrypted-password>.<encrypted-data>"
+//   - Encrypted string in format "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV
+//     or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS
 //   - Error if encryption fails or certificate is invalid
 func encrypter(stringText, confidentialComputingOs, certVersion, encryptionCertificate string) (string, error) {
 	if gen.CheckIfEmpty(stringText) {
@@ -656,7 +673,7 @@ func encrypter(stringText, confidentialComputingOs, certVersion, encryptionCerti
 		return "", fmt.Errorf("failed to encrypt key - %v", err)
 	}
 
-	return enc.EncryptFinalStr(encodedEncryptedPassword, encryptedString), nil
+	return enc.EncryptFinalStr(encodedEncryptedPassword, encryptedString, confidentialComputingOs), nil
 }
 
 // readHpcrTemplateFile resolves a template file path under contract/template and returns its content.

@@ -29,6 +29,7 @@ const (
 	OsTypeCcrt = "ccrt"
 	OsTypeCcrv = "ccrv"
 	OsTypeCcco = "ccco"
+	OsTypeHpvs = "hpvs"
 )
 
 // Embed all certificate directories
@@ -36,6 +37,7 @@ const (
 //go:embed ccrt/*.crt
 //go:embed ccrv/*.crt
 //go:embed ccco/*.crt
+//go:embed hpvs/*.crt
 var certFS embed.FS
 
 // CertificateMap holds the mapping of OS type and version to certificate content.
@@ -47,6 +49,7 @@ var (
 	LatestEncryptionCertificateCcrt string
 	LatestEncryptionCertificateCcrv string
 	LatestEncryptionCertificateCcco string
+	LatestEncryptionCertificateHpvs string
 )
 
 var initOnce sync.Once
@@ -60,16 +63,19 @@ func init() {
 		CertificateMap[OsTypeCcrt] = make(map[string]string)
 		CertificateMap[OsTypeCcrv] = make(map[string]string)
 		CertificateMap[OsTypeCcco] = make(map[string]string)
+		CertificateMap[OsTypeHpvs] = make(map[string]string)
 
 		// Load certificates from each directory
 		loadCertificatesFromDir(OsTypeCcrt)
 		loadCertificatesFromDir(OsTypeCcrv)
 		loadCertificatesFromDir(OsTypeCcco)
+		loadCertificatesFromDir(OsTypeHpvs)
 
 		// Set latest certificate variables
 		LatestEncryptionCertificateCcrt = getLatestCertificate(OsTypeCcrt)
 		LatestEncryptionCertificateCcrv = getLatestCertificate(OsTypeCcrv)
 		LatestEncryptionCertificateCcco = getLatestCertificate(OsTypeCcco)
+		LatestEncryptionCertificateHpvs = getLatestCertificate(OsTypeHpvs)
 	})
 }
 
@@ -109,6 +115,7 @@ func loadCertificatesFromDir(osType string) {
 //   - ibm-hyper-protect-container-runtime-26.2.0-encrypt.crt -> 26.2.0
 //   - ibm-confidential-computing-container-runtime-rhvs-26.4.1-encrypt.crt -> 26.4.1
 //   - ibm-hyper-protect-confidential-container-25.12.0-encrypt.crt -> 25.12.0
+//   - ibm-hyper-protect-container-runtime-1-0-s390x-28-encrypt.crt -> 28
 func extractVersionFromFilename(filename string) string {
 	// Pattern to match semantic version (X.Y.Z or X.Y.Z.W)
 	re := regexp.MustCompile(`(\d+\.\d+\.\d+(?:\.\d+)?)-encrypt\.crt$`)
@@ -116,6 +123,15 @@ func extractVersionFromFilename(filename string) string {
 	if len(matches) > 1 {
 		return matches[1]
 	}
+
+	// Pattern to match HPVS format: ibm-hyper-protect-container-runtime-1-0-s390x-XX-encrypt.crt
+	// where XX is the version number
+	reHpvs := regexp.MustCompile(`-s390x-(\d+)-encrypt\.crt$`)
+	matchesHpvs := reHpvs.FindStringSubmatch(filename)
+	if len(matchesHpvs) > 1 {
+		return matchesHpvs[1]
+	}
+
 	return ""
 }
 

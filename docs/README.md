@@ -21,21 +21,28 @@ A contract has four valid high-level sections:
 
 ### Encryption Format
 
-Encrypted sections use the format: `hyper-protect-basic.<encrypted-password>.<encrypted-data>`
+Encrypted sections use one of two formats depending on the target platform:
+
+**For Confidential Computing (CCRT, CCRV):**
+`contract-basic.<encrypted-password>.<encrypted-data>`
+
+**For Confidential Computing Containers and Hyper Protect Virtual Servers (CCCO, HPVS):**
+`hyper-protect-basic.<encrypted-password>.<encrypted-data>`
 
 The encryption process:
 1. Generate a random 32-byte AES password
 2. Encrypt the password with the IBM encryption certificate (RSA)
 3. Encrypt the section data with the AES password (AES-256-CBC)
-4. Combine as `hyper-protect-basic.<base64-encrypted-password>.<base64-encrypted-data>`
+4. Combine as `<format-prefix>.<base64-encrypted-password>.<base64-encrypted-data>`
 
 ### Supported Platforms
 
-| Platform Identifier | Official Name |
-|---------------------|---------------|
-| `ccrt` | IBM Confidential Computing Container Runtime (CCRT) |
-| `ccrv` | IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV) |
-| `ccco` | IBM Confidential Computing Containers for Red Hat OpenShift Container Platform (CCCO) |
+| Platform Identifier | Official Name | Encryption Format |
+|---------------------|---------------|-------------------|
+| `ccrt` | IBM Confidential Computing Container Runtime (CCRT) | `contract-basic` |
+| `ccrv` | IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV) | `contract-basic` |
+| `ccco` | IBM Confidential Computing Containers for Red Hat OpenShift Container Platform (CCCO) | `hyper-protect-basic` |
+| `hpvs` | IBM Hyper Protect Virtual Servers (HPVS) | `hyper-protect-basic` |
 
 ## Table of Contents
 
@@ -128,7 +135,7 @@ func HpcrGetAttestationRecords(data, privateKey, password string) (string, error
 
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
-| `data` | `string` | Required | Encrypted attestation data in the format `hyper-protect-basic.<password>.<data>` |
+| `data` | `string` | Required | Encrypted attestation data in the format `contract-basic.<password>.<data>` |
 | `privateKey` | `string` | Required | RSA private key (PEM format) used to decrypt the password |
 | `password` | `string` | Optional | Password for encrypted private key (empty string if private key is not encrypted) |
 
@@ -1029,15 +1036,15 @@ func HpcrTextEncrypted(plainText, confidentialComputingOs, certVersion, encrypti
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
 | `plainText` | `string` | Required | Text to encrypt |
-| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
 | `certVersion` | `string` | Optional | Certificate version (e.g., `"26.2.0"`, `"25.11.0"`). Uses latest if empty |
 | `encryptionCertificate` | `string` | Optional | PEM certificate (uses default for platform if empty) |
+| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, `"ccco"`, or `"hpvs"` (defaults to `"ccrt"` if empty) |
 
 **Returns:**
 
 | Return | Type | Description |
 |--------|------|-------------|
-| Encrypted Data | `string` | Format: `hyper-protect-basic.<password>.<data>` |
+| Encrypted Data | `string` | Format: `contract-basic.<password>.<data>` |
 | Input Checksum | `string` | SHA256 of original text |
 | Output Checksum | `string` | SHA256 of encrypted output |
 | Error | `error` | Error if encryption fails |
@@ -1117,8 +1124,8 @@ import (
 
 func main() {
     contractYAML := `
-env: hyper-protect-basic.fdsiufhaogdhup.idsvoijsndojvpnsv
-workload: hyper-protect-basic.jriewcbdpoiew.diewuphfwhfep
+env: contract-basic.fdsiufhaogdhup.idsvoijsndojvpnsv
+workload: contract-basic.jriewcbdpoiew.diewuphfwhfep
 `
     privateKey := `-----BEGIN RSA PRIVATE KEY-----
 MIIEpAIBAAKCAQEA...
@@ -1296,7 +1303,7 @@ func HpcrTextDecrypted(encryptedText, privateKey, password string) (string, stri
 
 | Return | Type | Description |
 |--------|------|-------------|
-| decrypted Data | `string` | Decrypt text in format `hyper-protect-basic.<password>.<data>` |
+| decrypted Data | `string` | Decrypt text in format `contract-basic.<password>.<data>` |
 | Input Checksum | `string` | SHA256 of encrypted text |
 | Output Checksum | `string` | SHA256 of decrypted output |
 | Error | `error` | Error if decryption fails |
@@ -1361,15 +1368,15 @@ func HpcrJsonEncrypted(plainJson, confidentialComputingOs, certVersion, encrypti
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
 | `plainJson` | `string` | Required | Valid JSON string to encrypt |
-| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
 | `certVersion` | `string` | Optional | Certificate version (e.g., `"26.2.0"`, `"25.11.0"`). Uses latest if empty |
-| `encryptionCertificate` | `string` | Optional | PEM certificate (uses default for platform if empty) |
+| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, `"ccco"`, or `"hpvs"` (defaults to `"hpvs"` if empty) |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest certificate for platform if empty) |
 
 **Returns:**
 
 | Return | Type | Description |
 |--------|------|-------------|
-| Encrypted JSON | `string` | Format: `hyper-protect-basic.<password>.<data>` |
+| Encrypted JSON | `string` | Format: `contract-basic.<password>.<data>` |
 | Input Checksum | `string` | SHA256 of original JSON |
 | Output Checksum | `string` | SHA256 of encrypted output |
 | Error | `error` | Error if not valid JSON or encryption fails |
@@ -1490,15 +1497,15 @@ func HpcrTgzEncrypted(folderPath, confidentialComputingOs, certVersion, encrypti
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
 | `folderPath` | `string` | Required | Path to folder with compose/pods files |
-| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
 | `certVersion` | `string` | Optional | Certificate version (e.g., `"26.2.0"`, `"25.11.0"`). Uses latest if empty |
-| `encryptionCertificate` | `string` | Optional | PEM certificate (uses default for platform if empty) |
+| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, `"ccco"`, or `"hpvs"` (defaults to `"hpvs"` if empty) |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest certificate for platform if empty) |
 
 **Returns:**
 
 | Return | Type | Description |
 |--------|------|-------------|
-| Encrypted TGZ | `string` | Format: `hyper-protect-basic.<password>.<data>` |
+| Encrypted TGZ | `string` | Format: `contract-basic.<password>.<data>` |
 | Input Checksum | `string` | SHA256 of folder path |
 | Output Checksum | `string` | SHA256 of encrypted output |
 | Error | `error` | Error if folder invalid or encryption fails |
@@ -1622,9 +1629,9 @@ func HpcrContractSignedEncrypted(contract, confidentialComputingOs, certVersion,
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
 | `contract` | `string` | Required | YAML contract with `env` and `workload` sections |
-| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
 | `certVersion` | `string` | Optional | Specific certificate version (e.g., `"26.2.0"`). Uses latest version if empty. Use [`HpcrListAvailableEncCertVersions`](#hpcrlistavailableenccertversions) to list available versions |
-| `encryptionCertificate` | `string` | Optional | PEM certificate (uses embedded certificate based on platform and version if empty) |
+| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, `"ccco"`, or `"hpvs"` (defaults to `"hpvs"` if empty) |
+| `encryptionCertificate` | `string` | Optional | PEM certificate (uses latest certificate for platform if empty) |
 | `privateKey` | `string` | Required | RSA private key (PEM format) for signing |
 | `password` | `string` | Optional | Password for encrypted private key (empty string if private key is not encrypted) |
 
@@ -1832,9 +1839,9 @@ func HpcrContractSignedEncryptedContractExpiry(contract, confidentialComputingOs
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
 | `contract` | `string` | Required | YAML contract |
-| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
 | `certVersion` | `string` | Optional | Certificate version (e.g., `"26.2.0"`, `"25.11.0"`). Uses latest if empty |
 | `encryptionCertificate` | `string` | Optional | PEM certificate (uses default for platform if empty) |
+| `confidentialComputingOs` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, `"ccco"`, or `"hpvs"` (defaults to `"ccrt"` if empty) |
 | `privateKey` | `string` | Required | RSA private key for signing |
 | `password` | `string` | Optional | Password for encrypted private key (empty string if private key is not encrypted) |
 | `cacert` | `string` | Required | CA certificate (PEM format) |

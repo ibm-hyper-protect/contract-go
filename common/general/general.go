@@ -50,6 +50,7 @@ const (
 	ConfidentialComputingOsCcrt = "ccrt"
 	ConfidentialComputingOsCcrv = "ccrv"
 	ConfidentialComputingOsCcco = "ccco"
+	HyperProtectOsHpvs          = "hpvs"
 )
 
 type Contract struct {
@@ -451,11 +452,11 @@ func CertificateDownloader(url string) (string, error) {
 }
 
 // GetEncryptPassWorkload extracts the encrypted password and workload from encrypted data.
-// It splits the encrypted data string in "hyper-protect-basic.<password>.<workload>" format
+// It splits the encrypted data string in "contract-basic.<password>.<workload>" format
 // and returns the password and workload components.
 //
 // Parameters:
-//   - encryptedData: Encrypted data in "hyper-protect-basic.<password>.<workload>" format
+//   - encryptedData: Encrypted data in "contract-basic.<password>.<workload>" format
 //
 // Returns:
 //   - Encrypted password (Base64-encoded)
@@ -544,7 +545,7 @@ func GetDataFromLatestVersion(jsonData, version string) (string, map[string]stri
 //   - Error if platform or certificate version is invalid
 func FetchEncryptionCertificate(confidentialComputingOs, encryptionCertificate, certVersion string) (string, error) {
 	if confidentialComputingOs == "" {
-		confidentialComputingOs = ConfidentialComputingOsCcrt
+		confidentialComputingOs = HyperProtectOsHpvs
 	}
 
 	// If custom certificate is provided, use it
@@ -555,8 +556,9 @@ func FetchEncryptionCertificate(confidentialComputingOs, encryptionCertificate, 
 	// Validate platform type
 	if confidentialComputingOs != ConfidentialComputingOsCcrt &&
 		confidentialComputingOs != ConfidentialComputingOsCcrv &&
-		confidentialComputingOs != ConfidentialComputingOsCcco {
-		return "", fmt.Errorf("invalid Confidential Computing platform: %s (must be ccrt, ccrv, or ccco)", confidentialComputingOs)
+		confidentialComputingOs != ConfidentialComputingOsCcco &&
+		confidentialComputingOs != HyperProtectOsHpvs {
+		return "", fmt.Errorf("invalid Confidential Computing platform: %s (must be ccrt, ccrv, ccco, or hpvs)", confidentialComputingOs)
 	}
 
 	var selectedCert string
@@ -566,8 +568,10 @@ func FetchEncryptionCertificate(confidentialComputingOs, encryptionCertificate, 
 			selectedCert = cert.LatestEncryptionCertificateCcrt
 		} else if confidentialComputingOs == ConfidentialComputingOsCcrv {
 			selectedCert = cert.LatestEncryptionCertificateCcrv
-		} else {
+		} else if confidentialComputingOs == ConfidentialComputingOsCcco {
 			selectedCert = cert.LatestEncryptionCertificateCcco
+		} else {
+			selectedCert = cert.LatestEncryptionCertificateHpvs
 		}
 		return selectedCert, nil
 	}
@@ -745,13 +749,13 @@ func convertToStringkeys(m map[any]any) map[string]any {
 // It returns the appropriate JSON schema string based on the platform version.
 //
 // Parameters:
-//   - version: Confidential Computing platform version ("ccrt", "ccrv", "ccco") - defaults to "ccrt" if empty
+//   - version: Confidential Computing platform version ("ccrt", "ccrv", "ccco", "hpvs") - defaults to "ccrt" if empty
 //
 // Returns:
 //   - JSON schema string for contract validation
 //   - Error if version is invalid
 func fetchContractSchema(version string) (string, error) {
-	if version == ConfidentialComputingOsCcrt || version == "" {
+	if version == ConfidentialComputingOsCcrt || version == HyperProtectOsHpvs || version == "" {
 		return sch.ContractSchemaCcrt, nil
 	} else if version == ConfidentialComputingOsCcrv {
 		return sch.ContractSchemaCcrv, nil
