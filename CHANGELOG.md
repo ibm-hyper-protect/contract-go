@@ -1,3 +1,9 @@
+## [2.29.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.28.0...v2.29.0) (2026-06-17)
+
+### Features
+
+* Add support of new prefix format for encrypted contract ([#223](https://github.com/ibm-hyper-protect/contract-go/issues/223)) ([8b43429](https://github.com/ibm-hyper-protect/contract-go/commit/8b434292e3ab0c8f93f5d3d89c9855e8481b12b4))
+
 ## [2.28.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.27.1...v2.28.0) (2026-06-03)
 
 ### Features
