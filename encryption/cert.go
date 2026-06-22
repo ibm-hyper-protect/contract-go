@@ -115,7 +115,7 @@ func loadCertificatesFromDir(osType string) {
 //   - ibm-hyper-protect-container-runtime-26.2.0-encrypt.crt -> 26.2.0
 //   - ibm-confidential-computing-container-runtime-rhvs-26.4.1-encrypt.crt -> 26.4.1
 //   - ibm-hyper-protect-confidential-container-25.12.0-encrypt.crt -> 25.12.0
-//   - ibm-hyper-protect-container-runtime-1-0-s390x-28-encrypt.crt -> 28
+//   - ibm-hyper-protect-container-runtime-1-0-s390x-28-encrypt.crt -> 1.0.28
 func extractVersionFromFilename(filename string) string {
 	// Pattern to match semantic version (X.Y.Z or X.Y.Z.W)
 	re := regexp.MustCompile(`(\d+\.\d+\.\d+(?:\.\d+)?)-encrypt\.crt$`)
@@ -126,10 +126,11 @@ func extractVersionFromFilename(filename string) string {
 
 	// Pattern to match HPVS format: ibm-hyper-protect-container-runtime-1-0-s390x-XX-encrypt.crt
 	// where XX is the version number
-	reHpvs := regexp.MustCompile(`-s390x-(\d+)-encrypt\.crt$`)
-	matchesHpvs := reHpvs.FindStringSubmatch(filename)
-	if len(matchesHpvs) > 1 {
-		return matchesHpvs[1]
+	reHpvs := regexp.MustCompile(`runtime-(\d+)-(\d+)-s390x-(\d+)-encrypt\.crt$`)
+	matches = reHpvs.FindStringSubmatch(filename)
+	if len(matches) > 1 {
+		version := fmt.Sprintf("%s.%s.%s", matches[1], matches[2], matches[3])
+		return version
 	}
 
 	return ""
