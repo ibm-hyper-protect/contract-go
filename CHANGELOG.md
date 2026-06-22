@@ -1,3 +1,13 @@
+## [2.30.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.29.0...v2.30.0) (2026-06-22)
+
+### Features
+
+* Added Support for Baremetal Initdata Annotation Ceration ([e925e36](https://github.com/ibm-hyper-protect/contract-go/commit/e925e3663f73d85adb7de21a7cb312d4c7f5b476))
+
+### Miscellaneous Chores
+
+* **deps:** update go dependencies ([9904739](https://github.com/ibm-hyper-protect/contract-go/commit/9904739308699d62f4c3479a73a68ea025b33478))
+
 ## [2.29.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.28.0...v2.29.0) (2026-06-17)
 
 ### Features
