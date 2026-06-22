@@ -1,3 +1,10 @@
+## [2.30.2](https://github.com/ibm-hyper-protect/contract-go/compare/v2.30.1...v2.30.2) (2026-06-22)
+
+### Bug Fixes
+
+* update mod file ([4f66d54](https://github.com/ibm-hyper-protect/contract-go/commit/4f66d54ab476a1e7368f1d75c0d695bf9010daeb))
+* version format of hpvs ([69fd977](https://github.com/ibm-hyper-protect/contract-go/commit/69fd977c2bd88fc9c98525fcf1ede7fb58c78b85))
+
 ## [2.30.1](https://github.com/ibm-hyper-protect/contract-go/compare/v2.30.0...v2.30.1) (2026-06-22)
 
 ### Bug Fixes
