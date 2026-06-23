@@ -6,6 +6,8 @@ on:
       - main
 
   pull_request:
+    branches:
+      - main
 
   workflow_dispatch:
     inputs:
@@ -21,7 +23,99 @@ env:
   NODE_VERSION: 25.5.0
 
 jobs:
+  verify-commit-signatures:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Verify latest commit is signed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Verifying commit signature (latest commit only)"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+        
+          # Determine which commit to check based on event type
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "Event: Pull Request #${{ github.event.pull_request.number }}"
+            COMMIT="${{ github.event.pull_request.head.sha }}"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            echo "Event: Push to ${{ github.ref_name }}"
+            COMMIT="${{ github.event.after }}"
+          else
+            echo "Event: ${{ github.event_name }}"
+            COMMIT="${{ github.sha }}"
+          fi
+          
+          SHORT_SHA=$(echo $COMMIT | cut -c1-7)
+          COMMIT_MSG=$(git log --format=%s -n 1 $COMMIT)
+          AUTHOR=$(git log --format='%an <%ae>' -n 1 $COMMIT)
+          
+          echo "Checking latest commit: $SHORT_SHA"
+          echo "   Author: $AUTHOR"
+          echo "   Message: $COMMIT_MSG"
+          echo ""
+          
+          # Use GitHub API to check verification status
+          VERIFICATION=$(gh api repos/${{ github.repository }}/commits/$COMMIT --jq '.commit.verification')
+          VERIFIED=$(echo "$VERIFICATION" | jq -r '.verified')
+          REASON=$(echo "$VERIFICATION" | jq -r '.reason')
+          
+          if [ "$VERIFIED" = "true" ]; then
+            echo "Commit is signed and verified!"
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "Latest commit is properly signed and verified!"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          else
+            echo "Commit is NOT SIGNED or verification failed"
+            echo "   Reason: $REASON"
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "VERIFICATION FAILED!"
+            echo ""
+            echo "The latest commit ($SHORT_SHA) is not signed."
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "How to sign commits:"
+            echo ""
+            echo "1. Generate a GPG key (if you don't have one):"
+            echo "   gpg --full-generate-key"
+            echo ""
+            echo "2. List your GPG keys:"
+            echo "   gpg --list-secret-keys --keyid-format=long"
+            echo ""
+            echo "3. Export your public key:"
+            echo "   gpg --armor --export YOUR_KEY_ID"
+            echo ""
+            echo "4. Add the public key to GitHub:"
+            echo "   Settings → SSH and GPG keys → New GPG key"
+            echo ""
+            echo "5. Configure Git to sign commits:"
+            echo "   git config --global user.signingkey YOUR_KEY_ID"
+            echo "   git config --global commit.gpgsign true"
+            echo ""
+            echo "6. Sign your commits:"
+            echo "   git commit -S -m \"your message\""
+            echo ""
+            echo "7. Amend your last commit to sign it:"
+            echo "   git commit --amend --no-edit -S"
+            echo "   git push --force-with-lease"
+            echo ""
+            echo "For more information, visit:"
+            echo "https://docs.github.com/en/authentication/managing-commit-signature-verification"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            exit 1
+          fi
+
   commit-lint:
+    needs: verify-commit-signatures
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     permissions:
@@ -69,6 +163,8 @@ jobs:
           echo "Commit message is valid!"
 
   build:
+    needs: [verify-commit-signatures, commit-lint]
+    if: always() && (needs.verify-commit-signatures.result == 'success') && (needs.commit-lint.result == 'success' || needs.commit-lint.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: read
