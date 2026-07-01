@@ -43,7 +43,6 @@ const (
 	SectionWorkload = "workload" // Validate only workload section
 	SectionEnv      = "env"      // Validate only env section
 )
-)
 
 // HPCC initdata.toml file template without sehdr bin.
 const tomlTemplate = `
