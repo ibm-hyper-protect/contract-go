@@ -37,6 +37,12 @@ const (
 	contractTemplateDirPath  = "template"
 	workloadTemplateFilePath = "workload.yaml"
 	envTemplateFilePath      = "env.yaml"
+	// Section validation constants for HpcrVerifyContract.
+	// Use these when calling HpcrVerifyContract to specify which section(s) to validate.
+	SectionBoth     = ""         // Validate both workload and env sections (default, backward compatible)
+	SectionWorkload = "workload" // Validate only workload section
+	SectionEnv      = "env"      // Validate only env section
+)
 )
 
 // HPCC initdata.toml file template without sehdr bin.
@@ -301,17 +307,42 @@ func HpcrTgzEncrypted(folderPath, confidentialComputingOs, certVersion, encrypti
 // to catch errors early, before deployment. It is recommended to call this function before
 // [HpcrContractSignedEncrypted] or [HpcrContractSignedEncryptedContractExpiry].
 //
+// This function supports two validation modes:
+//
+//  1. Complete contract validation (section = "" or SectionBoth):
+//     Validates both workload and env sections together.
+//     Contract must have both 'env:' and 'workload:' wrapper keys.
+//
+//  2. Individual section validation (section = SectionWorkload or SectionEnv):
+//     Validates only the specified section independently.
+//     Contract must be in raw format (starting with 'type: workload' or 'type: env')
+//     without 'env:' or 'workload:' wrapper keys.
+//
 // Parameters:
 //   - contract: YAML contract string to validate (must contain workload and env sections)
 //   - version: Platform identifier — "ccrt" (IBM Confidential Computing Container Runtime (CCRT)),
 //     "ccrv" (IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)), or "ccco" (IBM Confidential Computing Container Runtime for Red Hat OpenShift (CCCO)).
 //     Defaults to "ccrt" if empty.
+//   - section: Section to validate — SectionBoth (both workload and env - default), SectionWorkload (only workload),
+//     or SectionEnv (only env). Use this for multi-persona workflows where different teams create workload
+//     and env sections separately.
 //
 // Returns:
 //   - nil if the contract is valid
 //   - Error with details about validation failures
-func HpcrVerifyContract(contract, version string) error {
-	return gen.VerifyContractWithSchema(contract, version)
+//
+// Example:
+//
+//	// Validate complete contract (both sections with wrappers)
+//	err := contract.HpcrVerifyContract(contractYAML, "ccrt", contract.SectionBoth)
+//
+//	// Validate only workload section (raw format, no wrapper)
+//	err := contract.HpcrVerifyContract(workloadYAML, "ccrt", contract.SectionWorkload)
+//
+//	// Validate only env section (raw format, no wrapper)
+//	err := contract.HpcrVerifyContract(envYAML, "ccrt", contract.SectionEnv)
+func HpcrVerifyContract(contract, version, section string) error {
+	return gen.VerifyContractWithSchema(contract, version, section)
 }
 
 // HpcrContractSignedEncrypted generates a production-ready signed and encrypted contract.
@@ -345,7 +376,7 @@ func HpcrVerifyContract(contract, version string) error {
 //   - SHA256 hash of the final signed contract (output checksum)
 //   - Error if validation, encryption, or signing fails
 func HpcrContractSignedEncrypted(contract, confidentialComputingOs, certVersion, encryptionCertificate, privateKey, password string) (string, string, string, error) {
-	err := HpcrVerifyContract(contract, confidentialComputingOs)
+	err := HpcrVerifyContract(contract, confidentialComputingOs, SectionBoth)
 	if err != nil {
 		return "", "", "", fmt.Errorf("schema verification failed - %v", err)
 	}
@@ -414,7 +445,7 @@ func HpcrContractSignedEncrypted(contract, confidentialComputingOs, certVersion,
 //   - SHA256 hash of the final signed contract (output checksum)
 //   - Error if validation, CSR generation, certificate creation, or signing fails
 func HpcrContractSignedEncryptedContractExpiry(contract, confidentialComputingOs, certVersion, encryptionCertificate, privateKey, password, cacert, caKey, csrDataStr, csrPemData string, expiryDays int) (string, string, string, error) {
-	err := HpcrVerifyContract(contract, confidentialComputingOs)
+	err := HpcrVerifyContract(contract, confidentialComputingOs, SectionBoth)
 	if err != nil {
 		return "", "", "", fmt.Errorf("schema verification failed - %v", err)
 	}
