@@ -655,13 +655,42 @@ func GenerateTgzBase64(folderFilesPath []string) (string, error) {
 //
 // Parameters:
 //   - contract: Contract YAML string to validate
-//   - version: Confidential Computing platform version ("ccrt", "ccrv", "ccco") - defaults to "ccrt" if empty
+//   - version: Confidential Computing platform version ("ccrt", "ccrv", "ccco", "hpvs") - defaults to "ccrt" if empty
+//   - section: Section to validate - "" (both), "workload" (only workload), or "env" (only env)
 //
+
 // Returns:
 //   - nil if contract is valid
 //   - Error if contract parsing, schema retrieval, or validation fails
-func VerifyContractWithSchema(contract, version string) error {
-	contractMap, err := stringToMap(contract)
+func VerifyContractWithSchema(contract, version, section string) error {
+	// First, check what sections exist in the contract
+	data := Contract{}
+	yaml.Unmarshal([]byte(contract), &data)
+	hasWorkload := len(strings.TrimSpace(data.Workload)) > 0
+	hasEnv := len(strings.TrimSpace(data.Env)) > 0
+	hasWrapper := hasWorkload || hasEnv
+
+	// Validation rules for individual section validation
+	if section == "workload" || section == "env" {
+		// Rule: If wrapper format detected, reject
+		if hasWrapper {
+			if hasWorkload && hasEnv {
+				return fmt.Errorf("contract contains both env and workload sections. To validate individual sections, provide raw section content without 'env:' or 'workload:' wrappers, or use section=\"\" to validate the complete contract")
+			}
+			// Even if only one wrapper exists, reject for individual section validation
+			return fmt.Errorf("wrapper format detected. For individual section validation, provide raw section content starting with 'type: %s' (without 'env:' or 'workload:' wrapper)", section)
+		}
+	}
+
+	// Validation rule for complete contract validation
+	if section == "" {
+		// Must have both sections with wrappers
+		if !hasWorkload || !hasEnv {
+			return fmt.Errorf("complete contract validation requires both 'env:' and 'workload:' sections")
+		}
+	}
+
+	contractMap, err := stringToMap(contract, section)
 	if err != nil {
 		return fmt.Errorf("failed to convert to map %v", err)
 	}
@@ -672,56 +701,229 @@ func VerifyContractWithSchema(contract, version string) error {
 		return fmt.Errorf("error fetching contract schema")
 	}
 
-	sch, err := jsonschema.CompileString("schema.json", contractSchema)
+	// For individual section validation, create a wrapper schema
+	if section == "workload" || section == "env" {
+		return validateIndividualSection(contractStringMap, contractSchema, section)
+	}
+
+	// For complete contract validation (both sections)
+	return validateCompleteContract(contractStringMap, contractSchema)
+}
+
+// validateCompleteContract validates a complete contract with both workload and env sections.
+func validateCompleteContract(contractMap map[string]any, schemaJSON string) error {
+	sch, err := jsonschema.CompileString("schema.json", schemaJSON)
 	if err != nil {
 		return fmt.Errorf("failed to parse schema - %v", err)
 	}
 
-	if err := sch.Validate(contractStringMap); err != nil {
+	if err := sch.Validate(contractMap); err != nil {
 		return fmt.Errorf("contract validation failed - %v", err)
 	}
 
 	return nil
 }
 
+// validateIndividualSection validates a single section (workload or env) against the schema.
+// It creates a wrapper schema that references only the specific section definition.
+func validateIndividualSection(contractMap map[string]any, schemaJSON string, section string) error {
+	// Step 1: Parse the schema JSON
+	var schemaMap map[string]interface{}
+	if err := json.Unmarshal([]byte(schemaJSON), &schemaMap); err != nil {
+		return fmt.Errorf("failed to parse schema JSON - %v", err)
+	}
+
+	// Step 2: Merge all schema definitions into one place
+	mergedDefs := mergeSchemaDefinitions(schemaMap)
+
+	// Step 3: Create a wrapper schema that points to the specific section
+	wrapperSchema := createSectionWrapperSchema(section, mergedDefs)
+
+	// Step 4: Compile the wrapper schema
+	wrapperBytes, err := json.Marshal(wrapperSchema)
+	if err != nil {
+		return fmt.Errorf("failed to create wrapper schema - %v", err)
+	}
+
+	sch, err := jsonschema.CompileString("schema.json", string(wrapperBytes))
+	if err != nil {
+		return fmt.Errorf("failed to compile %s schema - %v", section, err)
+	}
+
+	// Step 5: Validate the section data
+	sectionData, ok := contractMap[section]
+	if !ok {
+		return fmt.Errorf("section '%s' not found in contract", section)
+	}
+
+	if err := sch.Validate(sectionData); err != nil {
+		return fmt.Errorf("%s section validation failed - %v", section, err)
+	}
+
+	return nil
+}
+
+// mergeSchemaDefinitions merges schema definitions from root $defs and allOf[1]/$defs.
+// The JSON schema has definitions in two locations, and we need them all in one place.
+// It also fixes references from #/allOf/1/$defs/... to #/$defs/...
+func mergeSchemaDefinitions(schemaMap map[string]interface{}) map[string]interface{} {
+	mergedDefs := make(map[string]interface{})
+
+	// Copy definitions from root $defs
+	if rootDefs, ok := schemaMap["$defs"].(map[string]interface{}); ok {
+		for k, v := range rootDefs {
+			mergedDefs[k] = v
+		}
+	}
+
+	// Copy definitions from allOf[1]/$defs and fix their internal references
+	if allOf, ok := schemaMap["allOf"].([]interface{}); ok && len(allOf) > 1 {
+		if allOfItem, ok := allOf[1].(map[string]interface{}); ok {
+			if allOfDefs, ok := allOfItem["$defs"].(map[string]interface{}); ok {
+				for k, v := range allOfDefs {
+					// Fix references so they point to the merged $defs location
+					mergedDefs[k] = fixSchemaReferences(v)
+				}
+			}
+		}
+	}
+
+	return mergedDefs
+}
+
+// createSectionWrapperSchema creates a simple schema that references a specific section definition.
+// This allows us to validate just one section (workload or env) independently.
+func createSectionWrapperSchema(section string, definitions map[string]interface{}) map[string]interface{} {
+	return map[string]interface{}{
+		"$ref":  "#/$defs/" + section,
+		"$defs": definitions,
+	}
+}
+
+// fixSchemaReferences recursively updates schema references from #/allOf/1/$defs/... to #/$defs/...
+// This is needed because we're merging definitions from allOf[1]/$defs into the root $defs.
+func fixSchemaReferences(v interface{}) interface{} {
+	switch val := v.(type) {
+	case map[string]interface{}:
+		result := make(map[string]interface{})
+		for k, v := range val {
+			if k == "$ref" {
+				// Fix the reference path
+				if ref, ok := v.(string); ok {
+					result[k] = strings.Replace(ref, "#/allOf/1/$defs/", "#/$defs/", 1)
+				} else {
+					result[k] = v
+				}
+			} else {
+				// Recursively fix nested references
+				result[k] = fixSchemaReferences(v)
+			}
+		}
+		return result
+	case []interface{}:
+		// Recursively fix references in arrays
+		result := make([]interface{}, len(val))
+		for i, v := range val {
+			result[i] = fixSchemaReferences(v)
+		}
+		return result
+	default:
+		return v
+	}
+}
+
 // stringToMap converts a contract YAML string to a nested map structure.
 // It parses the contract YAML containing workload, env, and optional envWorkloadSignature fields,
 // unmarshals each section, and returns a structured map representation.
 //
+// This function supports two formats:
+//  1. Wrapped format: Contract with 'env:' and 'workload:' keys (for complete contract validation)
+//  2. Raw format: Section content starting with 'type: env' or 'type: workload' (for individual section validation)
+//
 // Parameters:
 //   - contract: Contract YAML string with workload and env sections
+//   - section: Section to parse - "" (both), "workload" (only workload), or "env" (only env)
 //
 // Returns:
 //   - Map with "env", "workload", and optionally "envWorkloadSignature" keys
 //   - Error if YAML unmarshaling fails
-func stringToMap(contract string) (map[any]any, error) {
-	data := Contract{}
+func stringToMap(contract, section string) (map[any]any, error) {
+	dataMap := make(map[any]any)
 
+	// When validating a specific section, try raw format first
+	if section != "" {
+		// Try to parse as raw section format (type: env/workload at root)
+		sectionData := make(map[any]any)
+		err := yaml.Unmarshal([]byte(contract), &sectionData)
+		if err != nil {
+			return nil, err
+		}
+
+		// Check if it has a type field matching the requested section
+		if typeVal, ok := sectionData["type"]; ok {
+			if typeStr, ok := typeVal.(string); ok {
+				if typeStr == section {
+					// Valid raw format for the requested section
+					dataMap[section] = sectionData
+					return dataMap, nil
+				} else {
+					return nil, fmt.Errorf("section type mismatch: requested '%s' but contract has 'type: %s'", section, typeStr)
+				}
+			}
+		}
+
+		// If no type field or doesn't match, fall through to try wrapped format
+	}
+
+	// Try wrapped format (env: | and workload: |)
+	data := Contract{}
 	err := yaml.Unmarshal([]byte(contract), &data)
 	if err != nil {
+		// If we're validating a specific section and wrapped format fails, it's an error
+		if section != "" {
+			return nil, fmt.Errorf("invalid contract format: 'type' field not found. Expected 'type: %s'", section)
+		}
 		return nil, err
 	}
 
-	dataEnv := make(map[any]any)
-	err = yaml.Unmarshal([]byte(data.Env), &dataEnv)
-	if err != nil {
-		return nil, err
+	// Check if contract has wrapper format (env: or workload: keys)
+	hasWrapper := len(strings.TrimSpace(data.Env)) > 0 || len(strings.TrimSpace(data.Workload)) > 0
+
+	if hasWrapper {
+		// Format A: Wrapped format (env: | and workload: |)
+		// Parse env section if requested or if no specific section is specified
+		if section == "" || section == "env" {
+			dataEnv := make(map[any]any)
+			err = yaml.Unmarshal([]byte(data.Env), &dataEnv)
+			if err != nil {
+				return nil, err
+			}
+			dataMap["env"] = dataEnv
+		}
+
+		// Parse workload section if requested or if no specific section is specified
+		if section == "" || section == "workload" {
+			dataWorkload := make(map[any]any)
+			err = yaml.Unmarshal([]byte(data.Workload), &dataWorkload)
+			if err != nil {
+				return nil, err
+			}
+			dataMap["workload"] = dataWorkload
+		}
+
+		// Include signature only when validating both sections
+		if section == "" && len(data.WorkloadSignature) != 0 {
+			dataMap["envWorkloadSignature"] = data.WorkloadSignature
+		}
+	} else {
+		// No wrapper format and no valid raw format
+		if section == "" {
+			return nil, fmt.Errorf("invalid contract format: contract must contain both 'env:' and 'workload:' sections for complete validation")
+		}
+		return nil, fmt.Errorf("invalid contract format: 'type' field not found. Expected 'type: %s'", section)
 	}
 
-	dataWorkload := make(map[any]any)
-	err = yaml.Unmarshal([]byte(data.Workload), &dataWorkload)
-	if err != nil {
-		return nil, err
-	}
-
-	dataMap := make(map[any]any)
-	dataMap["env"] = dataEnv
-	dataMap["workload"] = dataWorkload
-	if len(data.WorkloadSignature) != 0 {
-		dataMap["envWorkloadSignature"] = data.WorkloadSignature
-	}
-
-	return dataMap, err
+	return dataMap, nil
 }
 
 // convertToStringkeys recursively converts a map with any-typed keys to string-keyed maps.
