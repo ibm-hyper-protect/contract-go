@@ -658,6 +658,7 @@ func GenerateTgzBase64(folderFilesPath []string) (string, error) {
 //   - version: Confidential Computing platform version ("ccrt", "ccrv", "ccco", "hpvs") - defaults to "ccrt" if empty
 //   - section: Section to validate - "" (both), "workload" (only workload), or "env" (only env)
 //
+
 // Returns:
 //   - nil if contract is valid
 //   - Error if contract parsing, schema retrieval, or validation fails
