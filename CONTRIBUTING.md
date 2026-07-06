@@ -293,6 +293,7 @@ git config --local user.signingkey ~/.ssh/id_ed25519.pub
 git config --local commit.gpgsign true
 ```
 
+
 ### Making Signed Commits
 
 Once configured, commits are signed automatically:
