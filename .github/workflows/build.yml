@@ -115,7 +115,6 @@ jobs:
             echo "  chore!: breaking change in build process"
             exit 1
           fi
-
           echo "Commit message is valid!"
 
   verify-commit-signatures:
