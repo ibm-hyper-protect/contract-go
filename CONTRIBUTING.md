@@ -11,6 +11,7 @@ Thank you for considering contributing to `contract-go`! We appreciate your time
 - [Coding Standards](#coding-standards)
 - [Commit Signing](#commit-signing)
 - [Commit Messages](#commit-messages)
+- [CI Requirements](#ci-requirements)
 - [Pull Request Process](#pull-request-process)
 - [Testing](#testing)
 - [Reporting Bugs](#reporting-bugs)
@@ -343,10 +344,6 @@ git push --force-with-lease
 - **Pipeline enforcement**: PRs with unsigned commits will fail CI/CD checks
 - **Squash and merge**: Only the latest commit needs to be signed
 
-### Need Help?
-
-See detailed guide: [COMMIT_SIGNING.md](COMMIT_SIGNING.md)
-
 ## Commit Messages
 
 We follow [Conventional Commits](https://www.conventionalcommits.org/) specification:
@@ -393,6 +390,42 @@ test(image): add tests for version constraint parsing
 - **Separate subject from body with a blank line**
 - **Use body to explain what and why, not how**
 - **Reference issues** (e.g., "Fixes #123")
+
+## CI Requirements
+
+Every pull request must pass the following checks before it can be merged:
+
+### 1. Branch Name
+Branch names must follow the format `<Type>/<name>`:
+
+| Type | Purpose |
+|---|---|
+| `Feature` | A new feature |
+| `Fix` | A bug fix |
+| `Docs` | Documentation only changes |
+| `Refactor` | Code changes that neither fix a bug nor add a feature |
+| `Performance` | Performance improvements |
+| `Test` | Adding or updating tests |
+| `Chore` | Changes to build process, dependencies, etc. |
+| `CI` | CI/CD configuration changes |
+
+✅ Valid: `Feature/add-encryption`, `Fix/null-pointer`, `Chore/upgrade-deps`
+❌ Invalid: `my-branch`, `fix-bug`, `HPVM-123`
+
+### 2. Commit Message
+Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) format: `type(optional-scope): description`
+
+✅ Valid: `feat: add contract expiry`, `fix(api): handle null values`
+❌ Invalid: `updated stuff`, `WIP`, `bug fix`
+
+### 3. No Force Pushes
+Force pushing to a PR branch is not allowed. If you need to update your branch, rebase and push normally:
+```bash
+git pull --rebase upstream main
+git push origin your-branch
+```
+
+---
 
 ## Pull Request Process
 
