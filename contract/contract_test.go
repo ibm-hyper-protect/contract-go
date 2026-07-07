@@ -825,114 +825,80 @@ func TestHpcrVerifyContractInvalidSchema(t *testing.T) {
 	assert.Error(t, err)
 }
 
-// Testcase to check if HpcrContractTemplate() is able to return workload template content (default CCRT).
+// Testcase to check if HpcrContractTemplate() returns correct workload template per OS.
+// hpvs/ccrt/ccco/"" use workload_ccrt.yaml; ccrv uses workload_ccrv.yaml.
 func TestHpcrContractTemplateWorkload(t *testing.T) {
-	expectedTemplate, err := gen.ReadDataFromFile(sampleWorkloadCcrtTemplatePath)
+	ccrtTemplate, err := gen.ReadDataFromFile(sampleWorkloadCcrtTemplatePath)
 	if err != nil {
-		t.Errorf("failed to read workload template file - %v", err)
+		t.Fatalf("failed to read CCRT workload template - %v", err)
+	}
+	ccrvTemplate, err := gen.ReadDataFromFile(sampleWorkloadCcrvTemplatePath)
+	if err != nil {
+		t.Fatalf("failed to read CCRV workload template - %v", err)
 	}
 
-	workloadTemplate, err := HpcrContractTemplate("workload", "")
-	assert.NoError(t, err)
-	assert.Equal(t, expectedTemplate, workloadTemplate)
+	cases := []struct {
+		os       string
+		expected string
+	}{
+		{"", ccrtTemplate},
+		{"hpvs", ccrtTemplate},
+		{"ccrt", ccrtTemplate},
+		{"ccco", ccrtTemplate},
+		{"ccrv", ccrvTemplate},
+	}
+	for _, tc := range cases {
+		result, err := HpcrContractTemplate("workload", tc.os)
+		assert.NoError(t, err, "os=%s", tc.os)
+		assert.Equal(t, tc.expected, result, "os=%s", tc.os)
+	}
 }
 
-// Testcase to check if HpcrContractTemplate() is able to return CCRT workload template.
-func TestHpcrContractTemplateWorkloadCcrt(t *testing.T) {
-	expectedTemplate, err := gen.ReadDataFromFile(sampleWorkloadCcrtTemplatePath)
-	if err != nil {
-		t.Errorf("failed to read CCRT workload template file - %v", err)
-	}
-
-	for _, osVal := range []string{"", "hpvs", "ccrt", "ccco"} {
-		workloadTemplate, err := HpcrContractTemplate("workload", osVal)
-		assert.NoError(t, err)
-		assert.Equal(t, expectedTemplate, workloadTemplate, "os=%s should use CCRT template", osVal)
-	}
-}
-
-// Testcase to check if HpcrContractTemplate() is able to return CCRV workload template.
-func TestHpcrContractTemplateWorkloadCcrv(t *testing.T) {
-	expectedTemplate, err := gen.ReadDataFromFile(sampleWorkloadCcrvTemplatePath)
-	if err != nil {
-		t.Errorf("failed to read CCRV workload template file - %v", err)
-	}
-
-	workloadTemplate, err := HpcrContractTemplate("workload", "ccrv")
-	assert.NoError(t, err)
-	assert.Equal(t, expectedTemplate, workloadTemplate)
-}
-
-// Testcase to check if HpcrContractTemplate() is able to return env template content.
+// Testcase to check if HpcrContractTemplate() returns the same env template for all OS values.
 func TestHpcrContractTemplateEnv(t *testing.T) {
-	expectedTemplate, err := gen.ReadDataFromFile(sampleEnvTemplatePath)
+	expected, err := gen.ReadDataFromFile(sampleEnvTemplatePath)
 	if err != nil {
-		t.Errorf("failed to read env template file - %v", err)
-	}
-
-	envTemplate, err := HpcrContractTemplate("env", "")
-	assert.NoError(t, err)
-	assert.Equal(t, expectedTemplate, envTemplate)
-}
-
-// Testcase to check if HpcrContractTemplate() returns same env template for all OS values.
-func TestHpcrContractTemplateEnvAllOs(t *testing.T) {
-	expectedTemplate, err := gen.ReadDataFromFile(sampleEnvTemplatePath)
-	if err != nil {
-		t.Errorf("failed to read env template file - %v", err)
+		t.Fatalf("failed to read env template - %v", err)
 	}
 
 	for _, osVal := range []string{"", "hpvs", "ccrt", "ccrv", "ccco"} {
-		envTemplate, err := HpcrContractTemplate("env", osVal)
-		assert.NoError(t, err)
-		assert.Equal(t, expectedTemplate, envTemplate, "os=%s should return same env template", osVal)
+		result, err := HpcrContractTemplate("env", osVal)
+		assert.NoError(t, err, "os=%s", osVal)
+		assert.Equal(t, expected, result, "os=%s", osVal)
 	}
 }
 
-// Testcase to check if HpcrContractTemplate() is able to return combined template content (default CCRT).
+// Testcase to check if HpcrContractTemplate() returns correct combined template per OS.
 func TestHpcrContractTemplateCombined(t *testing.T) {
-	workloadTemplate, err := gen.ReadDataFromFile(sampleWorkloadCcrtTemplatePath)
-	if err != nil {
-		t.Errorf("failed to read workload template file - %v", err)
+	buildExpected := func(workloadFile string) string {
+		wl, err := gen.ReadDataFromFile(workloadFile)
+		if err != nil {
+			t.Fatalf("failed to read %s - %v", workloadFile, err)
+		}
+		env, err := gen.ReadDataFromFile(sampleEnvTemplatePath)
+		if err != nil {
+			t.Fatalf("failed to read env template - %v", err)
+		}
+		out := "workload: |\n" + indentTemplateBlockForTest(wl)
+		if !strings.HasSuffix(wl, "\n") {
+			out += "\n"
+		}
+		return out + "env: |\n" + indentTemplateBlockForTest(env)
 	}
 
-	envTemplate, err := gen.ReadDataFromFile(sampleEnvTemplatePath)
-	if err != nil {
-		t.Errorf("failed to read env template file - %v", err)
+	cases := []struct {
+		os           string
+		workloadFile string
+	}{
+		{"", sampleWorkloadCcrtTemplatePath},
+		{"ccrt", sampleWorkloadCcrtTemplatePath},
+		{"ccrv", sampleWorkloadCcrvTemplatePath},
 	}
-
-	expectedOutput := "workload: |\n" + indentTemplateBlockForTest(workloadTemplate)
-	if !strings.HasSuffix(workloadTemplate, "\n") {
-		expectedOutput += "\n"
+	for _, tc := range cases {
+		result, err := HpcrContractTemplate("", tc.os)
+		assert.NoError(t, err, "os=%s", tc.os)
+		assert.Equal(t, buildExpected(tc.workloadFile), result, "os=%s", tc.os)
 	}
-	expectedOutput += "env: |\n" + indentTemplateBlockForTest(envTemplate)
-
-	combinedTemplate, err := HpcrContractTemplate("", "")
-	assert.NoError(t, err)
-	assert.Equal(t, expectedOutput, combinedTemplate)
-}
-
-// Testcase to check if HpcrContractTemplate() returns CCRV workload in combined template.
-func TestHpcrContractTemplateCombinedCcrv(t *testing.T) {
-	workloadTemplate, err := gen.ReadDataFromFile(sampleWorkloadCcrvTemplatePath)
-	if err != nil {
-		t.Errorf("failed to read CCRV workload template file - %v", err)
-	}
-
-	envTemplate, err := gen.ReadDataFromFile(sampleEnvTemplatePath)
-	if err != nil {
-		t.Errorf("failed to read env template file - %v", err)
-	}
-
-	expectedOutput := "workload: |\n" + indentTemplateBlockForTest(workloadTemplate)
-	if !strings.HasSuffix(workloadTemplate, "\n") {
-		expectedOutput += "\n"
-	}
-	expectedOutput += "env: |\n" + indentTemplateBlockForTest(envTemplate)
-
-	combinedTemplate, err := HpcrContractTemplate("", "ccrv")
-	assert.NoError(t, err)
-	assert.Equal(t, expectedOutput, combinedTemplate)
 }
 
 // Testcase to check if HpcrContractTemplate() handles invalid template type.
@@ -941,13 +907,18 @@ func TestHpcrContractTemplateInvalidType(t *testing.T) {
 	assert.EqualError(t, err, "unsupported template type: invalid")
 }
 
-// Testcase to check if resolveWorkloadTemplateFile() returns correct file for each OS.
+// Testcase to check if resolveWorkloadTemplateFile() maps OS values to correct template files.
 func TestResolveWorkloadTemplateFile(t *testing.T) {
-	assert.Equal(t, workloadCcrvTemplateFilePath, resolveWorkloadTemplateFile("ccrv"))
-	assert.Equal(t, workloadCcrtTemplateFilePath, resolveWorkloadTemplateFile(""))
-	assert.Equal(t, workloadCcrtTemplateFilePath, resolveWorkloadTemplateFile("ccrt"))
-	assert.Equal(t, workloadCcrtTemplateFilePath, resolveWorkloadTemplateFile("hpvs"))
-	assert.Equal(t, workloadCcrtTemplateFilePath, resolveWorkloadTemplateFile("ccco"))
+	cases := map[string]string{
+		"ccrv": workloadCcrvTemplateFilePath,
+		"":     workloadCcrtTemplateFilePath,
+		"ccrt": workloadCcrtTemplateFilePath,
+		"hpvs": workloadCcrtTemplateFilePath,
+		"ccco": workloadCcrtTemplateFilePath,
+	}
+	for osVal, expected := range cases {
+		assert.Equal(t, expected, resolveWorkloadTemplateFile(osVal), "os=%s", osVal)
+	}
 }
 
 // indentTemplateBlockForTest mirrors production indentation behavior for expected YAML output.
