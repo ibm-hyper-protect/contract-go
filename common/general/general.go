@@ -113,7 +113,6 @@ func ExecCommand(commandName, stdinInput string, args ...string) (string, error)
 		if err != nil {
 			return "", err
 		}
-		defer stdinPipe.Close()
 
 		go func() {
 			defer stdinPipe.Close()
