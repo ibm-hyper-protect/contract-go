@@ -73,7 +73,7 @@ Learn more:
   - Generate gzipped and encoded initdata for IBM Confidential Computing Container For Red Hat OpenShift Container Platform. Supports both Peerpod and Baremetal solution
   - Create signed and encrypted & signed contracts
   - Support contract expiry with CSR (Certificate Signing Request)
-  - Load built-in workload and env contract templates (CCRV uses a separate workload template without docker compose)
+  - Load built-in workload and env contract templates
   - Validate contract schemas
   - Decrypt encrypted text in Hyper Protect format
   - Password-protected private key support for decrypting attestation records and generate signed contracts

@@ -487,14 +487,10 @@ func HpcrContractSign(contract, privateKey, password string) (string, string, st
 
 // HpcrContractTemplate returns contract template content for workload, env, or both.
 //
-// The workload template varies by platform: "ccrv" uses a Red Hat Virtualization-specific
-// workload template (podman play only, no compose), while "hpvs", "ccrt", "ccco", and ""
-// all use the standard workload template (compose + play).
-//
 // Parameters:
 //   - templateType: "workload", "env", or "" (returns both templates combined)
-//   - os: Target IBM Confidential Computing platform — "ccrv" returns the CCRV-specific
-//     workload template; "hpvs", "ccrt", "ccco", or "" use the standard workload template
+//   - os: Target IBM Confidential Computing platform — "ccrv" workload template (podman play only, no compose)
+//     "hpvs", "ccrt", "ccco", or "" all use the standard workload template (compose + play).
 //
 // Returns:
 //   - Template content as string
@@ -542,7 +538,6 @@ func HpcrContractTemplate(templateType, os string) (string, error) {
 }
 
 // resolveWorkloadTemplateFile returns the workload template filename for the given OS.
-// "ccrv" uses the CCRV-specific template; all other values use the standard CCRT template.
 func resolveWorkloadTemplateFile(os string) string {
 	if os == "ccrv" {
 		return workloadCcrvTemplateFilePath
