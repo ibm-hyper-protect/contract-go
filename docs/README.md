@@ -1157,8 +1157,7 @@ MIIEpAIBAAKCAQEA...
 
 Returns built-in contract template content for `workload`, `env`, or both as a combined YAML scaffold.
 
-The workload template varies by platform: `"ccrv"` returns a template (podman `play` only, no docker `compose`), while `"hpvs"`, `"ccrt"`, `"ccco"`, and `""`
-all return the standard workload template (both `compose` and `play` sections).
+The workload template varies by platform: `"ccrv"` returns a template (podman `play` only), while `"hpvs"`, `"ccrt"`, `"ccco"`, and `""` all return the standard workload template (both `compose` and `play` sections).
 
 The env template is the same for all platforms.
 
@@ -1182,13 +1181,6 @@ func HpcrContractTemplate(templateType, os string) (string, error)
 |--------|------|-------------|
 | Template Content | `string` | YAML template content from `contract/template/workload_ccrt.yaml`, `contract/template/workload_ccrv.yaml`, `contract/template/env.yaml`, or a combination |
 | Error | `error` | Error if template type is invalid or template files cannot be read |
-
-**Workload Template Differences:**
-
-| OS | Template File | Includes `compose` | Includes `play` |
-|----|---------------|--------------------|-----------------|
-| `hpvs`, `ccrt`, `ccco`, `""` | `workload_ccrt.yaml` | ✓ | ✓ |
-| `ccrv` | `workload_ccrv.yaml` | ✗ | ✓ |
 
 **Example:**
 ```go
