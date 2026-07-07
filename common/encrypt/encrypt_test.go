@@ -27,12 +27,15 @@ import (
 )
 
 const (
-	certificateUrl       = "https://hpvsvpcubuntu.s3.us.cloud-object-storage.appdomain.cloud/s390x-22/ibm-hyper-protect-container-runtime-1-0-s390x-22-encrypt.crt"
-	simpleContractPath   = "../../samples/simple_contract.yaml"
-	samplePrivateKeyPath = "../../samples/contract-expiry/private.pem"
-	sampleCaCertPath     = "../../samples/contract-expiry/personal_ca.crt"
-	sampleCaKeyPath      = "../../samples/contract-expiry/personal_ca.pem"
-	sampleCsrFilePath    = "../../samples/contract-expiry/csr.pem"
+	certificateUrl              = "https://hpvsvpcubuntu.s3.us.cloud-object-storage.appdomain.cloud/s390x-22/ibm-hyper-protect-container-runtime-1-0-s390x-22-encrypt.crt"
+	simpleContractPath          = "../../samples/simple_contract.yaml"
+	samplePrivateKeyPath        = "../../samples/contract-expiry/private.pem"
+	sampleCaCertPath            = "../../samples/contract-expiry/personal_ca.crt"
+	sampleCaKeyPath             = "../../samples/contract-expiry/personal_ca.pem"
+	sampleCsrFilePath           = "../../samples/contract-expiry/csr.pem"
+	encryptedPrivateKeyPath     = "../../samples/encrypt/private_encrypted.pem"
+	encryptedPublicKeyPath      = "../../samples/encrypt/public_encrypted.pem"
+	encryptedPrivateKeyPassword = "testpassword"
 
 	sampleCsrCountry  = "IN"
 	sampleCsrState    = "Karnataka"
@@ -68,7 +71,7 @@ func TestGeneratePublicKey(t *testing.T) {
 		t.Errorf("failed to read public key - %v", err)
 	}
 
-	result, err := GeneratePublicKey(privateKey)
+	result, err := GeneratePublicKey(privateKey, "")
 	if err != nil {
 		t.Errorf("failed to generate public key - %v", err)
 	}
@@ -153,7 +156,7 @@ func TestEncryptString(t *testing.T) {
 	assert.NotEmpty(t, result, "Encrypted workload did not get generated")
 }
 
-// Testcase to check if EncryptFinalStr() is able to generate hyper-protect-basic.<password>.<workload>
+// Testcase to check if EncryptFinalStr() is able to generate hyper-protect-basic.<password>.<workload> for empty OS (default)
 func TestEncryptFinalStr(t *testing.T) {
 	var contractMap map[string]interface{}
 
@@ -187,7 +190,7 @@ func TestEncryptFinalStr(t *testing.T) {
 		t.Errorf("failed to encrypt workload - %v", err)
 	}
 
-	finalWorkload := EncryptFinalStr(encryptedRandomPassword, encryptedWorkload)
+	finalWorkload := EncryptFinalStr(encryptedRandomPassword, encryptedWorkload, "")
 
 	assert.NotEmpty(t, finalWorkload, "Final workload did not get generated")
 	assert.Contains(t, finalWorkload, "hyper-protect-basic.")
@@ -300,16 +303,16 @@ func TestSignContract(t *testing.T) {
 	if err != nil {
 		t.Errorf("failed to encrypt workload - %v", err)
 	}
-	finalWorkload := EncryptFinalStr(encryptedPassword, encryptedWorkload)
+	finalWorkload := EncryptFinalStr(encryptedPassword, encryptedWorkload, "ccrt")
 
 	encryptedEnv, err := EncryptContract(password, contractMap["env"].(string))
 	if err != nil {
 		t.Errorf("failed to encrypt env - %v", err)
 	}
 
-	finalEnv := EncryptFinalStr(encryptedPassword, encryptedEnv)
+	finalEnv := EncryptFinalStr(encryptedPassword, encryptedEnv, "ccrt")
 
-	workloadEnvSignature, err := SignContract(finalWorkload, finalEnv, privateKey)
+	workloadEnvSignature, err := SignContract(finalWorkload, finalEnv, privateKey, "")
 	if err != nil {
 		t.Errorf("failed to generate workload env signature - %v", err)
 	}
@@ -333,7 +336,7 @@ func TestGenFinalSignedContractAttest(t *testing.T) {
 
 // Testcase to check if GeneratePublicKey() handles invalid private key
 func TestGeneratePublicKeyInvalidPrivateKey(t *testing.T) {
-	_, err := GeneratePublicKey("invalid-private-key")
+	_, err := GeneratePublicKey("invalid-private-key", "")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to execute openssl command")
 }
@@ -352,7 +355,7 @@ func TestSignContractInvalidPrivateKey(t *testing.T) {
 		t.Errorf("failed to read contract - %v", err)
 	}
 
-	_, err = SignContract(contract, "", "invalid-private-key")
+	_, err = SignContract(contract, "", "invalid-private-key", "")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to execute openssl command")
 }
@@ -459,7 +462,18 @@ func TestEncryptFinalStrSuccess(t *testing.T) {
 	encryptedPassword := "encryptedpass"
 	encryptedContract := "encryptedcontract"
 
-	result := EncryptFinalStr(encryptedPassword, encryptedContract)
+	result := EncryptFinalStr(encryptedPassword, encryptedContract, "hpvs")
+	assert.NotEmpty(t, result)
+	assert.Contains(t, result, "hyper-protect-basic")
+	assert.Contains(t, result, encryptedPassword)
+	assert.Contains(t, result, encryptedContract)
+}
+
+func TestEncryptFinalStrSuccessCcco(t *testing.T) {
+	encryptedPassword := "encryptedpass"
+	encryptedContract := "encryptedcontract"
+
+	result := EncryptFinalStr(encryptedPassword, encryptedContract, "ccco")
 	assert.NotEmpty(t, result)
 	assert.Contains(t, result, "hyper-protect-basic")
 	assert.Contains(t, result, encryptedPassword)
@@ -521,7 +535,7 @@ func TestSignContractEmptyWorkload(t *testing.T) {
 		t.Errorf("failed to read private key - %v", err)
 	}
 
-	result, err := SignContract("", "test-env", privateKey)
+	result, err := SignContract("", "test-env", privateKey, "")
 	assert.NoError(t, err)
 	assert.NotEmpty(t, result)
 }
@@ -533,14 +547,14 @@ func TestSignContractEmptyEnv(t *testing.T) {
 		t.Errorf("failed to read private key - %v", err)
 	}
 
-	result, err := SignContract("test-workload", "", privateKey)
+	result, err := SignContract("test-workload", "", privateKey, "")
 	assert.NoError(t, err)
 	assert.NotEmpty(t, result)
 }
 
 // Testcase to check if SignContract() handles empty private key
 func TestSignContractEmptyPrivateKey(t *testing.T) {
-	_, err := SignContract("test-workload", "test-env", "")
+	_, err := SignContract("test-workload", "test-env", "", "")
 	assert.Error(t, err)
 }
 
@@ -655,7 +669,7 @@ func TestEncryptContractEmptyContract(t *testing.T) {
 
 // Testcase to check if GeneratePublicKey() handles empty private key
 func TestGeneratePublicKeyEmptyPrivateKey(t *testing.T) {
-	_, err := GeneratePublicKey("")
+	_, err := GeneratePublicKey("", "")
 	assert.Error(t, err)
 }
 
@@ -704,13 +718,13 @@ func TestVerifySignature(t *testing.T) {
 	}
 
 	// Generate public key from private key
-	publicKey, err := GeneratePublicKey(privateKey)
+	publicKey, err := GeneratePublicKey(privateKey, "")
 	if err != nil {
 		t.Errorf("failed to generate public key - %v", err)
 	}
 
 	// Verify signature
-	err = VerifySignature(testData, []byte(signature), publicKey)
+	err = VerifySignature(testData, signature, publicKey)
 	if err != nil {
 		t.Errorf("signature verification failed - %v", err)
 	}
@@ -719,18 +733,133 @@ func TestVerifySignature(t *testing.T) {
 // Testcase to check if VerifySignature() fails with invalid signature
 func TestVerifySignature_InvalidSignature(t *testing.T) {
 	testData := "test data"
-	invalidSignature := []byte("invalid signature")
+	invalidSignature := "invalid signature"
 
 	privateKey, err := gen.ReadDataFromFile(samplePrivateKeyPath)
 	if err != nil {
 		t.Errorf("failed to get private key - %v", err)
 	}
 
-	publicKey, err := GeneratePublicKey(privateKey)
+	publicKey, err := GeneratePublicKey(privateKey, "")
 	if err != nil {
 		t.Errorf("failed to generate public key - %v", err)
 	}
 
 	err = VerifySignature(testData, invalidSignature, publicKey)
 	assert.Error(t, err, "Expected verification to fail with invalid signature")
+}
+
+// Testcase to check if GeneratePublicKey() works with password-protected private key
+func TestGeneratePublicKeyWithEncryptedPrivateKey(t *testing.T) {
+	privateKey, err := gen.ReadDataFromFile(encryptedPrivateKeyPath)
+	if err != nil {
+		t.Errorf("failed to read encrypted private key - %v", err)
+	}
+
+	publicKey, err := gen.ReadDataFromFile(encryptedPublicKeyPath)
+	if err != nil {
+		t.Errorf("failed to read public key - %v", err)
+	}
+
+	result, err := GeneratePublicKey(privateKey, encryptedPrivateKeyPassword)
+	assert.NoError(t, err)
+	assert.Equal(t, result, publicKey)
+}
+
+// Testcase to check if GeneratePublicKey() fails with wrong password
+func TestGeneratePublicKeyWithEncryptedPrivateKeyWrongPassword(t *testing.T) {
+	privateKey, err := gen.ReadDataFromFile(encryptedPrivateKeyPath)
+	if err != nil {
+		t.Errorf("failed to read encrypted private key - %v", err)
+	}
+
+	_, err = GeneratePublicKey(privateKey, "wrongpassword")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to execute openssl command")
+}
+
+// Testcase to check if GeneratePublicKey() fails when password is required but not provided
+func TestGeneratePublicKeyWithEncryptedPrivateKeyNoPassword(t *testing.T) {
+	privateKey, err := gen.ReadDataFromFile(encryptedPrivateKeyPath)
+	if err != nil {
+		t.Errorf("failed to read encrypted private key - %v", err)
+	}
+
+	_, err = GeneratePublicKey(privateKey, "")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "private key is encrypted but no password provided")
+}
+
+// Testcase to check if SignContract() works with password-protected private key
+func TestSignContractWithEncryptedPrivateKey(t *testing.T) {
+	var contractMap map[string]interface{}
+	contract, err := gen.ReadDataFromFile(simpleContractPath)
+	if err != nil {
+		t.Errorf("failed to read contract - %v", err)
+	}
+
+	err = yaml.Unmarshal([]byte(contract), &contractMap)
+	if err != nil {
+		t.Errorf("failed to unmarshal YAML - %v", err)
+	}
+
+	password, err := RandomPasswordGenerator()
+	if err != nil {
+		t.Errorf("failed to generate random password - %v", err)
+	}
+
+	encryptCertificate, err := gen.CertificateDownloader(certificateUrl)
+	if err != nil {
+		t.Errorf("failed to get encryption certificate - %v", err)
+	}
+
+	encryptedPassword, err := EncryptPassword(password, encryptCertificate)
+	if err != nil {
+		t.Errorf("failed to encrypt password - %v", err)
+	}
+
+	encryptedWorkload, err := EncryptContract(password, contractMap["workload"].(string))
+	if err != nil {
+		t.Errorf("failed to encrypt workload - %v", err)
+	}
+	finalWorkload := EncryptFinalStr(encryptedPassword, encryptedWorkload, "ccrv")
+
+	encryptedEnv, err := EncryptContract(password, contractMap["env"].(string))
+	if err != nil {
+		t.Errorf("failed to encrypt env - %v", err)
+	}
+	finalEnv := EncryptFinalStr(encryptedPassword, encryptedEnv, "ccrv")
+
+	privateKey, err := gen.ReadDataFromFile(encryptedPrivateKeyPath)
+	if err != nil {
+		t.Errorf("failed to read encrypted private key - %v", err)
+	}
+
+	workloadEnvSignature, err := SignContract(finalWorkload, finalEnv, privateKey, encryptedPrivateKeyPassword)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, workloadEnvSignature)
+}
+
+// Testcase to check if SignContract() fails with wrong password
+func TestSignContractWithEncryptedPrivateKeyWrongPassword(t *testing.T) {
+	privateKey, err := gen.ReadDataFromFile(encryptedPrivateKeyPath)
+	if err != nil {
+		t.Errorf("failed to read encrypted private key - %v", err)
+	}
+
+	_, err = SignContract("test-workload", "test-env", privateKey, "wrongpassword")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to execute openssl command")
+}
+
+// Testcase to check if SignContract() fails when password is required but not provided
+func TestSignContractWithEncryptedPrivateKeyNoPassword(t *testing.T) {
+	privateKey, err := gen.ReadDataFromFile(encryptedPrivateKeyPath)
+	if err != nil {
+		t.Errorf("failed to read encrypted private key - %v", err)
+	}
+
+	_, err = SignContract("test-workload", "test-env", privateKey, "")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "private key is encrypted but no password provided")
 }

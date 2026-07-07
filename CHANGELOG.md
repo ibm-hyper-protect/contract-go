@@ -1,3 +1,251 @@
+## [2.30.3](https://github.com/ibm-hyper-protect/contract-go/compare/v2.30.2...v2.30.3) (2026-06-22)
+
+### Bug Fixes
+
+* **deps:** update go dependencies ([#254](https://github.com/ibm-hyper-protect/contract-go/issues/254)) ([01fa6ed](https://github.com/ibm-hyper-protect/contract-go/commit/01fa6ed417e180989e0c28efa31ac9feebc0a444))
+
+## [2.30.2](https://github.com/ibm-hyper-protect/contract-go/compare/v2.30.1...v2.30.2) (2026-06-22)
+
+### Bug Fixes
+
+* update mod file ([4f66d54](https://github.com/ibm-hyper-protect/contract-go/commit/4f66d54ab476a1e7368f1d75c0d695bf9010daeb))
+* version format of hpvs ([69fd977](https://github.com/ibm-hyper-protect/contract-go/commit/69fd977c2bd88fc9c98525fcf1ede7fb58c78b85))
+
+## [2.30.1](https://github.com/ibm-hyper-protect/contract-go/compare/v2.30.0...v2.30.1) (2026-06-22)
+
+### Bug Fixes
+
+* **deps:** update go dependencies ([#240](https://github.com/ibm-hyper-protect/contract-go/issues/240)) ([e5ca7d1](https://github.com/ibm-hyper-protect/contract-go/commit/e5ca7d100155aada87f78b2611167da082c45fac))
+
+## [2.30.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.29.0...v2.30.0) (2026-06-22)
+
+### Features
+
+* Added Support for Baremetal Initdata Annotation Ceration ([e925e36](https://github.com/ibm-hyper-protect/contract-go/commit/e925e3663f73d85adb7de21a7cb312d4c7f5b476))
+
+### Miscellaneous Chores
+
+* **deps:** update go dependencies ([9904739](https://github.com/ibm-hyper-protect/contract-go/commit/9904739308699d62f4c3479a73a68ea025b33478))
+
+## [2.29.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.28.0...v2.29.0) (2026-06-17)
+
+### Features
+
+* Add support of new prefix format for encrypted contract ([#223](https://github.com/ibm-hyper-protect/contract-go/issues/223)) ([8b43429](https://github.com/ibm-hyper-protect/contract-go/commit/8b434292e3ab0c8f93f5d3d89c9855e8481b12b4))
+
+## [2.28.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.27.1...v2.28.0) (2026-06-03)
+
+### Features
+
+* rhel schema changes for byok ([44a902b](https://github.com/ibm-hyper-protect/contract-go/commit/44a902b57847cb56523e242183691a785b86621e))
+
+## [2.27.1](https://github.com/ibm-hyper-protect/contract-go/compare/v2.27.0...v2.27.1) (2026-06-03)
+
+### Bug Fixes
+
+* **deps:** update go dependencies to v6 ([#238](https://github.com/ibm-hyper-protect/contract-go/issues/238)) ([49cebe2](https://github.com/ibm-hyper-protect/contract-go/commit/49cebe2f5c24957353019bfe400b28e0dbe90280))
+
+## [2.27.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.26.0...v2.27.0) (2026-06-02)
+
+### Features
+
+* add encryption cert 26.4.0 for CCCO-1.2.1 ([39e9bda](https://github.com/ibm-hyper-protect/contract-go/commit/39e9bda392222a1886f83a34fff8a762b2e20410))
+
+## [2.26.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.25.0...v2.26.0) (2026-05-25)
+
+### Features
+
+* Support Sealed Secret Creation in Contract-go ([908c819](https://github.com/ibm-hyper-protect/contract-go/commit/908c819f585ab65635039e6df5ed998ddd3c703a))
+
+## [2.25.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.24.0...v2.25.0) (2026-05-22)
+
+### Features
+
+* Added ccrv latest version 26.5.0 ([f35a85c](https://github.com/ibm-hyper-protect/contract-go/commit/f35a85cdbc959dd01a8811e9d16f15f324a15d51))
+
+## [2.24.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.23.0...v2.24.0) (2026-05-22)
+
+### Features
+
+* add encryption cert for 26.5.0 ([f72991a](https://github.com/ibm-hyper-protect/contract-go/commit/f72991aff5aa000fdd6ee2af7a5e42d74601dc19))
+
+### Miscellaneous Chores
+
+* **deps:** update docker.io/library/hello-world docker digest to 0e760fd ([#232](https://github.com/ibm-hyper-protect/contract-go/issues/232)) ([b097ce1](https://github.com/ibm-hyper-protect/contract-go/commit/b097ce174a36a9e5fed78677cecab3b7ac8278c2))
+
+## [2.23.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.22.0...v2.23.0) (2026-05-08)
+
+### Features
+
+* add Rohit Singh as official Maintainer ([cbd9fb6](https://github.com/ibm-hyper-protect/contract-go/commit/cbd9fb6045a9f79dbd66e96a6f34fd2a386b476c))
+* some more changes ([bbe21f8](https://github.com/ibm-hyper-protect/contract-go/commit/bbe21f84fdadf67926fc7a01e7073093205c84ae))
+
+### Bug Fixes
+
+* changelog spell mistakes ([d858efc](https://github.com/ibm-hyper-protect/contract-go/commit/d858efcf035465eee290d5a0b5d0be1b51826d7e))
+
+### Documentation
+
+* Add Carsten has Emeritus Maintainer ([961d0de](https://github.com/ibm-hyper-protect/contract-go/commit/961d0de50ab2cc4dc7c63457b44caf5cd5d97402))
+* Update README & user documentation ([26d02cc](https://github.com/ibm-hyper-protect/contract-go/commit/26d02cc704ddd005fd5615ecdcdad0fd99b85421))
+
+## [2.22.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.21.2...v2.22.0) (2026-05-06)
+
+### Features
+
+* addressed review comments ([53a6262](https://github.com/ibm-hyper-protect/contract-go/commit/53a62625add55b9907d6268840b4780bcf21700d))
+* Built-in store for n, n-1, n-2 encryption certs ([e221092](https://github.com/ibm-hyper-protect/contract-go/commit/e2210928468786abea638200f6cdbce815ccbd8b))
+* simplifying listenCertVersions function ([131ef7d](https://github.com/ibm-hyper-protect/contract-go/commit/131ef7d1be1bc3088d820cee6adacbfe0af81893))
+
+## [2.21.2](https://github.com/ibm-hyper-protect/contract-go/compare/v2.21.1...v2.21.2) (2026-05-04)
+
+### Bug Fixes
+
+* Restore permissions for contents in build workflow ([ec9a882](https://github.com/ibm-hyper-protect/contract-go/commit/ec9a882252f22299a78fd15f289784dc5adc7944))
+
+## [2.21.1](https://github.com/ibm-hyper-protect/contract-go/compare/v2.21.0...v2.21.1) (2026-04-30)
+
+### Bug Fixes
+
+* **deps:** update module github.com/masterminds/semver/v3 to v3.5.0 ([#228](https://github.com/ibm-hyper-protect/contract-go/issues/228)) ([28bf82b](https://github.com/ibm-hyper-protect/contract-go/commit/28bf82bc83d041d5d0607b916063c8abebe162ec))
+
+## [2.21.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.20.0...v2.21.0) (2026-04-29)
+
+### Features
+
+* add support for dependabot ([fcdf70d](https://github.com/ibm-hyper-protect/contract-go/commit/fcdf70de7e96a359d124a4cb8917b11a0ad062e5))
+
+## [2.20.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.19.0...v2.20.0) (2026-04-24)
+
+### Features
+
+* update names to new product names ([5a6973e](https://github.com/ibm-hyper-protect/contract-go/commit/5a6973e5c1ef14b30c6a3fc341a3a696410a5e73))
+
+### Documentation
+
+* fix review comments ([e9258ff](https://github.com/ibm-hyper-protect/contract-go/commit/e9258ff948a63dad4aec1a3a8b99fc876bdbb0b9))
+* fixing review comments ([b343d69](https://github.com/ibm-hyper-protect/contract-go/commit/b343d69565bcec4e18a16a996e111f097b0b96a5))
+* update new naming abbreviations ([6fb79c8](https://github.com/ibm-hyper-protect/contract-go/commit/6fb79c8064d0345a45f3fc25a10762d5712f0c5f))
+
+## [2.19.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.18.0...v2.19.0) (2026-04-15)
+
+### Features
+
+* add support for template ([3ae7ccd](https://github.com/ibm-hyper-protect/contract-go/commit/3ae7ccd68f1899d811c1b4d500cc7959e2eba309))
+
+### Documentation
+
+* update docs with usage of contract templates ([d1e35bd](https://github.com/ibm-hyper-protect/contract-go/commit/d1e35bdbbd38ae2dbca55da75a395de4aa04b9a3))
+
+## [2.18.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.17.1...v2.18.0) (2026-04-15)
+
+### Features
+
+* update CRL functions ([ad2f266](https://github.com/ibm-hyper-protect/contract-go/commit/ad2f266e811e0c1cad8b308da016460597fafd00))
+
+### Bug Fixes
+
+* encryption & attestation certificate validation and crl revocation ([d713751](https://github.com/ibm-hyper-protect/contract-go/commit/d71375127d8b36618f2ad0f9a5c6aff979619929))
+
+### Documentation
+
+* update user documentation ([0e56ae1](https://github.com/ibm-hyper-protect/contract-go/commit/0e56ae169b92fe3530c327f96e13a6d01188a6ef))
+* update user documentation ([dc23c90](https://github.com/ibm-hyper-protect/contract-go/commit/dc23c9036f4a0afb9f85ec4bae37eb782e75d8f5))
+
+### Miscellaneous Chores
+
+* **deps:** update docker.io/library/hello-world docker digest to f907814 ([#217](https://github.com/ibm-hyper-protect/contract-go/issues/217)) ([089e7f4](https://github.com/ibm-hyper-protect/contract-go/commit/089e7f46aebce2d4d8f094321ea8acf32a4852cb))
+* go mod tidy ([f8b82d8](https://github.com/ibm-hyper-protect/contract-go/commit/f8b82d8e34f9c5e9eaa0e97e589a22f978abf2b2))
+* unused cert files ([46fa8e3](https://github.com/ibm-hyper-protect/contract-go/commit/46fa8e38feb5c3f7fa6562bfd2c69d43fe508875))
+
+## [2.17.1](https://github.com/ibm-hyper-protect/contract-go/compare/v2.17.0...v2.17.1) (2026-04-12)
+
+### Bug Fixes
+
+* **deps:** update go dependencies ([#216](https://github.com/ibm-hyper-protect/contract-go/issues/216)) ([5f63163](https://github.com/ibm-hyper-protect/contract-go/commit/5f63163b7a7e11dd53cdb547174999c1e3aa6677))
+
+## [2.17.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.16.1...v2.17.0) (2026-04-01)
+
+### Features
+
+* Added New schema for CCCO(HPCC) for contract validation ([fe9e348](https://github.com/ibm-hyper-protect/contract-go/commit/fe9e348b8cf089318f180f8077d4f99305f2c5a3))
+
+## [2.16.1](https://github.com/ibm-hyper-protect/contract-go/compare/v2.16.0...v2.16.1) (2026-04-01)
+
+### Bug Fixes
+
+* Add Rhel schema ([0e87faa](https://github.com/ibm-hyper-protect/contract-go/commit/0e87faac5af8a802e9fc926d2fd40ba23989c0b3))
+* updated schema variable name ([1ef1cf0](https://github.com/ibm-hyper-protect/contract-go/commit/1ef1cf03ca8f80647e73e3b290aa08f3ba3bf223))
+* updating error statement ([4a32cec](https://github.com/ibm-hyper-protect/contract-go/commit/4a32cec44e8b2891d087d90c03a7c5fd996640c6))
+
+## [2.16.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.15.0...v2.16.0) (2026-03-31)
+
+### Features
+
+* add support to accept password for encrypted private key ([a55c916](https://github.com/ibm-hyper-protect/contract-go/commit/a55c916402c781fd9e5a6201df319aad2013a679))
+* add support to public functions for accepting password for encrypted private key ([d2c6696](https://github.com/ibm-hyper-protect/contract-go/commit/d2c66966372054afb038fe83f848dbcd066089f4))
+* add/update testcases ([c018541](https://github.com/ibm-hyper-protect/contract-go/commit/c0185412e42a065fee8e78d556ff98adca35eab8))
+* more testcases ([b21fd6c](https://github.com/ibm-hyper-protect/contract-go/commit/b21fd6c193e897849fa2fb66ee7d232134c31ae0))
+* some optimisations ([2c138ce](https://github.com/ibm-hyper-protect/contract-go/commit/2c138ce839be47e855fbfbe4214897019beea1c9))
+* update go version to 1.26.1 ([6c1e93d](https://github.com/ibm-hyper-protect/contract-go/commit/6c1e93d23894acb28b6d09653e654578f3892b13))
+
+### Documentation
+
+* update documentation ([34ca086](https://github.com/ibm-hyper-protect/contract-go/commit/34ca0863b7e44a9d5c6d042ff8a603da7c5af290))
+
+### Miscellaneous Chores
+
+* **deps:** update docker.io/library/hello-world docker digest to 452a468 ([#210](https://github.com/ibm-hyper-protect/contract-go/issues/210)) ([0e65719](https://github.com/ibm-hyper-protect/contract-go/commit/0e6571992c54769057d79bf75aac6e2aace35fd3))
+* **deps:** update docker.io/library/hello-world docker digest to 6ae972d ([#209](https://github.com/ibm-hyper-protect/contract-go/issues/209)) ([eba6300](https://github.com/ibm-hyper-protect/contract-go/commit/eba6300a8e11e58fd764f38dd89e6506fb09514b))
+
+## [2.15.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.14.1...v2.15.0) (2026-03-23)
+
+### Features
+
+* add public function for chain of certificate and CRL revocation ([8974545](https://github.com/ibm-hyper-protect/contract-go/commit/897454539b288c4c67ba6679a5d6ccb4301e481e))
+* add support to validate cert chain, expiry, download crl and revocation ([8ac3464](https://github.com/ibm-hyper-protect/contract-go/commit/8ac3464f13dd4f48dad4e3b4771433bfd1b11ebb))
+
+### Documentation
+
+* add documentation for chain of certificate & revocation list ([18a2dc3](https://github.com/ibm-hyper-protect/contract-go/commit/18a2dc3702b2b2c4b4e0f7af164ae9479596784b))
+* add user documentation badge in README ([b47ba7f](https://github.com/ibm-hyper-protect/contract-go/commit/b47ba7fc0f7c8e6298d7175e0e9d89f7ab8dfa37))
+* update Issue & PR templates ([db551b6](https://github.com/ibm-hyper-protect/contract-go/commit/db551b633fd4357075f5738defda81729346310c))
+* update user documentations ([b121c91](https://github.com/ibm-hyper-protect/contract-go/commit/b121c91caa478ec16003fe707b1dc04075688de0))
+
+### Miscellaneous Chores
+
+* **deps:** update docker.io/library/hello-world docker digest to 85404b3 ([#206](https://github.com/ibm-hyper-protect/contract-go/issues/206)) ([43dce64](https://github.com/ibm-hyper-protect/contract-go/commit/43dce6436bab8f9f38c726e427d38b19f71f64f4))
+* review comments ([652b4ab](https://github.com/ibm-hyper-protect/contract-go/commit/652b4ab044427eafd86f3ba044e992d8cd184ed3))
+* update code comments for public function ([3e63af4](https://github.com/ibm-hyper-protect/contract-go/commit/3e63af4ff1a2601e3e0fa75658ff711be7751630))
+
+## [2.14.1](https://github.com/ibm-hyper-protect/contract-go/compare/v2.14.0...v2.14.1) (2026-03-06)
+
+### Bug Fixes
+
+* Add function to keep raw bytes without any trimming or modification ([bfdc12a](https://github.com/ibm-hyper-protect/contract-go/commit/bfdc12a6d9729efefd901b3d4bcc49f3680cc141))
+
+## [2.14.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.13.0...v2.14.0) (2026-03-04)
+
+### Features
+
+* add support to sign contract ([922e33b](https://github.com/ibm-hyper-protect/contract-go/commit/922e33b7f936ad5d127007a3da4ef1ff6947d4b8))
+
+### Documentation
+
+* update user documentation ([1206538](https://github.com/ibm-hyper-protect/contract-go/commit/1206538a137f1eb27b5d8b462bd26d3d36e83984))
+
+## [2.13.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.12.0...v2.13.0) (2026-03-04)
+
+### Features
+
+* Add support REV 26 ([#201](https://github.com/ibm-hyper-protect/contract-go/issues/201)) ([67ecca0](https://github.com/ibm-hyper-protect/contract-go/commit/67ecca049d50642b2d0e07a29acff0a75a270f0d))
+
+## [2.12.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.11.0...v2.12.0) (2026-03-04)
+
+### Features
+
+* update algorithm to encrypt contract ([#181](https://github.com/ibm-hyper-protect/contract-go/issues/181)) ([0df2a6d](https://github.com/ibm-hyper-protect/contract-go/commit/0df2a6d11ff25c1f3f1680b8d9c236581df4c1e5))
+
 ## [2.11.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.10.0...v2.11.0) (2026-03-03)
 
 ### Features
@@ -56,7 +304,7 @@
 ### Features
 
 * add support for attestation public key ([9a5cd17](https://github.com/ibm-hyper-protect/contract-go/commit/9a5cd174a7402a32542798f98d131412422aa1bf))
-* update go version and node versionm ([2bb0780](https://github.com/ibm-hyper-protect/contract-go/commit/2bb07806ce41df539a5c4ff5377dc6051bbc98e7))
+* update go version and node version ([2bb0780](https://github.com/ibm-hyper-protect/contract-go/commit/2bb07806ce41df539a5c4ff5377dc6051bbc98e7))
 
 ### Documentation
 
@@ -92,7 +340,7 @@
 
 * Added New TestCase for GzipInitdata function ([b0ab41b](https://github.com/ibm-hyper-protect/contract-go/commit/b0ab41b54940e17fbd0c926ddf683b59857ca5fe))
 * Initdata Support for HPCC Peerpod ([755d3da](https://github.com/ibm-hyper-protect/contract-go/commit/755d3da9d65858e454efc16dac558e1299178505))
-* Resloved the review comments ([58d562a](https://github.com/ibm-hyper-protect/contract-go/commit/58d562ab81f63228c60582f85eccdec4c55747ee))
+* Resolved the review comments ([58d562a](https://github.com/ibm-hyper-protect/contract-go/commit/58d562ab81f63228c60582f85eccdec4c55747ee))
 
 ### Tests
 

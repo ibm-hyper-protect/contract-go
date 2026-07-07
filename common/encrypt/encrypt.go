@@ -47,14 +47,19 @@ func OpensslCheck() error {
 //
 // Parameters:
 //   - privateKey: RSA private key (PEM format)
+//   - password: Optional password to unlock the encrypted private key (empty string "" for unencrypted keys)
 //
 // Returns:
 //   - Public key in PEM format
 //   - Error if OpenSSL is not found or key extraction fails
-func GeneratePublicKey(privateKey string) (string, error) {
+func GeneratePublicKey(privateKey, password string) (string, error) {
 	err := OpensslCheck()
 	if err != nil {
 		return "", fmt.Errorf("openssl not found - %v", err)
+	}
+
+	if gen.IsPrivateKeyEncrypted(privateKey) && password == "" {
+		return "", fmt.Errorf("private key is encrypted but no password provided - use the password parameter to unlock the key")
 	}
 
 	privateKeyPath, err := gen.CreateTempFile(privateKey)
@@ -62,7 +67,11 @@ func GeneratePublicKey(privateKey string) (string, error) {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
 
-	publicKey, err := gen.ExecCommand(gen.GetOpenSSLPath(), "", "rsa", "-in", privateKeyPath, "-pubout")
+	args := []string{"rsa", "-in", privateKeyPath}
+	args = gen.AppendPasswordArgs(args, password)
+	args = append(args, "-pubout")
+
+	publicKey, err := gen.ExecCommand(gen.GetOpenSSLPath(), "", args...)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
 	}
@@ -90,8 +99,8 @@ func RandomPasswordGenerator() (string, error) {
 	return randomPassword, nil
 }
 
-// EncryptPassword encrypts a password using RSA encryption with a certificate.
-// It uses OpenSSL RSA encryption with the provided certificate and returns the result
+// EncryptPassword encrypts a password using OpenSSL PKEYUTL encryption with a certificate.
+// It uses OpenSSL PKEYUTL encryption (PKCS#1 v1.5 padding) with the provided certificate and returns the result
 // as a Base64-encoded string.
 //
 // Parameters:
@@ -112,7 +121,7 @@ func EncryptPassword(password, cert string) (string, error) {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
 
-	result, err := gen.ExecCommand(gen.GetOpenSSLPath(), password, "rsautl", "-encrypt", "-inkey", encryptCertPath, "-certin")
+	result, err := gen.ExecCommand(gen.GetOpenSSLPath(), password, "pkeyutl", "-encrypt", "-inkey", encryptCertPath, "-certin", "-pkeyopt", "rsa_padding_mode:pkcs1")
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
 	}
@@ -174,16 +183,21 @@ func EncryptString(password, section string) (string, error) {
 }
 
 // EncryptFinalStr formats the final encrypted section by combining the encrypted password and contract.
-// It returns a string in the format "hyper-protect-basic.<password>.<contract>" which is the
-// standard format for Hyper Protect encrypted data.
+// It returns a string in the format "hyper-protect-basic.<password>.<contract>" or "contract-basic.<password>.<contract>"
+// depending on the target platform.
 //
 // Parameters:
 //   - encryptedPassword: Base64-encoded encrypted password
 //   - encryptedContract: Base64-encoded encrypted contract data
+//   - confidentialComputingOs: Target platform — "hpvs", "ccrt", "ccrv", or "ccco" (default: hyper-protect-basic)
 //
 // Returns:
-//   - Formatted string in "hyper-protect-basic.<password>.<contract>" format
-func EncryptFinalStr(encryptedPassword, encryptedContract string) string {
+//   - Formatted string in "contract-basic.<password>.<contract>" format for CCRT and CCRV platforms
+//   - Formatted string in "hyper-protect-basic.<password>.<contract>" format for HPVS, CCCO, and empty/default
+func EncryptFinalStr(encryptedPassword, encryptedContract, confidentialComputingOs string) string {
+	if confidentialComputingOs == "ccrt" || confidentialComputingOs == "ccrv" {
+		return fmt.Sprintf("contract-basic.%s.%s", encryptedPassword, encryptedContract)
+	}
 	return fmt.Sprintf("hyper-protect-basic.%s.%s", encryptedPassword, encryptedContract)
 }
 
@@ -295,14 +309,19 @@ func CreateCert(csrPath, caCertPath, caKeyPath string, expiryDays int) (string, 
 //   - encryptedWorkload: Encrypted workload section of the contract
 //   - encryptedEnv: Encrypted environment section of the contract
 //   - privateKey: RSA private key (PEM format) used to sign the contract
+//   - password: Optional password to unlock the private key if it's encrypted (empty string "" for unencrypted keys)
 //
 // Returns:
 //   - Base64-encoded SHA-256 signature of the combined contract sections
 //   - Error if OpenSSL is not found or signing fails
-func SignContract(encryptedWorkload, encryptedEnv, privateKey string) (string, error) {
+func SignContract(encryptedWorkload, encryptedEnv, privateKey, password string) (string, error) {
 	err := OpensslCheck()
 	if err != nil {
 		return "", fmt.Errorf("openssl not found - %v", err)
+	}
+
+	if gen.IsPrivateKeyEncrypted(privateKey) && password == "" {
+		return "", fmt.Errorf("private key is encrypted but no password provided - use the password parameter to unlock the key")
 	}
 
 	combinedContract := encryptedWorkload + encryptedEnv
@@ -312,7 +331,10 @@ func SignContract(encryptedWorkload, encryptedEnv, privateKey string) (string, e
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
 
-	workloadEnvSignature, err := gen.ExecCommand(gen.GetOpenSSLPath(), combinedContract, "dgst", "-sha256", "-sign", privateKeyPath)
+	args := []string{"dgst", "-sha256", "-sign", privateKeyPath}
+	args = gen.AppendPasswordArgs(args, password)
+
+	workloadEnvSignature, err := gen.ExecCommand(gen.GetOpenSSLPath(), combinedContract, args...)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
 	}
@@ -395,24 +417,25 @@ func ExtractPublicKeyFromCert(cert string) (string, error) {
 //
 // Parameters:
 //   - data: Original data that was signed
-//   - signature: Binary signature data to verify
+//   - signature: Binary signature data as string (binary file content read as string)
 //   - publicKey: RSA public key in PEM format
 //
 // Returns:
 //   - nil if signature verification succeeds
 //   - Error if OpenSSL is not found or verification fails
-func VerifySignature(data string, signature []byte, publicKey string) error {
+func VerifySignature(data string, signature string, publicKey string) error {
 	err := OpensslCheck()
 	if err != nil {
 		return fmt.Errorf("openssl not found - %v", err)
 	}
 
-	dataPath, err := gen.CreateTempFile(data)
+	// Use CreateTempBinaryFile for data to preserve exact content including whitespace
+	dataPath, err := gen.CreateTempBinaryFile([]byte(data))
 	if err != nil {
 		return fmt.Errorf("failed to create temp file for data - %v", err)
 	}
 
-	signaturePath, err := gen.CreateTempFile(string(signature))
+	signaturePath, err := gen.CreateTempBinaryFile([]byte(signature))
 	if err != nil {
 		return fmt.Errorf("failed to create temp file for signature - %v", err)
 	}

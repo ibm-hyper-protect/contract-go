@@ -17,7 +17,7 @@ package contract
 
 import (
 	"encoding/json"
-	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -27,6 +27,7 @@ import (
 
 const (
 	hpcrEncryptPrefix = "hyper-protect-basic."
+	ccrtEncryptPrefix = "contract-basic."
 
 	sampleStringData     = "sashwatk"
 	sampleBase64Data     = "c2FzaHdhdGs="
@@ -59,7 +60,7 @@ const (
 	sampleCeCsrPath          = "../samples/contract-expiry/csr.pem"
 	sampleContractExpiryDays = 365
 
-	sampleHyperProtectOsVersion = "hpvs"
+	sampleConfidentialComputingOsVersion = "ccrt"
 
 	encryptedTextPath  = "../samples/decrypt/encrypt.txt"
 	encryptedTextSha   = "df5aa6560eea14e80831fd16b7a4771cc12630912c136fcdb3dda9a1b2d3a23f"
@@ -67,9 +68,21 @@ const (
 	decryptedText      = "hello-world"
 	decryptedTextSha   = "afa27b44d43b02a9fea41d13cedc2e4016cfcf87c5dbf990e593669aa8ce286d"
 
-	sampleSignedEncryptedContract              = "../samples/hpcc/signed-encrypt-hpcc.yaml"
-	sampleGzippedInidata                       = "../samples/hpcc/gzipped-initdata"
+	sampleSignedEncryptedContract              = "../samples/ccco/signed-encrypt-ccco.yaml"
+	sampleGzippedInitdata                      = "../samples/ccco/gzipped-initdata"
+	sampleBase64EndcodedHeaderString           = "VGVzdCBiYXNlNjQgaGVkZXIgb2YgaW1hZ2UgZ2V0dGluZyB1c2VkCg=="
+	sampleBaremetalGzippedInitdata             = "../samples/ccco/baremetal-gzipped-initdata"
 	sampleSingedEncryptedContractInputChecksum = "1b6ee574d6061896c23fad0711d1a89b8d9b7748506ab089201db1335605daea"
+
+	sampleCertificate = "../encryption/ccrt/ibm-confidential-computing-container-runtime-26.2.0-encrypt.crt"
+
+	sampleEncryptedContract    = "../samples/sign/contract.enc.yaml"
+	sampleEncryptedInputSha    = "6a15ebc21cec4fc6a1e7317b4ca4de9cf71bb7a29d9f81d42cd8474b270c54a1"
+	sampleSignEncryptOutputSha = "001e7c38bf6f34c80e0c1f7ca42ef420667f09687038bbe0233badda9cc210af"
+
+	// Contract template fixtures used by template retrieval tests.
+	sampleWorkloadTemplatePath = "./template/workload.yaml"
+	sampleEnvTemplatePath      = "./template/env.yaml"
 )
 
 var (
@@ -164,23 +177,23 @@ func TestHpcrJson(t *testing.T) {
 
 // Testcase to check if TestHpcrTextEncrypted() is able to encrypt text and generate SHA256
 func TestHpcrTextEncrypted(t *testing.T) {
-	result, inputSha256, _, err := HpcrTextEncrypted(sampleStringData, sampleHyperProtectOsVersion, "")
+	result, inputSha256, _, err := HpcrTextEncrypted(sampleStringData, sampleConfidentialComputingOsVersion, "", "")
 	if err != nil {
 		t.Errorf("failed to generate HPCR encrypted text - %v", err)
 	}
 
-	assert.Contains(t, result, hpcrEncryptPrefix)
+	assert.Contains(t, result, ccrtEncryptPrefix)
 	assert.Equal(t, inputSha256, sampleInputChecksum)
 }
 
 // Testcase to check if TestHpcrJsonEncrypted() is able to encrypt JSON and generate SHA256
 func TestHpcrJsonEncrypted(t *testing.T) {
-	result, inputSha256, _, err := HpcrJsonEncrypted(sampleStringJson, sampleHyperProtectOsVersion, "")
+	result, inputSha256, _, err := HpcrJsonEncrypted(sampleStringJson, sampleConfidentialComputingOsVersion, "", "")
 	if err != nil {
 		t.Errorf("failed to generate HPCR encrypted JSON - %v", err)
 	}
 
-	assert.Contains(t, result, hpcrEncryptPrefix)
+	assert.Contains(t, result, ccrtEncryptPrefix)
 	assert.Equal(t, inputSha256, sampleInputChecksumJson)
 }
 
@@ -197,12 +210,12 @@ func TestHpcrTgz(t *testing.T) {
 
 // Testcase to check if HpcrTgzEncrypted() is able to generate encrypted base64 of tar.tgz
 func TestHpcrTgzEncrypted(t *testing.T) {
-	result, inputSha256, _, err := HpcrTgzEncrypted(sampleComposeFolderPath, sampleHyperProtectOsVersion, "")
+	result, inputSha256, _, err := HpcrTgzEncrypted(sampleComposeFolderPath, sampleConfidentialComputingOsVersion, "", "")
 	if err != nil {
 		t.Errorf("failed to generated HPCR encrypted TGZ - %v", err)
 	}
 
-	assert.Contains(t, result, hpcrEncryptPrefix)
+	assert.Contains(t, result, ccrtEncryptPrefix)
 	assert.Equal(t, inputSha256, sampleComposeFolderChecksum)
 }
 
@@ -234,17 +247,12 @@ func TestHpcrVerifyContractAttestPubKey(t *testing.T) {
 
 // Testcase to check if HpcrContractSignedEncrypted() is able to generate
 func TestHpcrContractSignedEncrypted(t *testing.T) {
-	encryption_cert := "../encryption/ibm-hyper-protect-container-runtime-1-0-s390x-25-encrypt.crt"
-	data, err := os.ReadFile(encryption_cert)
-	if err != nil {
-		t.Errorf("Error reading file: - %v", err)
-	}
 	contract, privateKey, _, _, _, err := common(t.Name())
 	if err != nil {
 		t.Errorf("failed to get contract and private key - %v", err)
 	}
 
-	result, inputSha256, _, err := HpcrContractSignedEncrypted(contract, sampleHyperProtectOsVersion, string(data), privateKey)
+	result, inputSha256, _, err := HpcrContractSignedEncrypted(contract, sampleConfidentialComputingOsVersion, "", "", privateKey, "")
 	if err != nil {
 		t.Errorf("failed to generate signed and encrypted contract - %v", err)
 	}
@@ -265,7 +273,7 @@ func TestHpcrContractSignedEncryptedContractExpiryCsrParams(t *testing.T) {
 		t.Errorf("failed to unmarshal CSR parameters - %v", err)
 	}
 
-	result, inputSha256, _, err := HpcrContractSignedEncryptedContractExpiry(contract, sampleHyperProtectOsVersion, "", privateKey, caCert, caKey, string(csrParams), "", sampleContractExpiryDays)
+	result, inputSha256, _, err := HpcrContractSignedEncryptedContractExpiry(contract, sampleConfidentialComputingOsVersion, "", "", privateKey, "", caCert, caKey, string(csrParams), "", sampleContractExpiryDays)
 	if err != nil {
 		t.Errorf("failed to generate signed and encrypted contract with contract expiry - %v", err)
 	}
@@ -286,7 +294,7 @@ func TestHpcrContractSignedEncryptedContractExpiryCsrPem(t *testing.T) {
 		t.Errorf("failed to read CSR file - %v", err)
 	}
 
-	result, inputSha256, _, err := HpcrContractSignedEncryptedContractExpiry(contract, sampleHyperProtectOsVersion, "", privateKey, caCert, caKey, "", csr, sampleContractExpiryDays)
+	result, inputSha256, _, err := HpcrContractSignedEncryptedContractExpiry(contract, sampleConfidentialComputingOsVersion, "", "", privateKey, "", caCert, caKey, "", csr, sampleContractExpiryDays)
 	if err != nil {
 		t.Errorf("failed to generate signed and encrypted contract with contract expiry - %v", err)
 	}
@@ -302,15 +310,15 @@ func TestEncryptWrapper(t *testing.T) {
 		t.Errorf("failed to get contract, private key and public key - %v", err)
 	}
 
-	result, err := encryptWrapper(contract, sampleHyperProtectOsVersion, "", privateKey, publicKey)
+	result, err := encryptWrapper(contract, sampleConfidentialComputingOsVersion, "", "", privateKey, "", publicKey)
 	if err != nil {
 		t.Errorf("failed to sign and encrypt contract - %v", err)
 	}
 
-	assert.NotContains(t, result, "attestationPublicKey: hyper-protect-basic.")
-	assert.Contains(t, result, "env: hyper-protect-basic.")
+	assert.NotContains(t, result, "attestationPublicKey: contract-basic.")
+	assert.Contains(t, result, "env: contract-basic.")
 	assert.Contains(t, result, "envWorkloadSignature:")
-	assert.Contains(t, result, "workload: hyper-protect-basic.")
+	assert.Contains(t, result, "workload: contract-basic.")
 	assert.NotEmpty(t, result)
 }
 
@@ -321,26 +329,26 @@ func TestEncryptWrapperAttestPubKey(t *testing.T) {
 		t.Errorf("failed to get contract, private key and public key - %v", err)
 	}
 
-	result, err := encryptWrapper(contract, sampleHyperProtectOsVersion, "", privateKey, publicKey)
+	result, err := encryptWrapper(contract, sampleConfidentialComputingOsVersion, "", "", privateKey, "", publicKey)
 	if err != nil {
 		t.Errorf("failed to sign and encrypt contract - %v", err)
 	}
 
-	assert.Contains(t, result, "attestationPublicKey: hyper-protect-basic.")
-	assert.Contains(t, result, "env: hyper-protect-basic.")
+	assert.Contains(t, result, "attestationPublicKey: contract-basic.")
+	assert.Contains(t, result, "env: contract-basic.")
 	assert.Contains(t, result, "envWorkloadSignature:")
-	assert.Contains(t, result, "workload: hyper-protect-basic.")
+	assert.Contains(t, result, "workload: contract-basic.")
 	assert.NotEmpty(t, result)
 }
 
 // Testcase to check if encrypter() is able to encrypt and generate SHA256 from string
 func TestEncrypter(t *testing.T) {
-	result, err := encrypter(sampleStringJson, sampleHyperProtectOsVersion, "")
+	result, err := encrypter(sampleStringJson, sampleConfidentialComputingOsVersion, "", "")
 	if err != nil {
 		t.Errorf("failed to encrypt contract - %v", err)
 	}
 
-	assert.Contains(t, result, hpcrEncryptPrefix)
+	assert.Contains(t, result, ccrtEncryptPrefix)
 }
 
 // Testcase to check if HpcrTextDecrypted() is able to decrypt and generate SHA256 for encrypted string
@@ -355,7 +363,7 @@ func TestHpcrTextDecrypted(t *testing.T) {
 		t.Errorf("failed to read private key - %v", err)
 	}
 
-	result, inputSha, outputSha, err := HpcrTextDecrypted(encryptedString, privateKey)
+	result, inputSha, outputSha, err := HpcrTextDecrypted(encryptedString, privateKey, "")
 	if err != nil {
 		t.Errorf("failed to decrypt text - %v", result)
 	}
@@ -363,6 +371,27 @@ func TestHpcrTextDecrypted(t *testing.T) {
 	assert.Equal(t, result, decryptedText)
 	assert.Equal(t, inputSha, encryptedTextSha)
 	assert.Equal(t, outputSha, decryptedTextSha)
+}
+
+// Testcase to check HpcrContractSign() is able to sign contract
+func TestHpcrContractSign(t *testing.T) {
+	encryptedContract, err := gen.ReadDataFromFile(sampleEncryptedContract)
+	if err != nil {
+		t.Errorf("failed to read encrypted contract - %v", err)
+	}
+
+	privateKey, err := gen.ReadDataFromFile(samplePrivateKeyPath)
+	if err != nil {
+		t.Errorf("failed to read private key - %v", err)
+	}
+
+	_, inputSha, outputSha, err := HpcrContractSign(encryptedContract, privateKey, "")
+	if err != nil {
+		t.Errorf("failed to sign the encrypted contract - %v", err)
+	}
+
+	assert.Equal(t, inputSha, sampleEncryptedInputSha)
+	assert.Equal(t, outputSha, sampleSignEncryptOutputSha)
 }
 
 // Testcase to check HpccInitdata() is able to gzip data.
@@ -376,12 +405,12 @@ func TestHpccInitdata(t *testing.T) {
 		t.Errorf("failed to read content from encrypted contract - %v", err)
 	}
 
-	encodedString, inputCheckSum, _, err := HpccInitdata(inputData)
+	encodedString, inputCheckSum, _, err := HpccInitdata(inputData, "")
 	if err != nil {
 		t.Errorf("failed to gzipped encoded initdata - %v", err)
 	}
 
-	expectedGzippedInitdata, err := gen.ReadDataFromFile(sampleGzippedInidata)
+	expectedGzippedInitdata, err := gen.ReadDataFromFile(sampleGzippedInitdata)
 	if err != nil {
 		t.Errorf("failed to read gzipped-initdata file - %v", err)
 	}
@@ -390,9 +419,34 @@ func TestHpccInitdata(t *testing.T) {
 	assert.Equal(t, sampleSingedEncryptedContractInputChecksum, inputCheckSum, "Checksum does not match with expected input checksum of encrypted contract")
 }
 
+// Testcase to check HpccInitdata() is able to gzip data with HDR binary(sehdr bin).
+func TestHpccInitdataWithHdrBinary(t *testing.T) {
+	if !gen.CheckFileFolderExists(sampleSignedEncryptedContract) {
+		t.Errorf("failed, file does not exits on defined path")
+	}
+
+	inputData, err := gen.ReadDataFromFile(sampleSignedEncryptedContract)
+	if err != nil {
+		t.Errorf("failed to read content from encrypted contract - %v", err)
+	}
+
+	encodedString, inputCheckSum, _, err := HpccInitdata(inputData, sampleBase64EndcodedHeaderString)
+	if err != nil {
+		t.Errorf("failed to gzipped encoded initdata with HDR binary - %v", err)
+	}
+
+	expectedBaremetalGzippedInitdata, err := gen.ReadDataFromFile(sampleBaremetalGzippedInitdata)
+	if err != nil {
+		t.Errorf("failed to read baremetal-gzipped-initdata file - %v", err)
+	}
+
+	assert.Equal(t, expectedBaremetalGzippedInitdata, encodedString, "Encoded gzipped initdata string with HDR binary does not match with expected baremetal gzipped initdata")
+	assert.Equal(t, sampleSingedEncryptedContractInputChecksum, inputCheckSum, "Checksum does not match with expected input checksum of encrypted contract")
+}
+
 // Testcase to check HpccInitdata() is able to handle empty contract case.
 func TestHpccInitdataEmptyContract(t *testing.T) {
-	_, _, _, err := HpccInitdata("")
+	_, _, _, err := HpccInitdata("", "")
 	assert.EqualError(t, err, emptyParameterErrStatement)
 }
 
@@ -411,14 +465,14 @@ func TestHpcrTgzNonExistentFolder(t *testing.T) {
 
 // Testcase to check if HpcrTgzEncrypted() handles empty folder path
 func TestHpcrTgzEncryptedEmptyPath(t *testing.T) {
-	_, _, _, err := HpcrTgzEncrypted("", sampleHyperProtectOsVersion, "")
+	_, _, _, err := HpcrTgzEncrypted("", sampleConfidentialComputingOsVersion, "", "")
 	assert.EqualError(t, err, emptyParameterErrStatement)
 }
 
 // Testcase to check if HpcrJsonEncrypted() handles invalid JSON
 func TestHpcrJsonEncryptedInvalidJson(t *testing.T) {
 	invalidJson := "not a valid json"
-	_, _, _, err := HpcrJsonEncrypted(invalidJson, sampleHyperProtectOsVersion, "")
+	_, _, _, err := HpcrJsonEncrypted(invalidJson, sampleConfidentialComputingOsVersion, "", "")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "not a JSON data")
 }
@@ -430,13 +484,13 @@ func TestHpcrContractSignedEncryptedEmptyPrivateKey(t *testing.T) {
 		t.Errorf("failed to read contract - %v", err)
 	}
 
-	_, _, _, err = HpcrContractSignedEncrypted(contract, sampleHyperProtectOsVersion, "", "")
+	_, _, _, err = HpcrContractSignedEncrypted(contract, sampleConfidentialComputingOsVersion, "", "", "", "")
 	assert.EqualError(t, err, emptyParameterErrStatement)
 }
 
 // Testcase to check if HpcrContractSignedEncryptedContractExpiry() handles empty contract
 func TestHpcrContractSignedEncryptedContractExpiryEmptyContract(t *testing.T) {
-	_, _, _, err := HpcrContractSignedEncryptedContractExpiry("", sampleHyperProtectOsVersion, "", "privateKey", "caCert", "caKey", "{}", "", 365)
+	_, _, _, err := HpcrContractSignedEncryptedContractExpiry("", sampleConfidentialComputingOsVersion, "", "", "privateKey", "", "caCert", "caKey", "{}", "", 365)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "schema verification failed")
 }
@@ -448,7 +502,7 @@ func TestHpcrContractSignedEncryptedContractExpiryEmptyParams(t *testing.T) {
 		t.Errorf("failed to read contract - %v", err)
 	}
 
-	_, _, _, err = HpcrContractSignedEncryptedContractExpiry(contract, sampleHyperProtectOsVersion, "", "", "caCert", "caKey", "{}", "", 365)
+	_, _, _, err = HpcrContractSignedEncryptedContractExpiry(contract, sampleConfidentialComputingOsVersion, "", "", "", "", "caCert", "caKey", "{}", "", 365)
 	assert.EqualError(t, err, emptyParameterErrStatement)
 }
 
@@ -464,7 +518,7 @@ func TestHpcrContractSignedEncryptedContractExpiryBothCsrProvided(t *testing.T) 
 		t.Errorf("failed to marshal CSR parameters - %v", err)
 	}
 
-	_, _, _, err = HpcrContractSignedEncryptedContractExpiry(contract, sampleHyperProtectOsVersion, "", privateKey, caCert, caKey, string(csrParams), "csrPemData", sampleContractExpiryDays)
+	_, _, _, err = HpcrContractSignedEncryptedContractExpiry(contract, sampleConfidentialComputingOsVersion, "", "", privateKey, "", caCert, caKey, string(csrParams), "csrPemData", sampleContractExpiryDays)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "CSR parameters and CSR PEM file are parsed together")
 }
@@ -476,7 +530,7 @@ func TestHpcrContractSignedEncryptedContractExpiryNoCsrProvided(t *testing.T) {
 		t.Errorf("failed to get contract data - %v", err)
 	}
 
-	_, _, _, err = HpcrContractSignedEncryptedContractExpiry(contract, sampleHyperProtectOsVersion, "", privateKey, caCert, caKey, "", "", sampleContractExpiryDays)
+	_, _, _, err = HpcrContractSignedEncryptedContractExpiry(contract, sampleConfidentialComputingOsVersion, "", "", privateKey, "", caCert, caKey, "", "", sampleContractExpiryDays)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "CSR parameters and CSR PEM file are parsed together or both are nil")
 }
@@ -491,14 +545,14 @@ func TestHpcrJsonInvalidJson(t *testing.T) {
 
 // Testcase to check if HpcrTextEncrypted() handles empty text
 func TestHpcrTextEncryptedEmptyText(t *testing.T) {
-	_, _, _, err := HpcrTextEncrypted("", "", "")
+	_, _, _, err := HpcrTextEncrypted("", "", "", "")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), emptyParameterErrStatement)
 }
 
-// Testcase to check if HpcrTextEncrypted() works with valid text
+// Testcase to check if HpcrTextEncrypted() works with valid text (empty OS defaults to hyper-protect-basic)
 func TestHpcrTextEncryptedSuccess(t *testing.T) {
-	encrypted, plainHash, encryptedHash, err := HpcrTextEncrypted("test text", "", "")
+	encrypted, plainHash, encryptedHash, err := HpcrTextEncrypted("test text", "", "", "")
 	assert.NoError(t, err)
 	assert.NotEmpty(t, encrypted)
 	assert.NotEmpty(t, plainHash)
@@ -513,7 +567,7 @@ func TestHpcrContractSignedEncryptedInvalidYaml(t *testing.T) {
 		t.Errorf("failed to read private key - %v", err)
 	}
 
-	_, _, _, err = HpcrContractSignedEncrypted("invalid: yaml: content:", "", "", privateKey)
+	_, _, _, err = HpcrContractSignedEncrypted("invalid: yaml: content:", "", "", "", privateKey, "")
 	assert.Error(t, err)
 }
 
@@ -525,14 +579,14 @@ func TestHpcrContractSignedEncryptedMissingWorkload(t *testing.T) {
 	}
 
 	contract := `env: "test"`
-	_, _, _, err = HpcrContractSignedEncrypted(contract, "", "", privateKey)
+	_, _, _, err = HpcrContractSignedEncrypted(contract, "", "", "", privateKey, "")
 	assert.Error(t, err)
 }
 
-// Testcase to check if HpcrJsonEncrypted() works with valid JSON
+// Testcase to check if HpcrJsonEncrypted() works with valid JSON (empty OS defaults to hyper-protect-basic)
 func TestHpcrJsonEncryptedSuccess(t *testing.T) {
 	validJson := `{"key": "value"}`
-	encrypted, plainHash, encryptedHash, err := HpcrJsonEncrypted(validJson, "", "")
+	encrypted, plainHash, encryptedHash, err := HpcrJsonEncrypted(validJson, "", "", "")
 	assert.NoError(t, err)
 	assert.NotEmpty(t, encrypted)
 	assert.NotEmpty(t, plainHash)
@@ -572,7 +626,7 @@ func TestHpcrContractSignedEncryptedValidInputs(t *testing.T) {
 		t.Errorf("failed to read private key - %v", err)
 	}
 
-	encrypted, plainHash, encryptedHash, err := HpcrContractSignedEncrypted(contract, "", "", privateKey)
+	encrypted, plainHash, encryptedHash, err := HpcrContractSignedEncrypted(contract, "", "", "", privateKey, "")
 	assert.NoError(t, err)
 	assert.NotEmpty(t, encrypted)
 	assert.NotEmpty(t, plainHash)
@@ -588,7 +642,7 @@ func TestHpcrTextEmptyText(t *testing.T) {
 
 // Testcase to check if HpcrTgzEncrypted() handles invalid folder path
 func TestHpcrTgzEncryptedInvalidPath(t *testing.T) {
-	_, _, _, err := HpcrTgzEncrypted("/non/existent/path", "", "")
+	_, _, _, err := HpcrTgzEncrypted("/non/existent/path", "", "", "")
 	assert.Error(t, err)
 }
 
@@ -600,20 +654,20 @@ func TestHpcrContractSignedEncryptedSchemaFailure(t *testing.T) {
 		t.Errorf("failed to read private key - %v", err)
 	}
 
-	_, _, _, err = HpcrContractSignedEncrypted(invalidContract, "", "", privateKey)
+	_, _, _, err = HpcrContractSignedEncrypted(invalidContract, "", "", "", privateKey, "")
 	assert.Error(t, err)
 }
 
 // Testcase to check if encrypter() handles empty string
 func TestEncrypterEmptyString(t *testing.T) {
-	_, err := encrypter("", sampleHyperProtectOsVersion, "")
+	_, err := encrypter("", sampleConfidentialComputingOsVersion, "", "")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), emptyParameterErrStatement)
 }
 
 // Testcase to check if encrypter() handles invalid encryption certificate
 func TestEncrypterInvalidCertificate(t *testing.T) {
-	_, err := encrypter("test data", sampleHyperProtectOsVersion, "invalid-certificate")
+	_, err := encrypter("test data", sampleConfidentialComputingOsVersion, "invalid-certificate", "")
 	assert.Error(t, err)
 }
 
@@ -629,7 +683,7 @@ func TestEncryptWrapperEmptyContract(t *testing.T) {
 		t.Errorf("failed to read public key - %v", err)
 	}
 
-	_, err = encryptWrapper("", sampleHyperProtectOsVersion, "", privateKey, publicKey)
+	_, err = encryptWrapper("", sampleConfidentialComputingOsVersion, "", "", privateKey, "", publicKey)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), emptyParameterErrStatement)
 }
@@ -646,7 +700,7 @@ func TestEncryptWrapperEmptyPrivateKey(t *testing.T) {
 		t.Errorf("failed to read public key - %v", err)
 	}
 
-	_, err = encryptWrapper(contract, sampleHyperProtectOsVersion, "", "", publicKey)
+	_, err = encryptWrapper(contract, sampleConfidentialComputingOsVersion, "", "", "", "", publicKey)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), emptyParameterErrStatement)
 }
@@ -663,7 +717,7 @@ func TestEncryptWrapperEmptyPublicKey(t *testing.T) {
 		t.Errorf("failed to read private key - %v", err)
 	}
 
-	_, err = encryptWrapper(contract, sampleHyperProtectOsVersion, "", privateKey, "")
+	_, err = encryptWrapper(contract, sampleConfidentialComputingOsVersion, "", "", privateKey, "", "")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), emptyParameterErrStatement)
 }
@@ -680,7 +734,7 @@ func TestEncryptWrapperInvalidYaml(t *testing.T) {
 		t.Errorf("failed to read public key - %v", err)
 	}
 
-	_, err = encryptWrapper("invalid: yaml: content:", sampleHyperProtectOsVersion, "", privateKey, publicKey)
+	_, err = encryptWrapper("invalid: yaml: content:", sampleConfidentialComputingOsVersion, "", "", privateKey, "", publicKey)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to unmarshal YAML")
 }
@@ -702,7 +756,7 @@ func TestEncryptWrapperInvalidCertificate(t *testing.T) {
 		t.Errorf("failed to read public key - %v", err)
 	}
 
-	_, err = encryptWrapper(contract, sampleHyperProtectOsVersion, "invalid-certificate", privateKey, publicKey)
+	_, err = encryptWrapper(contract, sampleConfidentialComputingOsVersion, "", "invalid-certificate", privateKey, "", publicKey)
 	assert.Error(t, err)
 }
 
@@ -713,29 +767,29 @@ func TestHpcrContractSignedEncryptedInvalidPrivateKey(t *testing.T) {
 		t.Errorf("failed to read contract - %v", err)
 	}
 
-	_, _, _, err = HpcrContractSignedEncrypted(contract, sampleHyperProtectOsVersion, "", "invalid-private-key")
+	_, _, _, err = HpcrContractSignedEncrypted(contract, sampleConfidentialComputingOsVersion, "", "", "invalid-private-key", "")
 	assert.Error(t, err)
 }
 
 // Testcase to check if HpcrTgzEncrypted() works with valid folder
 func TestHpcrTgzEncryptedSuccess(t *testing.T) {
-	result, inputHash, outputHash, err := HpcrTgzEncrypted(sampleComposeFolderPath, sampleHyperProtectOsVersion, "")
+	result, inputHash, outputHash, err := HpcrTgzEncrypted(sampleComposeFolderPath, sampleConfidentialComputingOsVersion, "", "")
 	assert.NoError(t, err)
 	assert.NotEmpty(t, result)
 	assert.NotEmpty(t, inputHash)
 	assert.NotEmpty(t, outputHash)
-	assert.Contains(t, result, "hyper-protect-basic")
+	assert.Contains(t, result, "contract-basic")
 }
 
 // Testcase to check if HpcrTextEncrypted() handles invalid certificate
 func TestHpcrTextEncryptedInvalidCertificate(t *testing.T) {
-	_, _, _, err := HpcrTextEncrypted("test text", sampleHyperProtectOsVersion, "invalid-certificate")
+	_, _, _, err := HpcrTextEncrypted("test text", sampleConfidentialComputingOsVersion, "", "invalid-certificate")
 	assert.Error(t, err)
 }
 
 // Testcase to check if HpcrJsonEncrypted() handles empty JSON
 func TestHpcrJsonEncryptedEmptyJson(t *testing.T) {
-	_, _, _, err := HpcrJsonEncrypted("", sampleHyperProtectOsVersion, "")
+	_, _, _, err := HpcrJsonEncrypted("", sampleConfidentialComputingOsVersion, "", "")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "not a JSON data")
 }
@@ -759,7 +813,7 @@ func TestHpcrContractSignedEncryptedContractExpiryInvalidPrivateKey(t *testing.T
 
 	csrParams, _ := json.Marshal(sampleCeCSRPems)
 
-	_, _, _, err = HpcrContractSignedEncryptedContractExpiry(contract, sampleHyperProtectOsVersion, "", "invalid-private-key", caCert, caKey, string(csrParams), "", sampleContractExpiryDays)
+	_, _, _, err = HpcrContractSignedEncryptedContractExpiry(contract, sampleConfidentialComputingOsVersion, "", "", "invalid-private-key", "", caCert, caKey, string(csrParams), "", sampleContractExpiryDays)
 	assert.Error(t, err)
 }
 
@@ -768,4 +822,76 @@ func TestHpcrVerifyContractInvalidSchema(t *testing.T) {
 	invalidContract := `workload: test`
 	err := HpcrVerifyContract(invalidContract, "")
 	assert.Error(t, err)
+}
+
+// Testcase to check if HpcrContractTemplate() is able to return workload template content.
+func TestHpcrContractTemplateWorkload(t *testing.T) {
+	expectedTemplate, err := gen.ReadDataFromFile(sampleWorkloadTemplatePath)
+	if err != nil {
+		t.Errorf("failed to read workload template file - %v", err)
+	}
+
+	workloadTemplate, err := HpcrContractTemplate("workload")
+	assert.NoError(t, err)
+	assert.Equal(t, expectedTemplate, workloadTemplate)
+}
+
+// Testcase to check if HpcrContractTemplate() is able to return env template content.
+func TestHpcrContractTemplateEnv(t *testing.T) {
+	expectedTemplate, err := gen.ReadDataFromFile(sampleEnvTemplatePath)
+	if err != nil {
+		t.Errorf("failed to read env template file - %v", err)
+	}
+
+	envTemplate, err := HpcrContractTemplate("env")
+	assert.NoError(t, err)
+	assert.Equal(t, expectedTemplate, envTemplate)
+}
+
+// Testcase to check if HpcrContractTemplate() is able to return combined template content.
+func TestHpcrContractTemplateCombined(t *testing.T) {
+	workloadTemplate, err := gen.ReadDataFromFile(sampleWorkloadTemplatePath)
+	if err != nil {
+		t.Errorf("failed to read workload template file - %v", err)
+	}
+
+	envTemplate, err := gen.ReadDataFromFile(sampleEnvTemplatePath)
+	if err != nil {
+		t.Errorf("failed to read env template file - %v", err)
+	}
+
+	expectedOutput := "workload: |\n" + indentTemplateBlockForTest(workloadTemplate)
+	if !strings.HasSuffix(workloadTemplate, "\n") {
+		expectedOutput += "\n"
+	}
+	expectedOutput += "env: |\n" + indentTemplateBlockForTest(envTemplate)
+
+	combinedTemplate, err := HpcrContractTemplate("")
+	assert.NoError(t, err)
+	assert.Equal(t, expectedOutput, combinedTemplate)
+}
+
+// Testcase to check if HpcrContractTemplate() handles invalid template type.
+func TestHpcrContractTemplateInvalidType(t *testing.T) {
+	_, err := HpcrContractTemplate("invalid")
+	assert.EqualError(t, err, "unsupported template type: invalid")
+}
+
+// indentTemplateBlockForTest mirrors production indentation behavior for expected YAML output.
+func indentTemplateBlockForTest(content string) string {
+	if content == "" {
+		return "  "
+	}
+
+	var output strings.Builder
+	for _, line := range strings.SplitAfter(content, "\n") {
+		if line == "" {
+			continue
+		}
+
+		output.WriteString("  ")
+		output.WriteString(line)
+	}
+
+	return output.String()
 }

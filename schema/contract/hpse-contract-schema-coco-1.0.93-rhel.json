@@ -22,7 +22,7 @@
               "$ref": "#/allOf/1/$defs/env"
             },
             "confidential-containers": {
-              "type": "object"
+              "$ref": "#/$defs/envConfidentialContainers"
             }
           },
           "examples": [
@@ -41,14 +41,14 @@
           "title": "Workload",
           "description": "Specification of application portions.",
           "properties": {
-            "compose": {
-              "$ref": "#/allOf/1/$defs/compose"
-            },
             "play": {
               "$ref": "#/allOf/1/$defs/play"
             },
+            "compose": {
+              "$ref": "#/allOf/1/$defs/compose"
+            },
             "confidential-containers": {
-              "type": "object"
+              "$ref": "#/$defs/confidentialContainers"
             },
             "env": {
               "$ref": "#/allOf/1/$defs/env"
@@ -58,13 +58,13 @@
             {
               "type": "object",
               "required": [
-                "compose"
+                "play"
               ]
             },
             {
               "type": "object",
               "required": [
-                "play"
+                "compose"
               ]
             },
             {
@@ -92,20 +92,6 @@
             }
           ]
         },
-        "compose": {
-          "type": "object",
-          "title": "Docker Compose",
-          "description": "Specification of configuration options for docker compose.",
-          "properties": {
-            "archive": {
-              "$ref": "#/allOf/1/$defs/tgz"
-            }
-          },
-          "additionalProperties": false,
-          "required": [
-            "archive"
-          ]
-        },
         "play": {
           "type": "object",
           "title": "Podman Pod Play Kube",
@@ -127,6 +113,20 @@
               "$ref": "#/allOf/1/$defs/tgz"
             }
           },
+          "additionalProperties": false
+        },
+        "compose": {
+          "type": "object",
+          "title": "Docker Compose",
+          "description": "Specification of configuration options for docker compose.",
+          "properties": {
+            "archive": {
+              "$ref": "#/allOf/1/$defs/tgz"
+            }
+          },
+          "required": [
+            "archive"
+          ],
           "additionalProperties": false
         },
         "tgz": {
@@ -7271,11 +7271,11 @@
           "properties": {
             "logging": {
               "$ref": "#/allOf/2/$defs/logging"
+            },
+            "host-attestation": {
+              "$ref": "#/allOf/2/$defs/hostAttestation"
             }
-          },
-          "required": [
-            "logging"
-          ]
+          }
         },
         "logging": {
           "type": "object",
@@ -7324,6 +7324,14 @@
               "description": "Port of the ICL instance.",
               "exclusiveMinimum": 0,
               "default": 443
+            },
+            "tags": {
+              "type": "array",
+              "title": "Tags",
+              "description": "Optional list of tags to attach to log entries.",
+              "items": {
+                "type": "string"
+              }
             }
           },
           "additionalProperties": false,
@@ -7331,6 +7339,17 @@
             "iamApiKey",
             "hostname"
           ]
+        },
+        "hostAttestation": {
+          "type": "object",
+          "title": "Host Attestation",
+          "description": "Map of host key documents used for host attestation. The key is an identifier for the host.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "$ref": "#/$defs/hkd"
+            }
+          },
+          "additionalProperties": false
         },
         "syslog": {
           "type": "object",
@@ -7449,14 +7468,14 @@
           "env": {
             "volumes": {
               "test": {
-                "seed": "env phrase"
+                "seed": "ThisIsAValidEnv123"
               }
             }
           },
           "workload": {
             "volumes": {
               "test": {
-                "seed": "workload phrase"
+                "seed": "ThisIsAValidWorkload123"
               }
             }
           }
@@ -7465,7 +7484,7 @@
           "env": {
             "volumes": {
               "test": {
-                "seed": "env phrase"
+                "seed": "ThisIsAValidEnv123"
               }
             }
           },
@@ -7474,7 +7493,7 @@
               "test": {
                 "mount": "/mnt/data",
                 "filesystem": "ext4",
-                "seed": "workload phrase"
+                "seed": "ThisIsAValidWorkload123"
               }
             }
           }
@@ -7484,7 +7503,7 @@
             "volumes": {
               "test": {
                 "volumeID": "ICIC UUID",
-                "seed": "env phrase"
+                "seed": "ThisIsAValidEnv123"
               }
             }
           },
@@ -7493,7 +7512,7 @@
               "test": {
                 "mount": "/mnt/data",
                 "filesystem": "ext4",
-                "seed": "workload phrase"
+                "seed": "ThisIsAValidWorkload123"
               }
             }
           }
@@ -7534,7 +7553,7 @@
             {
               "test": {
                 "mount": "/mnt/data",
-                "seed": "fancy phrase"
+                "seed": "ThisIsAValidPass123"
               }
             }
           ]
@@ -7552,13 +7571,13 @@
           "examples": [
             {
               "test": {
-                "seed": "fancy phrase"
+                "seed": "ThisIsAValidPass123"
               }
             },
             {
               "test": {
                 "volumeID": "ICIC UUID",
-                "seed": "fancy phrase"
+                "seed": "ThisIsAValidPass123"
               }
             }
           ]
@@ -7656,51 +7675,25 @@
           "additionalProperties": false
         },
         "seed": {
-          "anyOf": [
-            {
-              "type": "string",
-              "description": "Deprecated. Use 'seed' with the updated pattern. This pattern support will be removed in future versions.",
-              "minLength": 3,
-              "examples": [
-                "testing value"
-              ]
-            },
-            {
-              "type": "string",
-              "title": "seed",
-              "description": "Part of the encryption seed used to encrypt the device.",
-              "minLength": 15,
-              "pattern": "^[a-zA-Z0-9!@#$%^&*(),.?\":{}|<>_-]{15,}$",
-              "examples": [
-                "ThisIsAValidPass123",
-                "mypassword!@#2024",
-                "1234567890ABCDEF"
-              ]
-            }
+          "type": "string",
+          "title": "seed",
+          "description": "Part of the encryption seed used to encrypt the device.",
+          "minLength": 15,
+          "pattern": "^[a-zA-Z0-9!@#$%^&*(),.?\":{}|<>_-]{15,}$",
+          "examples": [
+            "ThisIsAValidPass123",
+            "mypassword!@#2024",
+            "1234567890ABCDEF"
           ]
         },
         "previousSeed": {
-          "anyOf": [
-            {
-              "type": "string",
-              "description": "Deprecated. Use 'seed' with the updated pattern. This pattern support will be removed in future versions.",
-              "minLength": 3,
-              "examples": [
-                "testing value"
-              ]
-            },
-            {
-              "type": "string",
-              "title": "previous seed",
-              "description": "Previous seed used to encrypt the device.",
-              "minLength": 15,
-              "pattern": "^[a-zA-Z0-9!@#$%^&*(),.?\":{}|<>_-]{15,}$",
-              "examples": [
-                "ThisIsAValidPass123",
-                "mypassword!@#2024",
-                "1234567890ABCDEF"
-              ]
-            }
+          "type": "string",
+          "title": "previous seed",
+          "description": "Previous seed used to encrypt the device.",
+          "minLength": 15,
+          "pattern": "^[a-zA-Z0-9!@#$%^&*(),.?\":{}|<>_-]{15,}$",
+          "examples": [
+            "ThisIsAValidPass123"
           ]
         },
         "filesystem": {
@@ -7750,7 +7743,7 @@
         "volumeID": {
           "type": "string",
           "title": "Volume ID",
-          "description": "Volume ID of volume created in IBM Cloud or UUID of volume in ICIC",
+          "description": "Volume ID of ICIC",
           "minLength": 3,
           "examples": [
             "virtio-0726-451ebc10-4763-4-part2",
@@ -8214,6 +8207,148 @@
       "required": [
         "type"
       ]
+    },
+    "confidentialContainers": {
+      "type": "object",
+      "title": "Confidential Containers",
+      "description": "Configuration for confidential containers.",
+      "properties": {
+        "config": {
+          "type": "object",
+          "properties": {
+            "cosign": {
+              "$ref": "#/$defs/cosignedImages"
+            }
+          },
+          "required": []
+        },
+        "allowedContainers": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "type": "object",
+              "properties": {
+                "allowedImages": {
+                  "type": "object",
+                  "properties": {
+                    "imageNames": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "imagePatterns": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "anyOf": [
+                    {
+                      "required": ["imageNames"]
+                    },
+                    {
+                      "required": ["imagePatterns"]
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "allowedImages"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "regoValidator": {
+          "type": "object",
+          "properties": {
+            "policy": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "policy"
+          ]
+        },
+        "secret": {
+          "type": "object",
+          "properties": {
+            "verificationKey": {
+              "type": "string"
+            },
+            "decryptionKey": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "verificationKey",
+            "decryptionKey"
+          ]
+        }
+      },
+      "required": [
+        "regoValidator"
+      ]
+    },
+    "envConfidentialContainers": {
+      "type": "object",
+      "title": "Environment Confidential Containers",
+      "description": "Configuration for confidential containers in the environment section.",
+      "properties": {
+        "secret": {
+          "type": "object",
+          "properties": {
+            "verificationKey": {
+              "type": "string"
+            },
+            "decryptionKey": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "verificationKey",
+            "decryptionKey"
+          ]
+        }
+      },
+      "required": []
+    },
+    "hkd": {
+      "type": "object",
+      "title": "Host Key Document",
+      "description": "Host key document for attestation.",
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "host-key-doc": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "description",
+        "host-key-doc"
+      ]
+    },
+    "cosignedImages": {
+      "type": "object",
+      "title": "Cosigned Images",
+      "description": "Map of cosigned images with their public keys.",
+      "patternProperties": {
+        "^[a-zA-Z0-9_-]+$": {
+          "type": "object",
+          "properties": {
+            "publicKey": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "publicKey"
+          ]
+        }
+      }
     }
   }
 }

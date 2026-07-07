@@ -4,9 +4,10 @@
 [![Latest Release](https://img.shields.io/github/v/release/ibm-hyper-protect/contract-go?include_prereleases)](https://github.com/ibm-hyper-protect/contract-go/releases/latest)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ibm-hyper-protect/contract-go)](https://goreportcard.com/report/ibm-hyper-protect/contract-go)
 [![Go Reference](https://pkg.go.dev/badge/github.com/ibm-hyper-protect/contract-go.svg)](https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go/v2)
+[![User Documentation](https://img.shields.io/badge/User%20Documentation-GitHub%20Pages-blue.svg)](https://ibm-hyper-protect.github.io/contract-go)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-A Go library for automating the provisioning and management of IBM Hyper Protect confidential computing workloads.
+A Go library for generating, signing, and encrypting deployment contracts for IBM Confidential Computing workloads on IBM Z and LinuxONE.
 
 ## Table of Contents
 
@@ -24,23 +25,32 @@ A Go library for automating the provisioning and management of IBM Hyper Protect
 
 ## Overview
 
-The `contract-go` library automates the provisioning of IBM Hyper Protect confidential computing solutions:
+The `contract-go` library automates the provisioning of IBM Confidential Computing solutions:
 
-- **Hyper Protect Virtual Servers (HPVS)** - Secure virtual servers on IBM Cloud
-- **Hyper Protect Container Runtime (HPCR)** for RedHat Virtualization (RHVS)
-- **Hyper Protect Confidential Container (HPCC)** for Red Hat OpenShift Peer Pods
+- **IBM Confidential Computing Container Runtime (CCRT)** (formerly known as Hyper Protect Virtual Servers) — Deploy confidential computing workloads on IBM Z and LinuxONE using IBM Secure Execution for Linux
+- **IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)** (formerly known as Hyper Protect Container Runtime for Red Hat Virtualization Solutions) — Purpose-built for hosting critical, centralized services within tightly controlled virtualized environments on IBM Z
+- **IBM Confidential Computing Containers for Red Hat OpenShift Container Platform (CCCO)** (formerly known as IBM Hyper Protect Confidential Container for Red Hat OpenShift Container Platform) — Deploy isolated workloads using IBM Secure Execution for Linux, integrated with Red Hat OpenShift Container Platform
 
-This library provides cryptographic operations, contract generation, validation, and management capabilities for deploying workloads in secure enclaves on IBM LinuxONE.
+This library provides cryptographic operations, contract generation, validation, and management capabilities for deploying workloads in secure enclaves on IBM Z and LinuxONE.
 
-### What are Hyper Protect Services?
+### Who Is This For?
 
-IBM Hyper Protect services provide confidential computing capabilities that protect data in use by leveraging Secure Execution feature of Z. 
+This library is for **Go developers** who need to programmatically generate, sign, and encrypt deployment contracts for IBM Confidential Computing services. Common users include:
+
+- **DevOps engineers** automating confidential computing deployments via Terraform or CI/CD pipelines
+- **Solution providers** building applications that run in secure enclaves
+- **Platform teams** managing contract lifecycle across environments
+
+### What is IBM Confidential Computing?
+
+IBM Confidential Computing services protect data in use by leveraging the IBM Secure Execution for Linux feature on IBM Z and LinuxONE hardware. Each deployment is configured through a **contract** — an encrypted YAML definition file that specifies workload, environment, and attestation settings. This library automates the generation and management of these contracts.
 
 Learn more:
 
 - [Confidential computing with LinuxONE](https://cloud.ibm.com/docs/vpc?topic=vpc-about-se)
-- [IBM Hyper Protect Virtual Servers](https://www.ibm.com/docs/en/hpvs/2.2.x)
-- [IBM Hyper Protect Confidential Container for Red Hat OpenShift](https://www.ibm.com/docs/en/hpcc/1.1.x)
+- [IBM Confidential Computing Container Runtime](https://www.ibm.com/docs/en/cccr/2.2.x)
+- [IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions](https://www.ibm.com/docs/en/ccrv/1.1.x)
+- [IBM Confidential Computing Containers for Red Hat OpenShift](https://www.ibm.com/docs/en/ccro/1.1.x)
 
 ## Features
 
@@ -52,13 +62,22 @@ Learn more:
   - Download HPVS encryption certificates from IBM Cloud
   - Extract specific encryption certificates by version
   - Validate expiry of encryption certificate
+  - **Validate complete certificate chains** (encryption cert -> intermediate -> root)
+  - **Check certificate revocation status** using CRL (Certificate Revocation List)
+  - **Download CRLs** from certificate distribution points
+  - **List all available encryption certificate versions** for all the platforms
+  - **Get the list of available encryption certificate versions** for specific platform (ccrt, ccrv, ccco)
 
 - **Contract Generation**
   - Generate Base64-encoded data from text, JSON, initdata annotation and docker compose / podman play archives
-  - Create encrypted and signed contracts
+  - Generate gzipped and encoded initdata for IBM Confidential Computing Container For Red Hat OpenShift Container Platform. Supports both Peerpod and Baremetal solution
+  - Create signed and encrypted & signed contracts
   - Support contract expiry with CSR (Certificate Signing Request)
+  - Load built-in workload and env contract templates
   - Validate contract schemas
   - Decrypt encrypted text in Hyper Protect format
+  - Password-protected private key support for decrypting attestation records and generate signed contracts
+  - **Specify certificate version** for encryption operations (optional certVersion parameter)
 
 - **Archive Management**
   - Generate Base64 tar archives of `docker-compose.yaml` or `pods.yaml`
@@ -70,7 +89,15 @@ Learn more:
 
 - **Network Validation**
   - Validate network-config schemas for on-premise deployments
-  - Support HPVS, HPCR RHVS, and HPCC Peer Pod configurations
+  - Support CCRT, CCRV, and CCCO configurations
+
+- **Sealed Secret Management**
+  - Create sealed secrets for workload and environment configurations
+  - Automatic RSA key pair generation for encryption and signing
+  - AES-256-GCM encryption with RSA key wrapping
+  - RSA-SHA512 digital signatures for integrity
+  - JWS (JSON Web Signature) compact serialization format
+  - Compatible with Go crypto packages for decryption
 
 ## Installation
 
@@ -100,6 +127,70 @@ $env:OPENSSL_BIN="C:\Program Files\OpenSSL-Win64\bin\openssl.exe"
 
 ## Quick Start
 
+### Encode Text
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+)
+
+func main() {
+    text := "Hello, IBM Confidential Computing!"
+
+    encoded, inputHash, outputHash, err := contract.HpcrText(text)
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("Base64 encoded: %s\n", encoded)
+    fmt.Printf("Input SHA256:  %s\n", inputHash)
+    fmt.Printf("Output SHA256: %s\n", outputHash)
+}
+```
+
+### Load Contract Templates
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+)
+
+func main() {
+    // Retrieve workload template only
+    workloadTemplate, err := contract.HpcrContractTemplate("workload")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Workload Template:\n%s\n", workloadTemplate)
+
+    // Retrieve env template only
+    envTemplate, err := contract.HpcrContractTemplate("env")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Env Template:\n%s\n", envTemplate)
+
+    // Retrieve combined contract scaffold:
+    // workload: | <workload template>
+    // env: | <env template>
+    contractTemplate, err := contract.HpcrContractTemplate("")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Combined Contract Template:\n%s\n", contractTemplate)
+}
+```
+
 ### Generate a Signed and Encrypted Contract
 
 ```go
@@ -125,15 +216,66 @@ workload: |
   type: workload
   compose:
     archive: your-archive
-attestationPublicKey: LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlJQ0lqQU5CZ2txaGtpRzl3MEJBUUVGQUFPQ0FnOEFNSUlDQ2dLQ0FnRUF4cklNT3RvSktWRTZQbGhvVlJ1dgorb3YxaW1jOEZRZUdQZ3VoVFBpQUFrNDVqRStJSnVKTHZtVHFkOE8yVlZwT05iZEhiN3ZpWGEydUwxeFBOcUp2ClVpVmZNTDUyN1B4V25TU3drcitKNDYwamZvZCtaMkJOQ0k1eVV6dVYxQVhvNHV3YmVLVzNYbVM2b2FIT1YrNmsKU1YwWCt3cFE5a3J5QnJ2NWVJc2tsSTBtS3JnaXBOc2N4b3hvNG4rRDlPMWRDVU5XRzZ4MmlpVnVLeXp4VzZZTgordW9wNHZxb3VMM2pGQ1crVkRGVHgycGViNzNqL2V6WnRUVVhEbStPZTc1V21zVkxjUUg4RXZYbVFsRVAvbEduCnZZMWQ1RXI1ZjlBSU5yOEdRWjM1OHNrWENvdCtseDZiMmQveTZwWEFOTFpBR2ZoRmZLSUMxSVdHOTQrRVdqMG4KUFB6Y1NpeHhHUk53bHZjV3BDY3hKTHFEb1VCaDF0NVA4OGJTVVJUVnpuZUVydDVYbUtjRVdDd3JsSGRrSWdGYgp1azFpbWlEOHl4S2RtZmNKdzZzRm5NeDlTb3FxSFFqNk9FUFZrV3E3Y1VYQUVMN05PSzlWTnZzZUxlNnEwRkRVClNLOSt5Ty9PdEdtSEFMcFJtY2dzNGlKOVJmRTlZQUt0a1JQRlRETUdYR0lFUGdnQkIyMHRlblk0ZTRyaXE1UWgKYWp1Y2txd3psRkhjbEZLWk9jMXNMR3NCRmhHSERIZm1taWNnWkhBdVN5YVpaM29QM3czbmhNK2IwT2grSjFSMwpWQUVWWUlDMzArVUZVR1dyTU40Q3ZDLzZaVk5YVkZ4ZkZMcU8raGFnNnI4Q3VqVEtLQ3NiaE5kaVNoNlRvdWhUCjZNY2N3OVg2bkpPdFBhK0E3L0ZVV3BVQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo=
+attestationPublicKey: LS0tLS1CRUdJTi...
 `
+    privateKey := `-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEA...
+-----END RSA PRIVATE KEY-----`
 
     // Generate signed and encrypted contract
     signedContract, inputHash, outputHash, err := contract.HpcrContractSignedEncrypted(
         contractYAML,
-        "hpvs",              // Hyper Protect OS type
-        "",                  // Use default encryption certificate
+        "ccrt",              // Platform type (ccrt, ccrv, or ccco)
+        "",                  // Certificate version (empty for default)
+        "",                  // Encryption certificate (empty for embedded)
         privateKey,          // Your RSA private key
+        "",                  // Password for encrypted private key (empty if not encrypted)
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("Signed Contract: %s\n", signedContract)
+    fmt.Printf("Input SHA256: %s\n", inputHash)
+    fmt.Printf("Output SHA256: %s\n", outputHash)
+}
+```
+
+### Using Password-Protected Private Keys
+
+If your private key is encrypted with a password, provide it as the last parameter:
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+)
+
+func main() {
+    contractYAML := `...` // Your contract YAML
+    
+    // Encrypted private key (with password protection)
+    encryptedPrivateKey := `-----BEGIN RSA PRIVATE KEY-----
+Proc-Type: 4,ENCRYPTED
+DEK-Info: AES-256-CBC,1234567890ABCDEF
+
+MIIEpAIBAAKCAQEA...
+-----END RSA PRIVATE KEY-----`
+
+    password := "your-secure-password"
+
+    // Generate signed and encrypted contract with password-protected key
+    signedContract, inputHash, outputHash, err := contract.HpcrContractSignedEncrypted(
+        contractYAML,
+        "ccrt",
+        "",                  // Certificate version (empty for default)
+        "",                  // Encryption certificate (empty for embedded)
+        encryptedPrivateKey,
+        password,            // Provide password for encrypted private key
     )
     if err != nil {
         log.Fatal(err)
@@ -177,42 +319,184 @@ func main() {
 }
 ```
 
+### Validate Certificate Documents
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/certificate"
+)
+
+func main() {
+    // Download IBM encryption certificate
+    versions := []string{"1.1.15"}
+    certsJSON, err := certificate.HpcrDownloadEncryptionCertificates(versions, "json", "")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Extract encryption certificate
+    _, encCert, _, _, _, err := certificate.HpcrGetEncryptionCertificateFromJson(certsJSON, "1.1.15")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Load intermediate and root certificates
+    // In production, obtain these from IBM or DigiCert
+    intermediateCert := `-----BEGIN CERTIFICATE-----
+... IBM intermediate CA certificate ...
+-----END CERTIFICATE-----`
+    
+    rootCert := `-----BEGIN CERTIFICATE-----
+... DigiCert root CA certificate ...
+-----END CERTIFICATE-----`
+
+    digicertIntermediateCert := `-----BEGIN CERTIFICATE-----
+... DigiCert intermediate CA certificate ...
+-----END CERTIFICATE-----`
+
+    // Validate encryption certificate document (chain + signature + dates)
+    valid, msg, err := certificate.HpcrVerifyEncryptionCertificateDocument(
+        encCert,                  // encryption certificate document
+        intermediateCert,         // IBM intermediate CA certificate
+        digicertIntermediateCert, // DigiCert intermediate CA certificate
+        rootCert,                 // DigiCert root CA certificate
+    )
+    if err != nil || !valid {
+        log.Fatalf("Certificate validation failed: %v", err)
+    }
+
+    fmt.Printf("%s\n", msg)
+
+    // Attestation certificate document (for combined CRL check)
+    attestationCert := `-----BEGIN CERTIFICATE-----
+... attestation certificate document ...
+-----END CERTIFICATE-----`
+
+    // Validate CRL signature and ensure encryption certificate serial is not revoked
+    valid, msg, err = certificate.HpcrValidateCertificateRevocationList(
+        encCert,
+        intermediateCert,
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+    if !valid {
+        log.Fatalf("Encryption CRL validation failed: %s", msg)
+    }
+    fmt.Printf("%s\n", msg)
+
+    // Validate CRL signature and ensure attestation certificate serial is not revoked
+    valid, msg, err = certificate.HpcrValidateCertificateRevocationList(
+        attestationCert,
+        intermediateCert,
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+    if !valid {
+        log.Fatalf("Attestation CRL validation failed: %s", msg)
+    }
+
+    fmt.Printf("%s\n", msg)
+}
+```
+
+### Seal Secrets
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/secrets"
+)
+
+func main() {
+    // Example 1: Seal a workload secret with auto-generated keys
+    sealedSecret, decryptionKey, verificationKey, inputHash, encryptedHash, err := secrets.HpccSealedSecret(
+        "my-database-password",
+        "workload",
+        "",  // Auto-generate encryption key
+        "",  // Auto-generate signing key
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Println("Sealed Secret:", sealedSecret)
+    fmt.Println("Decryption Key:", decryptionKey)
+    fmt.Println("Verification Key:", verificationKey)
+    fmt.Println("Input SHA256:", inputHash)
+    fmt.Println("Encrypted SHA256:", encryptedHash)
+
+    // Example 2: Seal a secret with provided key strings (PEM format)
+    encryptionKeyPEM := `-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEA...
+-----END RSA PRIVATE KEY-----`
+
+    signingKeyPEM := `-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEA...
+-----END RSA PRIVATE KEY-----`
+
+    sealedSecret2, _, _, _, _, err := secrets.HpccSealedSecret(
+        "my-api-key",
+        "env",
+        encryptionKeyPEM,  // Provide encryption key as PEM string
+        signingKeyPEM,     // Provide signing key as PEM string
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Println("Sealed Secret with Custom Keys:", sealedSecret2)
+}
+```
+
 ## Documentation
 
 Comprehensive documentation is available at:
 
-- **[User Documentation](https://ibm-hyper-protect.github.io/contract-go)** - Detailed API reference and usage examples
-- **[Go Package Documentation](https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go/v2)** - Generated Go docs
-- **[Examples](samples/)** - Sample contracts and configurations
+- **[User Documentation](https://ibm-hyper-protect.github.io/contract-go)** — Detailed API reference and usage examples
+- **[Go Package Documentation](https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go/v2)** — Generated Go docs
+- **[Examples](samples/)** — Sample contracts and configurations
 
 ## Supported Platforms
 
-| Platform | Description | Support Status |
-|----------|-------------|----------------|
-| HPVS | Hyper Protect Virtual Servers | Supported |
-| HPCR-RHVS | Hyper Protect Container Runtime for Red Hat Virtualization | Supported |
-| HPCC-PeerPod | Hyper Protect Confidential Container Peer Pods | Supported |
+| Platform | Official Name | Version | Support Status |
+|----------|---------------|---------|----------------|
+| CCRT | IBM Confidential Computing Container Runtime (CCRT) | 2.2.x | Supported |
+| CCRV | IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV) | 1.1.x | Supported |
+| CCCO | IBM Confidential Computing Containers for Red Hat OpenShift Container Platform (CCCO) | 1.1.x | Supported |
 
 ## Examples
 
 The [`samples/`](samples/) directory contains example configurations:
 
 - [Simple Contract](samples/simple_contract.yaml)
+- [Contract with Attestation Public Key](samples/attest_pub_key_contract.yaml)
 - [Workload Configuration](samples/workload.yaml)
-- [Network Configuration](samples/network/network_config.yaml)
+- [Encrypted Contract](samples/sign/contract.enc.yaml)
+- [CCCO Signed & Encrypted Contract](samples/ccco/signed-encrypt-ccco.yaml)
 - [Docker Compose](samples/tgz/docker-compose.yaml)
+- [Certificate Chain Validation](samples/certificate-chain/)
 
 ## Related Projects
 
-This library is used by several tools in the IBM Hyper Protect ecosystem:
+This library is used by several tools in the IBM Confidential Computing ecosystem:
 
 | Project | Description |
 |---------|-------------|
-| [contract-cli](https://github.com/ibm-hyper-protect/contract-cli) | CLI tool for generating Hyper Protect contracts |
-| [terraform-provider-hpcr](https://github.com/ibm-hyper-protect/terraform-provider-hpcr) | Terraform provider for Hyper Protect contracts |
+| [contract-cli](https://github.com/ibm-hyper-protect/contract-cli) | CLI tool for generating IBM Confidential Computing contracts |
+| [terraform-provider-hpcr](https://github.com/ibm-hyper-protect/terraform-provider-hpcr) | Terraform provider for IBM Confidential Computing contracts |
 | [k8s-operator-hpcr](https://github.com/ibm-hyper-protect/k8s-operator-hpcr) | Kubernetes operator for contract management |
-| [linuxone-vsi-automation-samples](https://github.com/ibm-hyper-protect/linuxone-vsi-automation-samples) | Terraform examples for HPVS and HPCR RHVS |
-| [hyper-protect-virtual-server-samples](https://github.com/ibm-hyper-protect/hyper-protect-virtual-server-samples) | HPVS feature samples and scripts |
+| [linuxone-vsi-automation-samples](https://github.com/ibm-hyper-protect/linuxone-vsi-automation-samples) | Examples for IBM Confidential Computing deployments |
 
 ## Contributing
 

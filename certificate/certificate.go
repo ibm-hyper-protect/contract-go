@@ -24,7 +24,9 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	crt "github.com/ibm-hyper-protect/contract-go/v2/common/cert"
 	gen "github.com/ibm-hyper-protect/contract-go/v2/common/general"
+	cert "github.com/ibm-hyper-protect/contract-go/v2/encryption"
 )
 
 const (
@@ -41,20 +43,23 @@ type CertSpec struct {
 	Patch string
 }
 
-// HpcrGetEncryptionCertificateFromJson extracts a specific version's encryption certificate from downloaded certificates.
-// It parses the JSON/YAML output from HpcrDownloadEncryptionCertificates and returns the certificate
-// for the requested version.
+// HpcrGetEncryptionCertificateFromJson extracts a specific version's encryption certificate
+// from the output of [HpcrDownloadEncryptionCertificates].
+//
+// Use this function after downloading certificates with [HpcrDownloadEncryptionCertificates]
+// to extract the certificate, version, expiry details, and status for a specific IBM Confidential
+// Computing Container Runtime version.
 //
 // Parameters:
-//   - encryptionCertificateJson: JSON or YAML formatted certificate data from HpcrDownloadEncryptionCertificates
-//   - version: Specific HPCR version to extract (e.g., "1.1.15")
+//   - encryptionCertificateJson: JSON or YAML formatted certificate data (output from [HpcrDownloadEncryptionCertificates])
+//   - version: Specific version to extract (e.g., "1.1.15")
 //
 // Returns:
 //   - Version string of the extracted certificate
-//   - PEM-formatted encryption certificate
-//   - Expiry date of the encryption certificate
-//   - Expiry days of the encryption certificate
-//   - Status of the Encryption certificate
+//   - PEM-formatted encryption certificate for use with contract encryption functions
+//   - Expiry date of the encryption certificate (human-readable date string)
+//   - Expiry days remaining as a string (e.g., "365")
+//   - Status of the certificate (e.g., "valid", "expired")
 //   - Error if version not found or data is invalid
 func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version string) (string, string, string, string, string, error) {
 	if gen.CheckIfEmpty(encryptionCertificateJson, version) {
@@ -68,18 +73,25 @@ func HpcrGetEncryptionCertificateFromJson(encryptionCertificateJson, version str
 	return latestVersion, certInfo["cert"], certInfo["expiry_date"], certInfo["expiry_days"], certInfo["status"], nil
 }
 
-// HpcrDownloadEncryptionCertificates downloads encryption certificates for specified HPCR versions from IBM Cloud.
-// It retrieves certificates for each version in the list, validates their existence and expiry,
-// and returns them in either JSON or YAML format.
+// HpcrDownloadEncryptionCertificates downloads encryption certificates for specified IBM
+// Confidential Computing Container Runtime versions from IBM Cloud.
+//
+// Use this function to download the IBM encryption certificates required for encrypting
+// contract sections. Each version of the runtime may have a different encryption certificate.
+// The certificates are used to encrypt the random AES password in the "contract-basic"
+// encryption format. You can then extract individual certificates using [HpcrGetEncryptionCertificateFromJson].
 //
 // Parameters:
-//   - versionList: List of HPCR versions to download (e.g., []string{"1.1.14", "1.1.15"})
-//   - formatType: Output format - "json" or "yaml" (defaults to "json" if empty)
-//   - certDownloadUrlTemplate: Custom URL template for certificate download (uses IBM Cloud default if empty)
+//   - versionList: List of runtime versions to download certificates for (e.g., []string{"1.1.14", "1.1.15"}).
+//     Version format must be "major.minor.patch" (e.g., "1.1.15").
+//   - formatType: Output format — "json" or "yaml" (defaults to "json" if empty)
+//   - certDownloadUrlTemplate: Custom URL template for certificate download. If empty, uses the
+//     default IBM Cloud Object Storage URL. Template variables: {{.Major}}, {{.Minor}}, {{.Patch}}
 //
 // Returns:
-//   - JSON or YAML formatted map of versions to certificates with status and expiry information
-//   - Error if download fails or version not found
+//   - JSON or YAML formatted map of versions to certificates, each with cert, status, expiry_days,
+//     and expiry_date fields
+//   - Error if download fails, version format is invalid, or certificate not found
 func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDownloadUrlTemplate string) (string, error) {
 	if certDownloadUrlTemplate == "" {
 		certDownloadUrlTemplate = defaultEncCertUrlTemplate
@@ -156,20 +168,181 @@ func HpcrDownloadEncryptionCertificates(versionList []string, formatType, certDo
 	}
 }
 
-// HpcrValidateEncryptionCertificate validates an encryption certificate and returns expiry information.
-// It checks the certificate's validity period and returns a message indicating whether the certificate
-// is valid, about to expire, or has already expired.
+// HpcrValidateEncryptionCertificate validates an IBM encryption certificate and returns its expiry status.
+//
+// Use this function to check whether an encryption certificate is still valid before using it
+// for contract encryption. This is especially important in CI/CD pipelines and automation
+// to detect expiring certificates early and avoid deployment failures.
 //
 // Parameters:
-//   - encryptionCert: PEM-formatted encryption certificate to validate
+//   - encryptionCert: PEM-formatted IBM encryption certificate to validate
 //
 // Returns:
-//   - Validation message with expiry information (days remaining or expiration date)
-//   - Error if certificate is invalid, corrupted, or has expired
+//   - Validation message indicating the certificate status (valid with days remaining, or expired)
+//   - Error if the certificate is invalid, corrupted, or has expired
 func HpcrValidateEncryptionCertificate(encryptionCert string) (string, error) {
 	msg, err := gen.CheckEncryptionCertValidityForContractEncryption(encryptionCert)
 	if err != nil {
 		return "", err
 	}
 	return msg, nil
+}
+
+// HpcrVerifyEncryptionCertificateDocument verifies an encryption certificate
+// document by checking issuer chain, document signature, and validity dates.
+//
+// Parameters:
+//   - encryptionCert: encryption certificate document content
+//   - ibmIntermediateCert: IBM intermediate certificate content
+//   - digicertIntermediateCert: DigiCert intermediate certificate content
+//   - digicertRootCert: DigiCert root certificate content
+//
+// Returns:
+//   - valid: true if the certificate document is valid
+//   - message: Detailed validation message
+//   - error: Error with stage information if validation fails
+func HpcrVerifyEncryptionCertificateDocument(encryptionCert, ibmIntermediateCert, digicertIntermediateCert, digicertRootCert string) (bool, string, error) {
+	if gen.CheckIfEmpty(encryptionCert, ibmIntermediateCert, digicertIntermediateCert, digicertRootCert) {
+		return false, "", fmt.Errorf(missingParameterErrStatement)
+	}
+
+	valid, msg, err := crt.ValidateEncryptionCertificateDocument(encryptionCert, ibmIntermediateCert, digicertIntermediateCert, digicertRootCert)
+	if err != nil {
+		return false, "", err
+	}
+
+	return valid, msg, nil
+}
+
+// HpcrVerifyAttestationCertificateDocument verifies an attestation certificate
+// document by checking issuer chain, document signature, and validity dates.
+//
+// Parameters:
+//   - attestationCert: attestation certificate document content
+//   - ibmIntermediateCert: IBM intermediate certificate content
+//   - digicertIntermediateCert: DigiCert intermediate certificate content
+//   - digicertRootCert: DigiCert root certificate content
+//
+// Returns:
+//   - valid: true if the certificate document is valid
+//   - message: Detailed validation message
+//   - error: Error with stage information if validation fails
+func HpcrVerifyAttestationCertificateDocument(attestationCert, ibmIntermediateCert, digicertIntermediateCert, digicertRootCert string) (bool, string, error) {
+	if gen.CheckIfEmpty(attestationCert, ibmIntermediateCert, digicertIntermediateCert, digicertRootCert) {
+		return false, "", fmt.Errorf(missingParameterErrStatement)
+	}
+
+	valid, msg, err := crt.ValidateAttestationCertificateDocument(attestationCert, ibmIntermediateCert, digicertIntermediateCert, digicertRootCert)
+	if err != nil {
+		return false, "", err
+	}
+
+	return valid, msg, nil
+}
+
+// HpcrValidateCertificateRevocationList validates CRL metadata/signature and checks
+// that a certificate document (encryption or attestation) is not revoked.
+//
+// Parameters:
+//   - certificateDocument: certificate document content (encryption or attestation)
+//   - ibmIntermediateCert: IBM intermediate certificate content
+//
+// Returns:
+//   - valid: true if CRL validation succeeded and certificate is not revoked
+//   - message: Detailed validation message
+//   - error: Error with stage information if validation fails
+func HpcrValidateCertificateRevocationList(certificateDocument, ibmIntermediateCert string) (bool, string, error) {
+	if gen.CheckIfEmpty(certificateDocument, ibmIntermediateCert) {
+		return false, "", fmt.Errorf(missingParameterErrStatement)
+	}
+
+	valid, msg, err := crt.ValidateCertificateRevocationList(certificateDocument, ibmIntermediateCert)
+	if err != nil {
+		return false, "", err
+	}
+
+	return valid, msg, nil
+}
+
+// HpcrListAvailableEncCertVersions returns available embedded encryption certificate versions
+// in JSON or YAML format. If osType is provided, returns versions for that specific OS type only.
+// If osType is empty, returns versions for all OS types.
+//
+// Use this function to discover which encryption certificate versions are available without downloading
+// from IBM Cloud. This is useful for:
+//   - Displaying available versions to users
+//   - Validating version inputs before encryption
+//   - Programmatically selecting certificate versions
+//
+// Parameters:
+//   - osType: The operating system type ("ccrt", "ccrv", "ccco", "hpvs") or empty string for all types
+//   - formatType: Output format — "json" or "yaml" (defaults to "json" if empty)
+//
+// Returns:
+//   - JSON or YAML string with OS types as keys and sorted version arrays as values (descending order, latest first)
+//   - Error if marshaling fails, invalid format specified, or if specified osType doesn't exist
+//
+// Examples:
+//
+//	// Get all OS types in JSON format
+//	allCerts, err := certificate.HpcrListAvailableEncCertVersions("", "json")
+//	// Returns: {"ccrt":["26.2.0","25.11.0"],"ccrv":["26.4.1","25.11.0"],"ccco":["25.12.0","25.10.0"],"hpvs":["26.5.0","26.2.0"]}
+//
+//	// Get specific OS type in YAML format
+//	hpvsCerts, err := certificate.HpcrListAvailableEncCertVersions("hpvs", "yaml")
+//	// Returns:
+//	// hpvs:
+//	//   - 26.5.0
+//	//   - 26.2.0
+//
+//	// Default to JSON if format not specified
+//	certs, err := certificate.HpcrListAvailableEncCertVersions("", "")
+func HpcrListAvailableEncCertVersions(osType, formatType string) (string, error) {
+	// Default to JSON if format not specified
+	if formatType == "" {
+		formatType = defaultFormat
+	}
+
+	// Validate format type
+	if formatType != formatJson && formatType != formatYaml {
+		return "", fmt.Errorf("invalid output format: %s. Valid formats are: json, yaml", formatType)
+	}
+
+	result := make(map[string][]string)
+
+	// Normalize OS type to lowercase if provided
+	if osType != "" {
+		osType = strings.ToLower(osType)
+
+		// Check if the specified OS type exists
+		osMap, exists := cert.CertificateMap[osType]
+		if !exists {
+			return "", fmt.Errorf("invalid OS type: %s. Valid types are: ccrt, ccrv, ccco, hpvs", osType)
+		}
+
+		result[osType] = gen.CollectAndSortVersions(osMap)
+	} else {
+		// Get all OS types from the certificate map
+		for osType, osMap := range cert.CertificateMap {
+			result[osType] = gen.CollectAndSortVersions(osMap)
+		}
+	}
+
+	// Marshal to requested format
+	switch formatType {
+	case formatJson:
+		jsonBytes, err := json.Marshal(result)
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal JSON - %v", err)
+		}
+		return string(jsonBytes), nil
+	case formatYaml:
+		yamlBytes, err := yaml.Marshal(result)
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal YAML - %v", err)
+		}
+		return string(yamlBytes), nil
+	default:
+		return "", fmt.Errorf("invalid output format")
+	}
 }
