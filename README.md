@@ -73,7 +73,7 @@ Learn more:
   - Generate gzipped and encoded initdata for IBM Confidential Computing Container For Red Hat OpenShift Container Platform. Supports both Peerpod and Baremetal solution
   - Create signed and encrypted & signed contracts
   - Support contract expiry with CSR (Certificate Signing Request)
-  - Load built-in workload and env contract templates
+  - Load built-in workload and env contract templates (CCRV uses a separate workload template without docker compose)
   - Validate contract schemas
   - Decrypt encrypted text in Hyper Protect format
   - Password-protected private key support for decrypting attestation records and generate signed contracts
@@ -166,28 +166,35 @@ import (
 )
 
 func main() {
-    // Retrieve workload template only
-    workloadTemplate, err := contract.HpcrContractTemplate("workload")
+    // Retrieve standard workload template (hpvs, ccrt, ccco)
+    workloadTemplate, err := contract.HpcrContractTemplate("workload", "ccrt")
     if err != nil {
         log.Fatal(err)
     }
-    fmt.Printf("Workload Template:\n%s\n", workloadTemplate)
+    fmt.Printf("Workload Template (CCRT):\n%s\n", workloadTemplate)
 
-    // Retrieve env template only
-    envTemplate, err := contract.HpcrContractTemplate("env")
+    // Retrieve CCRV-specific workload template (podman play only, no compose)
+    workloadCcrvTemplate, err := contract.HpcrContractTemplate("workload", "ccrv")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Workload Template (CCRV):\n%s\n", workloadCcrvTemplate)
+
+    // Retrieve env template (same for all platforms)
+    envTemplate, err := contract.HpcrContractTemplate("env", "")
     if err != nil {
         log.Fatal(err)
     }
     fmt.Printf("Env Template:\n%s\n", envTemplate)
 
-    // Retrieve combined contract scaffold:
-    // workload: | <workload template>
+    // Retrieve combined contract scaffold with CCRV workload:
+    // workload: | <ccrv workload template>
     // env: | <env template>
-    contractTemplate, err := contract.HpcrContractTemplate("")
+    contractTemplate, err := contract.HpcrContractTemplate("", "ccrv")
     if err != nil {
         log.Fatal(err)
     }
-    fmt.Printf("Combined Contract Template:\n%s\n", contractTemplate)
+    fmt.Printf("Combined CCRV Contract Template:\n%s\n", contractTemplate)
 }
 ```
 

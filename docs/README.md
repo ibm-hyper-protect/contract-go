@@ -1157,11 +1157,16 @@ MIIEpAIBAAKCAQEA...
 
 Returns built-in contract template content for `workload`, `env`, or both as a combined YAML scaffold.
 
+The workload template varies by platform: `"ccrv"` returns a template (podman `play` only, no docker `compose`), while `"hpvs"`, `"ccrt"`, `"ccco"`, and `""`
+all return the standard workload template (both `compose` and `play` sections).
+
+The env template is the same for all platforms.
+
 **Package:** `github.com/ibm-hyper-protect/contract-go/v2/contract`
 
 **Signature:**
 ```go
-func HpcrContractTemplate(templateType string) (string, error)
+func HpcrContractTemplate(templateType, os string) (string, error)
 ```
 
 **Parameters:**
@@ -1169,13 +1174,21 @@ func HpcrContractTemplate(templateType string) (string, error)
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
 | `templateType` | `string` | Optional | Template selector: `"workload"`, `"env"`, or `""` (returns combined output) |
+| `os` | `string` | Optional | Target platform: `"ccrv"` returns the CCRV-specific workload template; `"hpvs"`, `"ccrt"`, `"ccco"`, or `""` return the standard workload template |
 
 **Returns:**
 
 | Return | Type | Description |
 |--------|------|-------------|
-| Template Content | `string` | YAML template content from `contract/template/workload.yaml`, `contract/template/env.yaml`, or both |
+| Template Content | `string` | YAML template content from `contract/template/workload_ccrt.yaml`, `contract/template/workload_ccrv.yaml`, `contract/template/env.yaml`, or a combination |
 | Error | `error` | Error if template type is invalid or template files cannot be read |
+
+**Workload Template Differences:**
+
+| OS | Template File | Includes `compose` | Includes `play` |
+|----|---------------|--------------------|-----------------|
+| `hpvs`, `ccrt`, `ccco`, `""` | `workload_ccrt.yaml` | ✓ | ✓ |
+| `ccrv` | `workload_ccrv.yaml` | ✗ | ✓ |
 
 **Example:**
 ```go
@@ -1189,37 +1202,54 @@ import (
 )
 
 func main() {
-    workloadTemplate, err := contract.HpcrContractTemplate("workload")
+    // Standard workload template (ccrt/hpvs/ccco)
+    workloadTemplate, err := contract.HpcrContractTemplate("workload", "ccrt")
     if err != nil {
         log.Fatal(err)
     }
-    fmt.Printf("Workload template:\n%s\n", workloadTemplate)
+    fmt.Printf("Workload template (CCRT):\n%s\n", workloadTemplate)
 
-    envTemplate, err := contract.HpcrContractTemplate("env")
+    // CCRV-specific workload template (podman play only, no compose)
+    workloadCcrvTemplate, err := contract.HpcrContractTemplate("workload", "ccrv")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Workload template (CCRV):\n%s\n", workloadCcrvTemplate)
+
+    // Env template (same for all platforms)
+    envTemplate, err := contract.HpcrContractTemplate("env", "")
     if err != nil {
         log.Fatal(err)
     }
     fmt.Printf("Env template:\n%s\n", envTemplate)
 
-    combinedTemplate, err := contract.HpcrContractTemplate("")
+    // Combined template with standard workload
+    combinedTemplate, err := contract.HpcrContractTemplate("", "ccrt")
     if err != nil {
         log.Fatal(err)
     }
-    fmt.Printf("Combined template:\n%s\n", combinedTemplate)
+    fmt.Printf("Combined template (CCRT):\n%s\n", combinedTemplate)
+
+    // Combined template with CCRV workload
+    combinedCcrvTemplate, err := contract.HpcrContractTemplate("", "ccrv")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Combined template (CCRV):\n%s\n", combinedCcrvTemplate)
 }
 ```
 
 **Combined Output Format (`templateType == ""`):**
 ```yaml
 workload: |
-  ...content of workload.yaml...
+  ...content of workload_ccrt.yaml or workload_ccrv.yaml depending on os...
 env: |
   ...content of env.yaml...
 ```
 
 **Common Errors:**
 - `"unsupported template type: <value>"` - `templateType` is not one of `"workload"`, `"env"`, or `""`
-- `"failed to read workload template"` - Unable to read `contract/template/workload.yaml`
+- `"failed to read workload template"` - Unable to read the resolved workload template file
 - `"failed to read env template"` - Unable to read `contract/template/env.yaml`
 
 ---

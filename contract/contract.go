@@ -34,9 +34,10 @@ const (
 	emptyParameterErrStatement = "required parameter is empty"
 
 	// Contract template locations relative to this package.
-	contractTemplateDirPath  = "template"
-	workloadTemplateFilePath = "workload.yaml"
-	envTemplateFilePath      = "env.yaml"
+	contractTemplateDirPath      = "template"
+	workloadCcrtTemplateFilePath = "workload_ccrt.yaml"
+	workloadCcrvTemplateFilePath = "workload_ccrv.yaml"
+	envTemplateFilePath          = "env.yaml"
 )
 
 // HPCC initdata.toml file template without sehdr bin.
@@ -486,16 +487,24 @@ func HpcrContractSign(contract, privateKey, password string) (string, string, st
 
 // HpcrContractTemplate returns contract template content for workload, env, or both.
 //
+// The workload template varies by platform: "ccrv" uses a Red Hat Virtualization-specific
+// workload template (podman play only, no compose), while "hpvs", "ccrt", "ccco", and ""
+// all use the standard workload template (compose + play).
+//
 // Parameters:
 //   - templateType: "workload", "env", or "" (returns both templates combined)
+//   - os: Target IBM Confidential Computing platform — "ccrv" returns the CCRV-specific
+//     workload template; "hpvs", "ccrt", "ccco", or "" use the standard workload template
 //
 // Returns:
 //   - Template content as string
 //   - Error if template type is unsupported or file read fails
-func HpcrContractTemplate(templateType string) (string, error) {
+func HpcrContractTemplate(templateType, os string) (string, error) {
+	workloadFile := resolveWorkloadTemplateFile(os)
+
 	switch templateType {
 	case "workload":
-		workloadTemplate, err := readHpcrTemplateFile(workloadTemplateFilePath)
+		workloadTemplate, err := readHpcrTemplateFile(workloadFile)
 		if err != nil {
 			return "", fmt.Errorf("failed to read workload template - %v", err)
 		}
@@ -507,7 +516,7 @@ func HpcrContractTemplate(templateType string) (string, error) {
 		}
 		return envTemplate, nil
 	case "":
-		workloadTemplate, err := readHpcrTemplateFile(workloadTemplateFilePath)
+		workloadTemplate, err := readHpcrTemplateFile(workloadFile)
 		if err != nil {
 			return "", fmt.Errorf("failed to read workload template - %v", err)
 		}
@@ -530,6 +539,15 @@ func HpcrContractTemplate(templateType string) (string, error) {
 	default:
 		return "", fmt.Errorf("unsupported template type: %s", templateType)
 	}
+}
+
+// resolveWorkloadTemplateFile returns the workload template filename for the given OS.
+// "ccrv" uses the CCRV-specific template; all other values use the standard CCRT template.
+func resolveWorkloadTemplateFile(os string) string {
+	if os == "ccrv" {
+		return workloadCcrvTemplateFilePath
+	}
+	return workloadCcrtTemplateFilePath
 }
 
 // HpccInitdata generates gzipped and Base64-encoded initdata for IBM Confidential Computing
