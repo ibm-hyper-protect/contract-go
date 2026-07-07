@@ -6,6 +6,8 @@ on:
       - main
 
   pull_request:
+    branches:
+      - main
 
   workflow_dispatch:
     inputs:
@@ -21,7 +23,65 @@ env:
   NODE_VERSION: 25.5.0
 
 jobs:
+  branch-name-check:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+    steps:
+      - name: Validate branch name
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          pattern='^(Feature|Fix|Docs|Refactor|Performance|Test|Chore|CI)/[a-zA-Z0-9._/-]+$'
+
+          if ! echo "$BRANCH" | grep -qE "$pattern"; then
+            echo "Invalid branch name: '$BRANCH'"
+            echo ""
+            echo "Branch names must follow the format: <Type>/<name>"
+            echo ""
+            echo "Allowed types (case-sensitive):"
+            echo "  Feature/<name>     - A new feature"
+            echo "  Fix/<name>         - A bug fix"
+            echo "  Docs/<name>        - Documentation only changes"
+            echo "  Refactor/<name>    - Code changes that neither fix a bug nor add a feature"
+            echo "  Performance/<name> - Performance improvements"
+            echo "  Test/<name>        - Adding or updating tests"
+            echo "  Chore/<name>       - Changes to build process, dependencies, etc."
+            echo "  CI/<name>          - CI/CD configuration changes"
+            echo ""
+            echo "Examples: Feature/add-encryption, Fix/null-pointer, Chore/upgrade-deps"
+            exit 1
+          fi
+
+          echo "Branch name '$BRANCH' is valid!"
+
+  force-push-check:
+    runs-on: ubuntu-latest
+    needs: [branch-name-check]
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+    steps:
+      - name: Check for force push
+        run: |
+          BEFORE="${{ github.event.before }}"
+          ZERO_SHA="0000000000000000000000000000000000000000"
+
+          if [ "$BEFORE" = "$ZERO_SHA" ]; then
+            echo "New branch — not a force push. OK."
+            exit 0
+          fi
+
+          if [ "${{ github.event.forced }}" = "true" ]; then
+            echo "FORCE PUSH DETECTED on branch: ${{ github.head_ref }}"
+            echo "Force pushes are not allowed. Please rebase and push normally."
+            exit 1
+          fi
+
+          echo "No force push detected. OK."
+
   commit-lint:
+    needs: [branch-name-check, force-push-check]
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     permissions:
@@ -33,12 +93,8 @@ jobs:
 
       - name: Validate commit message
         run: |
-          # Conventional commit regex pattern
-          # Matches: type(optional-scope): description
-          # Valid types from .releaserc: feat, fix, docs, perf, revert, chore, refactor, test, build, ci
           pattern='^(feat|fix|docs|perf|revert|chore|refactor|test|build|ci)(\([a-z0-9-]+\))?!?: .{1,}'
 
-          # Get the latest commit message (HEAD)
           commit_sha="${{ github.event.pull_request.head.sha }}"
           commit_message=$(git log --format=%B -n 1 $commit_sha | head -n 1)
           short_sha=$(echo $commit_sha | cut -c1-7)
@@ -48,27 +104,91 @@ jobs:
           echo ""
 
           if ! echo "$commit_message" | grep -qE "$pattern"; then
-            echo "Invalid commit message format!"
+            echo "Invalid commit message: '$commit_message'"
             echo ""
-            echo "Commit: $short_sha"
-            echo "Message: $commit_message"
-            echo ""
-            echo "────────────────────────────────────────"
             echo "Valid format: <type>(<optional-scope>): <description>"
-            echo ""
             echo "Allowed types: feat, fix, docs, perf, revert, chore, refactor, test, build, ci"
             echo ""
             echo "Examples:"
             echo "  feat: add new feature"
             echo "  fix(api): resolve null pointer exception"
-            echo "  docs: update README"
             echo "  chore!: breaking change in build process"
             exit 1
           fi
-
           echo "Commit message is valid!"
 
+  verify-commit-signatures:
+    needs: [branch-name-check, force-push-check, commit-lint]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Verify latest commit is signed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Verifying commit signature (latest commit only)"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+        
+          # Determine which commit to check based on event type
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "Event: Pull Request #${{ github.event.pull_request.number }}"
+            COMMIT="${{ github.event.pull_request.head.sha }}"
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            echo "Event: Push to ${{ github.ref_name }}"
+            COMMIT="${{ github.event.after }}"
+          else
+            echo "Event: ${{ github.event_name }}"
+            COMMIT="${{ github.sha }}"
+          fi
+          
+          SHORT_SHA=$(echo $COMMIT | cut -c1-7)
+          COMMIT_MSG=$(git log --format=%s -n 1 $COMMIT)
+          AUTHOR=$(git log --format='%an <%ae>' -n 1 $COMMIT)
+          
+          echo "Checking latest commit: $SHORT_SHA"
+          echo "   Author: $AUTHOR"
+          echo "   Message: $COMMIT_MSG"
+          echo ""
+          
+          # Use GitHub API to check verification status
+          VERIFICATION=$(gh api repos/${{ github.repository }}/commits/$COMMIT --jq '.commit.verification')
+          VERIFIED=$(echo "$VERIFICATION" | jq -r '.verified')
+          REASON=$(echo "$VERIFICATION" | jq -r '.reason')
+          
+          if [ "$VERIFIED" = "true" ]; then
+            echo "Commit is signed and verified!"
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "Latest commit is properly signed and verified!"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          else
+            echo "Commit is NOT SIGNED or verification failed"
+            echo "   Reason: $REASON"
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "VERIFICATION FAILED!"
+            echo ""
+            echo "The latest commit ($SHORT_SHA) is not signed."
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            exit 1
+          fi
+
   build:
+    needs: [verify-commit-signatures, branch-name-check, force-push-check, commit-lint]
+    if: |
+      always() &&
+      (needs.verify-commit-signatures.result == 'success') &&
+      (needs.branch-name-check.result == 'success' || needs.branch-name-check.result == 'skipped') &&
+      (needs.force-push-check.result == 'success' || needs.force-push-check.result == 'skipped') &&
+      (needs.commit-lint.result == 'success' || needs.commit-lint.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: read
