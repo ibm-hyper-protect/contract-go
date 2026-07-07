@@ -45,11 +45,12 @@ import (
 )
 
 const (
-	TempFolderNamePrefix = "hpvs-"
+	TempFolderNamePrefix = "ccrt-"
 
-	HyperProtectOsHpvs                        = "hpvs"
-	HyperProtectOsHpcrRhvs                    = "hpcr-rhvs"
-	HyperProtectConfidentialContainerPeerPods = "hpcc-peerpod"
+	ConfidentialComputingOsCcrt = "ccrt"
+	ConfidentialComputingOsCcrv = "ccrv"
+	ConfidentialComputingOsCcco = "ccco"
+	HyperProtectOsHpvs          = "hpvs"
 )
 
 type Contract struct {
@@ -134,6 +135,36 @@ func ExecCommand(commandName, stdinInput string, args ...string) (string, error)
 	return out.String(), nil
 }
 
+// AppendPasswordArgs appends OpenSSL password arguments to an args slice if a password is provided.
+// This helper function eliminates code duplication when building OpenSSL commands that support
+// password-protected private keys.
+//
+// Parameters:
+//   - args: Existing slice of command arguments
+//   - password: Optional password for encrypted private keys (empty string for unencrypted keys)
+//
+// Returns:
+//   - Updated args slice with password arguments appended if password is non-empty
+func AppendPasswordArgs(args []string, password string) []string {
+	if password != "" {
+		args = append(args, "-passin", fmt.Sprintf("pass:%s", password))
+	}
+	return args
+}
+
+// IsPrivateKeyEncrypted checks if a PEM-encoded private key is encrypted.
+// It examines the PEM headers to determine if the key requires a password.
+//
+// Parameters:
+//   - privateKey: PEM-encoded private key string
+//
+// Returns:
+//   - true if the private key is encrypted, false otherwise
+func IsPrivateKeyEncrypted(privateKey string) bool {
+	return strings.Contains(privateKey, "ENCRYPTED") ||
+		strings.Contains(privateKey, "Proc-Type: 4,ENCRYPTED")
+}
+
 // ReadDataFromFile reads the entire contents of a file and returns it as a string.
 // It opens the file, reads all data, and closes the file automatically.
 //
@@ -159,7 +190,7 @@ func ReadDataFromFile(filePath string) (string, error) {
 }
 
 // CreateTempFile creates a temporary file with the provided data.
-// It trims whitespace from the data, creates a temp file with the prefix "hpvs-",
+// It trims whitespace from the data, creates a temp file with the prefix "ccrt-",
 // writes the data to it, and returns the file path.
 //
 // Parameters:
@@ -178,6 +209,33 @@ func CreateTempFile(data string) (string, error) {
 
 	// Write the data to the temp file.
 	_, err = tmpFile.WriteString(trimmedData)
+	if err != nil {
+		return "", err
+	}
+
+	// Return the path to the temp file.
+	return tmpFile.Name(), nil
+}
+
+// CreateTempBinaryFile creates a temporary file with binary data.
+// It creates a temp file with the prefix "ccrt-", writes the binary data to it,
+// and returns the file path. This function preserves binary data integrity.
+//
+// Parameters:
+//   - data: Binary data to write to the temporary file
+//
+// Returns:
+//   - Absolute path to the created temporary file
+//   - Error if file creation or writing fails
+func CreateTempBinaryFile(data []byte) (string, error) {
+	tmpFile, err := os.CreateTemp("", TempFolderNamePrefix)
+	if err != nil {
+		return "", err
+	}
+	defer tmpFile.Close()
+
+	// Write the binary data to the temp file.
+	_, err = tmpFile.Write(data)
 	if err != nil {
 		return "", err
 	}
@@ -394,11 +452,11 @@ func CertificateDownloader(url string) (string, error) {
 }
 
 // GetEncryptPassWorkload extracts the encrypted password and workload from encrypted data.
-// It splits the encrypted data string in "hyper-protect-basic.<password>.<workload>" format
+// It splits the encrypted data string in "contract-basic.<password>.<workload>" format
 // and returns the password and workload components.
 //
 // Parameters:
-//   - encryptedData: Encrypted data in "hyper-protect-basic.<password>.<workload>" format
+//   - encryptedData: Encrypted data in "contract-basic.<password>.<workload>" format
 //
 // Returns:
 //   - Encrypted password (Base64-encoded)
@@ -473,35 +531,60 @@ func GetDataFromLatestVersion(jsonData, version string) (string, map[string]stri
 	return "", nil, fmt.Errorf("no matching version found for the given constraint")
 }
 
-// FetchEncryptionCertificate retrieves the appropriate encryption certificate for a Hyper Protect platform.
-// If a custom certificate is provided, it returns that. Otherwise, it returns the embedded default
-// certificate for the specified platform version (hpvs, hpcr-rhvs, or hpcc-peerpod).
+// FetchEncryptionCertificate retrieves the appropriate encryption certificate for a IBM Confidential Computing platform.
+// If a custom certificate is provided, it returns that. Otherwise, it returns the embedded certificate
+// for the specified platform (ccrt, ccrv, or ccco) and certificate version.
 //
 // Parameters:
-//   - version: Hyper Protect platform version ("hpvs", "hpcr-rhvs", "hpcc-peerpod") - defaults to "hpvs" if empty
+//   - confidentialComputingOs: Confidential Computing platform version ("ccrt", "ccrv", "ccco") - defaults to "ccrt" if empty
 //   - encryptionCertificate: Custom encryption certificate (PEM format) - uses embedded default if empty
+//   - certVersion: Certificate version (e.g., "26.2.0", "25.11.0") - uses latest if empty
 //
 // Returns:
 //   - Encryption certificate in PEM format
-//   - Error if version is invalid
-func FetchEncryptionCertificate(version, encryptionCertificate string) (string, error) {
-	if version == "" {
-		version = HyperProtectOsHpvs
+//   - Error if platform or certificate version is invalid
+func FetchEncryptionCertificate(confidentialComputingOs, encryptionCertificate, certVersion string) (string, error) {
+	if confidentialComputingOs == "" {
+		confidentialComputingOs = HyperProtectOsHpvs
 	}
 
+	// If custom certificate is provided, use it
 	if encryptionCertificate != "" {
 		return encryptionCertificate, nil
-	} else {
-		if version == HyperProtectOsHpvs {
-			return cert.EncryptionCertificateHpvs, nil
-		} else if version == HyperProtectOsHpcrRhvs {
-			return cert.EncryptionCertificateHpcrRhvs, nil
-		} else if version == HyperProtectConfidentialContainerPeerPods {
-			return cert.EncryptionCertificateHpccPeerPods, nil
-		} else {
-			return "", fmt.Errorf("invalid Hyper Protect version")
-		}
 	}
+
+	// Validate platform type
+	if confidentialComputingOs != ConfidentialComputingOsCcrt &&
+		confidentialComputingOs != ConfidentialComputingOsCcrv &&
+		confidentialComputingOs != ConfidentialComputingOsCcco &&
+		confidentialComputingOs != HyperProtectOsHpvs {
+		return "", fmt.Errorf("invalid Confidential Computing platform: %s (must be ccrt, ccrv, ccco, or hpvs)", confidentialComputingOs)
+	}
+
+	var selectedCert string
+	// If no version specified, return latest certificate
+	if certVersion == "" {
+		if confidentialComputingOs == ConfidentialComputingOsCcrt {
+			selectedCert = cert.LatestEncryptionCertificateCcrt
+		} else if confidentialComputingOs == ConfidentialComputingOsCcrv {
+			selectedCert = cert.LatestEncryptionCertificateCcrv
+		} else if confidentialComputingOs == ConfidentialComputingOsCcco {
+			selectedCert = cert.LatestEncryptionCertificateCcco
+		} else {
+			selectedCert = cert.LatestEncryptionCertificateHpvs
+		}
+		return selectedCert, nil
+	}
+
+	// Fetch specific version from CertificateMap
+	if platformCerts, exists := cert.CertificateMap[confidentialComputingOs]; exists {
+		if certificate, versionExists := platformCerts[certVersion]; versionExists {
+			return certificate, nil
+		}
+		return "", fmt.Errorf("certificate version %s not found for platform %s", certVersion, confidentialComputingOs)
+	}
+
+	return "", fmt.Errorf("no certificates found for platform %s", confidentialComputingOs)
 }
 
 // GenerateTgzBase64 creates a compressed tar.gz archive from files and folders.
@@ -566,13 +649,13 @@ func GenerateTgzBase64(folderFilesPath []string) (string, error) {
 	return EncodeToBase64(buf.Bytes()), nil
 }
 
-// VerifyContractWithSchema validates a contract against the schema for a specific Hyper Protect platform.
+// VerifyContractWithSchema validates a contract against the schema for a specific Confidential Computing platform.
 // It parses the contract YAML, retrieves the appropriate schema for the platform version,
 // and validates the contract structure against that schema.
 //
 // Parameters:
 //   - contract: Contract YAML string to validate
-//   - version: Hyper Protect platform version ("hpvs", "hpcr-rhvs", "hpcc-peerpod") - defaults to "hpvs" if empty
+//   - version: Confidential Computing platform version ("ccrt", "ccrv", "ccco") - defaults to "ccrt" if empty
 //
 // Returns:
 //   - nil if contract is valid
@@ -662,30 +745,30 @@ func convertToStringkeys(m map[any]any) map[string]any {
 	return result
 }
 
-// fetchContractSchema retrieves the embedded contract schema for a specific Hyper Protect platform.
+// fetchContractSchema retrieves the embedded contract schema for a specific Confidential Computing platform.
 // It returns the appropriate JSON schema string based on the platform version.
 //
 // Parameters:
-//   - version: Hyper Protect platform version ("hpvs", "hpcr-rhvs", "hpcc-peerpod") - defaults to "hpvs" if empty
+//   - version: Confidential Computing platform version ("ccrt", "ccrv", "ccco", "hpvs") - defaults to "ccrt" if empty
 //
 // Returns:
 //   - JSON schema string for contract validation
 //   - Error if version is invalid
 func fetchContractSchema(version string) (string, error) {
-	if version == HyperProtectOsHpvs || version == "" {
-		return sch.ContractSchemaHpvs, nil
-	} else if version == HyperProtectConfidentialContainerPeerPods {
-		return sch.ContractSchemaHpvs, nil
-	} else if version == HyperProtectOsHpcrRhvs {
-		return sch.ContractSchemaHpcrRhvs, nil
+	if version == ConfidentialComputingOsCcrt || version == HyperProtectOsHpvs || version == "" {
+		return sch.ContractSchemaCcrt, nil
+	} else if version == ConfidentialComputingOsCcrv {
+		return sch.ContractSchemaCcrv, nil
+	} else if version == ConfidentialComputingOsCcco {
+		return sch.ContractSchemaCcco, nil
 	} else {
-		return "", fmt.Errorf("invalid Hyper Protect version")
+		return "", fmt.Errorf("invalid Confidential Computing version")
 	}
 }
 
 // VerifyNetworkSchema validates a network configuration YAML against the network schema.
 // It parses the network configuration YAML and validates it against the embedded network schema
-// for on-premise Hyper Protect deployments.
+// for on-premise Confidential Computing deployments.
 //
 // Parameters:
 //   - Network_Config_File: Network configuration YAML string to validate
@@ -832,4 +915,27 @@ func GzipInitData(tomlString string) ([]byte, error) {
 	}
 
 	return buf.Bytes(), nil
+}
+
+// CollectAndSortVersions extracts versions from a certificate map and sorts them
+// in descending order (latest first) using semantic version comparison.
+// This is a utility function used by certificate listing operations.
+//
+// Parameters:
+//   - osMap: Map of version strings to certificate data
+//
+// Returns:
+//   - Slice of version strings sorted in descending order (latest first)
+func CollectAndSortVersions(osMap map[string]string) []string {
+	versions := make([]string, 0, len(osMap))
+	for version := range osMap {
+		versions = append(versions, version)
+	}
+
+	// Sort versions in descending order (latest first)
+	sort.Slice(versions, func(i, j int) bool {
+		return cert.CompareVersions(versions[i], versions[j]) > 0
+	})
+
+	return versions
 }

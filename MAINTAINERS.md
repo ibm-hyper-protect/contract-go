@@ -7,7 +7,9 @@ This document lists the maintainers of the `contract-go` project, their roles, a
 | Name      | GitHub Handle | Role          | Email | Focus Areas |
 |-----------|---------------|---------------|-------|-------------|
 | Sashwat K | [@Sashwat-K](https://github.com/Sashwat-K) | Lead Maintainer | Sashwat.K@ibm.com | Overall project direction, releases, core features |
+ Dirk Herrendörfer | [@dherrend](https://github.com/dherrend) | Lead Maintainer | d.herrendoerfer@de.ibm.com | Overall project direction, releases, core features |
 | Vikas Sharma | [@vikas-sharma24](https://github.com/vikas-sharma24) | Maintainer | Vikas.Sharma24@ibm.com | Releases and core features |
+| Rohit Singh | [@Rohit-Singh43-1](https://github.com/Rohit-Singh43-1) | Maintainer | Rohit.Singh@ibm.com | Releases and core features |
 | Lokesh Puthalapattu | [@Lokesh-Puthalapattu](https://github.com/Lokesh-Puthalapattu) | Security Lead | lokesh.puthalapattu@ibm.com | Overall Security |
 
 ## Roles and Responsibilities
@@ -100,7 +102,7 @@ We welcome community members who demonstrate consistent, high-quality contributi
 
 Maintainers who have stepped down or moved to emeritus status are recognized here for their contributions:
 
-_No emeritus maintainers at this time._
+1. Carsten Leue - [@CarstenLeue](https://github.com/CarstenLeue)
 
 ## Contact
 
@@ -174,6 +176,8 @@ Before merging:
 - [ ] Tests added or updated
 
 ### Release Process
+
+Releases are managed using [semantic-release](https://semantic-release.gitbook.io/) (see `.releaserc` configuration):
 
 1. Update version in `go.mod`
 2. Update `CHANGELOG.md`

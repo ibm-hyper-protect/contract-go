@@ -18,6 +18,9 @@ package contract
 import (
 	"bytes"
 	"fmt"
+	"path/filepath"
+	"runtime"
+	"strings"
 	"text/template"
 
 	"gopkg.in/yaml.v3"
@@ -29,28 +32,51 @@ import (
 
 const (
 	emptyParameterErrStatement = "required parameter is empty"
+
+	// Contract template locations relative to this package.
+	contractTemplateDirPath  = "template"
+	workloadTemplateFilePath = "workload.yaml"
+	envTemplateFilePath      = "env.yaml"
 )
 
-// HPCC initdata.toml file template.
+// HPCC initdata.toml file template without sehdr bin.
 const tomlTemplate = `
 algorithm = "sha384"
 version = "0.1.0"
 
 [data]
-"contract.yaml" = '''{{ . }}'''
+"contract.yaml" = '''{{ .Contract }}'''
 `
 
-// HpcrText generates Base64-encoded representation of plain text with integrity checksums.
-// It encodes the provided text and returns both the encoded data and SHA256 checksums
-// for verification purposes.
+// HPCC initdata.toml file template with sehdr bin.
+const tomlTemplateWithHdr = `
+algorithm = "sha384"
+version = "0.1.0"
+
+[data]
+"contract.yaml" = '''{{ .Contract }}
+boot: |
+    sehdr: {{ .HdrBin }}'''
+`
+
+// tomlTemplateData holds the data for TOML template execution.
+type tomlTemplateData struct {
+	Contract string
+	HdrBin   string
+}
+
+// HpcrText encodes plain text to Base64 with integrity checksums.
+//
+// Use this function when you need to Base64-encode text content (such as certificates, keys, etc.) for inclusion in an IBM Confidential Computing
+// contract. The returned SHA256 checksums allow you to verify data integrity at each stage.
 //
 // Parameters:
-//   - plainText: Text data to encode
+//   - plainText: Text data to encode (must not be empty)
 //
 // Returns:
 //   - Base64-encoded text
-//   - SHA256 hash of the original text
-//   - SHA256 hash of the Base64-encoded data
+//   - SHA256 hash of the original plain text (input checksum)
+//   - SHA256 hash of the Base64-encoded output (output checksum)
 //   - Error if plainText is empty
 func HpcrText(plainText string) (string, string, string, error) {
 	if gen.CheckIfEmpty(plainText) {
@@ -62,18 +88,20 @@ func HpcrText(plainText string) (string, string, string, error) {
 	return hpcrTextStr, gen.GenerateSha256(plainText), gen.GenerateSha256(hpcrTextStr), nil
 }
 
-// HpcrJson generates Base64-encoded representation of JSON data with integrity checksums.
-// It validates the JSON format, encodes it, and returns the encoded data along with
-// SHA256 checksums for verification.
+// HpcrJson encodes JSON data to Base64 with integrity checksums.
+//
+// Use this function when you need to Base64-encode valid JSON content for inclusion in an
+// IBM Confidential Computing contract. The JSON is validated before encoding. The returned
+// SHA256 checksums allow you to verify data integrity at each stage.
 //
 // Parameters:
-//   - plainJson: Valid JSON string to encode
+//   - plainJson: Valid JSON string to encode (validated before encoding)
 //
 // Returns:
 //   - Base64-encoded JSON
-//   - SHA256 hash of the original JSON
-//   - SHA256 hash of the Base64-encoded data
-//   - Error if JSON is invalid
+//   - SHA256 hash of the original JSON (input checksum)
+//   - SHA256 hash of the Base64-encoded output (output checksum)
+//   - Error if the input is not valid JSON
 func HpcrJson(plainJson string) (string, string, string, error) {
 	if !gen.IsJSON(plainJson) {
 		return "", "", "", fmt.Errorf("not a JSON data")
@@ -84,26 +112,36 @@ func HpcrJson(plainJson string) (string, string, string, error) {
 	return hpcrJsonStr, gen.GenerateSha256(plainJson), gen.GenerateSha256(hpcrJsonStr), nil
 }
 
-// HpcrTextEncrypted encrypts plain text using the Hyper Protect encryption format.
-// It generates a random password, encrypts the text, and returns the encrypted data
-// in the format "hyper-protect-basic.<password>.<data>" along with checksums.
+// HpcrTextEncrypted encrypts plain text using the IBM Confidential Computing encryption format.
+//
+// Use this function to encrypt individual contract sections (workload or env) before assembling
+// the final contract YAML. The output format depends on the platform:
+// "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV, or
+// "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS.
+// The password is RSA-encrypted with the IBM encryption certificate and the data is
+// AES-256-CBC encrypted with the password.
 //
 // Parameters:
-//   - plainText: Text to encrypt
-//   - hyperProtectOs: Target platform - "hpvs", "hpcr-rhvs", or "hpcc-peerpod" (defaults to "hpvs" if empty)
-//   - encryptionCertificate: PEM certificate for encryption (uses embedded default if empty)
+//   - plainText: Text to encrypt (must not be empty)
+//   - confidentialComputingOs: Target platform identifier — "ccrt" (IBM Confidential Computing Container Runtime (CCRT)),
+//     "ccrv" (IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)), or "ccco" (IBM Confidential Computing Containers for Red Hat OpenShift (CCCO)).
+//     Defaults to "ccrt" if empty.
+//   - encryptionCertificate: PEM-formatted IBM encryption certificate. If empty, the library
+//     uses the embedded default certificate for the specified platform.
+//   - certVersion: Encryption Certificate version (e.g., "26.2.0", "25.11.0"). Uses latest if empty.
 //
 // Returns:
-//   - Encrypted data in format "hyper-protect-basic.<password>.<data>"
-//   - SHA256 hash of the original text
-//   - SHA256 hash of the encrypted output
-//   - Error if encryption fails
-func HpcrTextEncrypted(plainText, hyperProtectOs, encryptionCertificate string) (string, string, string, error) {
+//   - Encrypted data in format "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV
+//     or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS
+//   - SHA256 hash of the original text (input checksum)
+//   - SHA256 hash of the encrypted output (output checksum)
+//   - Error if encryption fails or certificate is invalid
+func HpcrTextEncrypted(plainText, confidentialComputingOs, certVersion, encryptionCertificate string) (string, string, string, error) {
 	if gen.CheckIfEmpty(plainText) {
 		return "", "", "", fmt.Errorf(emptyParameterErrStatement)
 	}
 
-	hpcrTextEncryptedStr, err := encrypter(plainText, hyperProtectOs, encryptionCertificate)
+	hpcrTextEncryptedStr, err := encrypter(plainText, confidentialComputingOs, certVersion, encryptionCertificate)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to generate encrypted string - %v", err)
 	}
@@ -111,24 +149,30 @@ func HpcrTextEncrypted(plainText, hyperProtectOs, encryptionCertificate string) 
 	return hpcrTextEncryptedStr, gen.GenerateSha256(plainText), gen.GenerateSha256(hpcrTextEncryptedStr), nil
 }
 
-// HpcrTextDecrypted decrypts hyper protect encrypted data
-// It decrypts the text encrypted in format hyper-protect-basic
+// HpcrTextDecrypted decrypts data encrypted with the IBM Confidential Computing encryption format.
+//
+// Use this function to decrypt text that was encrypted using [HpcrTextEncrypted] or the equivalent
+// openssl-based encryption process documented in the IBM Confidential Computing documentation.
+// The input must be in the format "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV
+// or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS.
 //
 // Parameters:
-//   - encryptedText: Encrypted text
-//   - privateKey: Private key to decrypt the text
+//   - encryptedText: Encrypted text in format "contract-basic.<encrypted-password>.<encrypted-data>" (CCRT/CCRV)
+//     or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" (CCCO/HPVS)
+//   - privateKey: RSA private key (PEM format) corresponding to the encryption certificate used during encryption
+//   - password: Optional password to unlock the encrypted private key (empty string "" for unencrypted keys)
 //
 // Returns:
-//   - Decrypted text
-//   - SHA256 hash of the encrypted text
-//   - SHA256 hash of the decrypted output
-//   - Error if decryption fails
-func HpcrTextDecrypted(encryptedText, privateKey string) (string, string, string, error) {
+//   - Decrypted plain text
+//   - SHA256 hash of the encrypted input (input checksum)
+//   - SHA256 hash of the decrypted output (output checksum)
+//   - Error if decryption fails or parameters are missing
+func HpcrTextDecrypted(encryptedText, privateKey, password string) (string, string, string, error) {
 	if gen.CheckIfEmpty(encryptedText, privateKey) {
 		return "", "", "", fmt.Errorf(emptyParameterErrStatement)
 	}
 
-	decryptedText, err := dec.DecryptText(encryptedText, privateKey)
+	decryptedText, err := dec.DecryptText(encryptedText, privateKey, password)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to decrypt text - %v", err)
 	}
@@ -136,26 +180,34 @@ func HpcrTextDecrypted(encryptedText, privateKey string) (string, string, string
 	return decryptedText, gen.GenerateSha256(encryptedText), gen.GenerateSha256(decryptedText), nil
 }
 
-// HpcrJsonEncrypted encrypts JSON data using the Hyper Protect encryption format.
-// It validates the JSON, generates a random password, encrypts the data, and returns
-// the encrypted output in the Hyper Protect format along with checksums.
+// HpcrJsonEncrypted encrypts JSON data using the IBM Confidential Computing encryption format.
+//
+// Use this function to encrypt JSON-formatted contract sections. The JSON is validated before
+// encryption. The output format depends on the platform:
+// "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV, or
+// "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS.
 //
 // Parameters:
 //   - plainJson: Valid JSON string to encrypt
-//   - hyperProtectOs: Target platform - "hpvs", "hpcr-rhvs", or "hpcc-peerpod" (defaults to "hpvs" if empty)
-//   - encryptionCertificate: PEM certificate for encryption (uses embedded default if empty)
+//   - confidentialComputingOs: Target platform identifier — "ccrt" (IBM Confidential Computing Container Runtime (CCRT)),
+//     "ccrv" (BM Confidential Computing Containers for Red Hat Virtualization Solutions (CCRV)), or "ccco" (IBM Confidential Computing Containers for Red Hat OpenShift (CCCO)).
+//     Defaults to "ccrt" if empty.
+//   - encryptionCertificate: PEM-formatted IBM encryption certificate. If empty, the library
+//     uses the embedded default certificate for the specified platform.
+//   - certVersion: Certificate version (e.g., "26.2.0", "25.11.0"). Uses latest if empty.
 //
 // Returns:
-//   - Encrypted JSON in format "hyper-protect-basic.<password>.<data>"
-//   - SHA256 hash of the original JSON
-//   - SHA256 hash of the encrypted output
+//   - Encrypted JSON in format "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV
+//     or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS
+//   - SHA256 hash of the original JSON (input checksum)
+//   - SHA256 hash of the encrypted output (output checksum)
 //   - Error if JSON is invalid or encryption fails
-func HpcrJsonEncrypted(plainJson, hyperProtectOs, encryptionCertificate string) (string, string, string, error) {
+func HpcrJsonEncrypted(plainJson, confidentialComputingOs, certVersion, encryptionCertificate string) (string, string, string, error) {
 	if !gen.IsJSON(plainJson) {
 		return "", "", "", fmt.Errorf("contract is not a JSON data")
 	}
 
-	hpcrJsonEncrypted, err := encrypter(plainJson, hyperProtectOs, encryptionCertificate)
+	hpcrJsonEncrypted, err := encrypter(plainJson, confidentialComputingOs, certVersion, encryptionCertificate)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to generate encrypted JSON - %v", err)
 	}
@@ -163,17 +215,20 @@ func HpcrJsonEncrypted(plainJson, hyperProtectOs, encryptionCertificate string) 
 	return hpcrJsonEncrypted, gen.GenerateSha256(plainJson), gen.GenerateSha256(hpcrJsonEncrypted), nil
 }
 
-// HpcrTgz creates a Base64-encoded TGZ archive from a directory containing docker-compose.yaml or pods.yaml.
-// It reads all files in the specified folder, creates a tar.gz archive, encodes it to Base64,
-// and returns the encoded archive along with checksums.
+// HpcrTgz creates a Base64-encoded TGZ archive from a directory.
+//
+// Use this function to prepare the compose archive for the workload section of a contract.
+// The folder should contain your docker-compose.yaml (for single-container deployments)
+// or pod descriptor YAML files (for multi-container deployments). The resulting Base64-encoded
+// TGZ is used as the value for the compose->archive or play->archive field in the contract.
 //
 // Parameters:
-//   - folderPath: Path to folder containing docker-compose.yaml or pods.yaml files
+//   - folderPath: Absolute path to folder containing docker-compose.yaml, pods.yaml, or pod descriptor files
 //
 // Returns:
-//   - Base64-encoded tar.gz archive
-//   - SHA256 hash of the folder path
-//   - SHA256 hash of the Base64-encoded TGZ
+//   - Base64-encoded tar.gz archive (ready for use in compose->archive)
+//   - SHA256 hash of the folder path (input checksum)
+//   - SHA256 hash of the Base64-encoded TGZ (output checksum)
 //   - Error if folder doesn't exist or archive creation fails
 func HpcrTgz(folderPath string) (string, string, string, error) {
 	if gen.CheckIfEmpty(folderPath) {
@@ -197,21 +252,31 @@ func HpcrTgz(folderPath string) (string, string, string, error) {
 	return tgzBase64, gen.GenerateSha256(folderPath), gen.GenerateSha256(tgzBase64), nil
 }
 
-// HpcrTgzEncrypted creates an encrypted Base64 TGZ archive from a directory.
-// It first creates a Base64-encoded tar.gz archive from the folder, then encrypts it
-// using the Hyper Protect encryption format.
+// HpcrTgzEncrypted creates an encrypted TGZ archive from a directory.
+//
+// Use this function to prepare and encrypt the compose archive for the workload section
+// of a contract in a single step. This combines [HpcrTgz] and [HpcrTextEncrypted] — it first
+// archives the folder contents into a Base64-encoded TGZ, then encrypts it using the IBM
+// Confidential Computing encryption format.
 //
 // Parameters:
-//   - folderPath: Path to folder containing docker-compose.yaml or pods.yaml files
-//   - hyperProtectOs: Target platform - "hpvs", "hpcr-rhvs", or "hpcc-peerpod" (defaults to "hpvs" if empty)
-//   - encryptionCertificate: PEM certificate for encryption (uses embedded default if empty)
+//   - folderPath: Absolute path to folder containing docker-compose.yaml, pods.yaml, or pod descriptor files
+//   - confidentialComputingOs: Target platform identifier — "ccrt" (IBM Confidential Computing Container Runtime (CCRT)),
+//     "ccrv" (IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)),
+//     "ccco" (IBM Confidential Computing Containers for Red Hat OpenShift (CCCO)), or
+//     "hpvs" (IBM Hyper Protect Virtual Servers (HPVS)).
+//     Defaults to "hpvs" if empty.
+//   - encryptionCertificate: PEM-formatted IBM encryption certificate. If empty, the library
+//     uses the embedded default certificate for the specified platform.
+//   - certVersion: Certificate version (e.g., "26.2.0", "25.11.0"). Uses latest if empty.
 //
 // Returns:
-//   - Encrypted TGZ in format "hyper-protect-basic.<password>.<data>"
-//   - SHA256 hash of the folder path
-//   - SHA256 hash of the encrypted output
+//   - Encrypted TGZ in format "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV
+//     or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS
+//   - SHA256 hash of the folder path (input checksum)
+//   - SHA256 hash of the encrypted output (output checksum)
 //   - Error if folder is invalid or encryption fails
-func HpcrTgzEncrypted(folderPath, hyperProtectOs, encryptionCertificate string) (string, string, string, error) {
+func HpcrTgzEncrypted(folderPath, confidentialComputingOs, certVersion, encryptionCertificate string) (string, string, string, error) {
 	if gen.CheckIfEmpty(folderPath) {
 		return "", "", "", fmt.Errorf(emptyParameterErrStatement)
 	}
@@ -221,7 +286,7 @@ func HpcrTgzEncrypted(folderPath, hyperProtectOs, encryptionCertificate string) 
 		return "", "", "", err
 	}
 
-	hpcrTgzEncryptedStr, err := encrypter(tgzBase64, hyperProtectOs, encryptionCertificate)
+	hpcrTgzEncryptedStr, err := encrypter(tgzBase64, confidentialComputingOs, certVersion, encryptionCertificate)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to generate encrypted tgz - %v", err)
 	}
@@ -229,38 +294,58 @@ func HpcrTgzEncrypted(folderPath, hyperProtectOs, encryptionCertificate string) 
 	return hpcrTgzEncryptedStr, gen.GenerateSha256(folderPath), gen.GenerateSha256(hpcrTgzEncryptedStr), nil
 }
 
-// HpcrVerifyContract validates a contract against the JSON schema for the specified Hyper Protect platform.
-// It checks the contract structure, required fields, data types, and platform-specific requirements
-// to ensure the contract is valid before encryption and deployment.
+// HpcrVerifyContract validates a contract YAML against the platform-specific JSON schema.
+//
+// Use this function to validate your contract before signing and encrypting it. It checks
+// the contract structure, required fields, data types, and platform-specific requirements
+// to catch errors early, before deployment. It is recommended to call this function before
+// [HpcrContractSignedEncrypted] or [HpcrContractSignedEncryptedContractExpiry].
 //
 // Parameters:
-//   - contract: YAML contract string to validate
-//   - version: Platform identifier - "hpvs", "hpcr-rhvs", or "hpcc-peerpod" (defaults to "hpvs" if empty)
+//   - contract: YAML contract string to validate (must contain workload and env sections)
+//   - version: Platform identifier — "ccrt" (IBM Confidential Computing Container Runtime (CCRT)),
+//     "ccrv" (IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)), or "ccco" (IBM Confidential Computing Container Runtime for Red Hat OpenShift (CCCO)).
+//     Defaults to "ccrt" if empty.
 //
 // Returns:
-//   - nil if contract is valid
-//   - Error if validation fails with details about what's wrong
+//   - nil if the contract is valid
+//   - Error with details about validation failures
 func HpcrVerifyContract(contract, version string) error {
 	return gen.VerifyContractWithSchema(contract, version)
 }
 
-// HpcrContractSignedEncrypted generates a signed and encrypted contract ready for deployment to Hyper Protect services.
-// It validates the contract schema, generates a public key from the private key, encrypts the workload
-// and environment sections, injects the signing key, and signs the encrypted sections with the private key.
+// HpcrContractSignedEncrypted generates a production-ready signed and encrypted contract.
+//
+// This is the primary function for creating deployment-ready contracts for IBM Confidential Computing.
+// It performs the complete contract preparation workflow:
+//  1. Validates the contract against the platform-specific schema
+//  2. Fetches the encryption certificate (from the embedded default or a user-provided certificate)
+//  3. Generates a public key from the provided private key
+//  4. Encrypts the workload and env sections separately
+//  5. Injects the signing key into the env section
+//  6. Signs the encrypted sections and sets the envWorkloadSignature
+//
+// The output contract is ready to be passed as user-data when creating a virtual server instance.
 //
 // Parameters:
-//   - contract: YAML contract string with env and workload sections
-//   - hyperProtectOs: Target platform - "hpvs", "hpcr-rhvs", or "hpcc-peerpod" (defaults to "hpvs" if empty)
-//   - encryptionCertificate: PEM certificate for encryption (uses embedded default if empty)
-//   - privateKey: RSA private key (PEM format) for signing the contract
+//   - contract: YAML contract string with workload and env sections (and optionally attestationPublicKey)
+//   - confidentialComputingOs: Target platform identifier — "ccrt" (IBM Confidential Computing Container Runtime (CCRT)),
+//     "ccrv" (IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)), or "ccco" (IBM Confidential Computing Container Runtime for Red Hat OpenShift (CCCO)).
+//     Defaults to "ccrt" if empty.
+//   - encryptionCertificate: PEM-formatted IBM encryption certificate. If empty, the library
+//     uses the embedded default certificate for the specified platform.
+//   - privateKey: RSA private key (PEM format) for signing the contract.
+//     Generate with: openssl genrsa -out private.pem 4096
+//   - password: Optional password to unlock the encrypted private key (empty string "" for unencrypted keys)
+//   - certVersion: Encryption Certificate version (e.g., "26.2.0", "25.11.0"). Uses latest if empty.
 //
 // Returns:
-//   - Signed and encrypted contract YAML with workload, env, and envWorkloadSignature
-//   - SHA256 hash of the original contract
-//   - SHA256 hash of the final signed contract
+//   - Signed and encrypted contract YAML containing workload, env, and envWorkloadSignature sections
+//   - SHA256 hash of the original contract (input checksum)
+//   - SHA256 hash of the final signed contract (output checksum)
 //   - Error if validation, encryption, or signing fails
-func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate, privateKey string) (string, string, string, error) {
-	err := HpcrVerifyContract(contract, hyperProtectOs)
+func HpcrContractSignedEncrypted(contract, confidentialComputingOs, certVersion, encryptionCertificate, privateKey, password string) (string, string, string, error) {
+	err := HpcrVerifyContract(contract, confidentialComputingOs)
 	if err != nil {
 		return "", "", "", fmt.Errorf("schema verification failed - %v", err)
 	}
@@ -269,7 +354,7 @@ func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate
 		return "", "", "", fmt.Errorf(emptyParameterErrStatement)
 	}
 
-	encryptCertificate, err := gen.FetchEncryptionCertificate(hyperProtectOs, encryptionCertificate)
+	encryptCertificate, err := gen.FetchEncryptionCertificate(confidentialComputingOs, encryptionCertificate, certVersion)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to fetch encryption certificate - %v", err)
 	}
@@ -279,12 +364,12 @@ func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate
 		return "", "", "", fmt.Errorf("Failed to encrypt contract - %v", err)
 	}
 
-	publicKey, err := enc.GeneratePublicKey(privateKey)
+	publicKey, err := enc.GeneratePublicKey(privateKey, password)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to generate public key - %v", err)
 	}
 
-	signedEncryptContract, err := encryptWrapper(contract, hyperProtectOs, encryptCertificate, privateKey, publicKey)
+	signedEncryptContract, err := encryptWrapper(contract, confidentialComputingOs, certVersion, encryptCertificate, privateKey, password, publicKey)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to sign and encrypt contract - %v", err)
 	}
@@ -293,29 +378,43 @@ func HpcrContractSignedEncrypted(contract, hyperProtectOs, encryptionCertificate
 }
 
 // HpcrContractSignedEncryptedContractExpiry generates a signed and encrypted contract with time-based expiration.
-// It creates a signing certificate with expiration using a Certificate Authority, then signs and encrypts
-// the contract. This is used for production deployments requiring time-limited contracts.
+//
+// Use this function for production deployments that require time-limited contracts. When a contract
+// has an expiry, an IBM Confidential Computing instance will refuse to boot if the contract's signing
+// certificate has expired. This provides an additional security layer by ensuring contracts cannot be
+// reused beyond their intended validity period.
+//
+// The function creates a signing certificate with an expiration date using a Certificate Authority (CA),
+// then signs and encrypts the contract. You must provide either CSR parameters as JSON (csrDataStr)
+// or a pre-generated CSR in PEM format (csrPemData), but not both.
 //
 // Parameters:
-//   - contract: YAML contract string with env and workload sections
-//   - hyperProtectOs: Target platform - "hpvs", "hpcr-rhvs", or "hpcc-peerpod" (defaults to "hpvs" if empty)
-//   - encryptionCertificate: PEM certificate for encryption (uses embedded default if empty)
+//   - contract: YAML contract string with workload and env sections
+//   - confidentialComputingOs: Target platform identifier — "ccrt" (IBM Confidential Computing Container Runtime (CCRT)),
+//     "ccrv" (IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV)),
+//     "ccco" (IBM Confidential Computing Containers for Red Hat OpenShift (CCCO)), or
+//     "hpvs" (IBM Hyper Protect Virtual Servers (HPVS)).
+//     Defaults to "hpvs" if empty.
+//   - encryptionCertificate: PEM-formatted IBM encryption certificate. If empty, the library
+//     uses the embedded default certificate.
 //   - privateKey: RSA private key (PEM format) for signing the contract
-//   - cacert: CA certificate (PEM format) for creating the signing certificate
-//   - caKey: CA private key (PEM format) for signing the certificate
-//   - csrDataStr: CSR parameters as JSON string (use if not providing csrPemData)
-//   - csrPemData: CSR in PEM format (use if not providing csrDataStr)
-//   - expiryDays: Number of days until the contract expires
-//
-// Note: Either csrDataStr OR csrPemData must be provided, but not both.
+//   - password: Optional password to unlock the encrypted private key (empty string "" for unencrypted keys)
+//   - cacert: CA certificate (PEM format) used to issue the time-limited signing certificate
+//   - caKey: CA private key (PEM format) used to sign the time-limited certificate
+//   - csrDataStr: Certificate Signing Request parameters as JSON string.
+//     Provide this OR csrPemData, not both.
+//   - csrPemData: Pre-generated Certificate Signing Request in PEM format.
+//     Provide this OR csrDataStr, not both.
+//   - expiryDays: Number of days until the contract expires (must be > 0)
+//   - certVersion: Encryption Certificate version (e.g., "26.2.0", "25.11.0"). Uses latest if empty.
 //
 // Returns:
-//   - Signed and encrypted contract YAML with time-limited signature
-//   - SHA256 hash of the original contract
-//   - SHA256 hash of the final signed contract
-//   - Error if validation, CSR generation, or signing fails
-func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encryptionCertificate, privateKey, cacert, caKey, csrDataStr, csrPemData string, expiryDays int) (string, string, string, error) {
-	err := HpcrVerifyContract(contract, hyperProtectOs)
+//   - Signed and encrypted contract YAML with a time-limited signature
+//   - SHA256 hash of the original contract (input checksum)
+//   - SHA256 hash of the final signed contract (output checksum)
+//   - Error if validation, CSR generation, certificate creation, or signing fails
+func HpcrContractSignedEncryptedContractExpiry(contract, confidentialComputingOs, certVersion, encryptionCertificate, privateKey, password, cacert, caKey, csrDataStr, csrPemData string, expiryDays int) (string, string, string, error) {
+	err := HpcrVerifyContract(contract, confidentialComputingOs)
 	if err != nil {
 		return "", "", "", fmt.Errorf("schema verification failed - %v", err)
 	}
@@ -333,7 +432,7 @@ func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encrypt
 		return "", "", "", fmt.Errorf("failed to generate signing certificate - %v", err)
 	}
 
-	finalContract, err := encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey, signingCert)
+	finalContract, err := encryptWrapper(contract, confidentialComputingOs, certVersion, encryptionCertificate, privateKey, password, signingCert)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to generate signed and encrypted contract - %v", err)
 	}
@@ -341,19 +440,117 @@ func HpcrContractSignedEncryptedContractExpiry(contract, hyperProtectOs, encrypt
 	return finalContract, gen.GenerateSha256(contract), gen.GenerateSha256(finalContract), nil
 }
 
-// HpccInitdata generates a gzipped and encoded initdata string.
-// It creates the initdata.toml based on tomltemplate and gzip the initdata.toml content to compress data.
-// It encode the compressed content in base64.
+// HpcrContractSign signs an already-encrypted contract without performing encryption.
+//
+// Use this function when you have already encrypted the workload and env sections of a contract
+// yourself (e.g., using openssl commands or [HpcrTextEncrypted]) and only need to add the
+// envWorkloadSignature. The contract must be a valid YAML with encrypted workload and env values.
+//
+// For most use cases, prefer [HpcrContractSignedEncrypted] which handles both encryption and signing.
 //
 // Parameters:
-// - contract: Encrypted and singed contract string with env, workload section
+//   - contract: YAML contract string with pre-encrypted workload and env sections
+//   - privateKey: RSA private key (PEM format) used to generate the signature
+//   - password: Optional password to unlock the encrypted private key (empty string "" for unencrypted keys)
 //
 // Returns:
-//   - Gzipped & Encoded initdata string
-//   - SHA256 hash of the original contract
-//   - SHA256 hash of the gzipped and encoded initdata string
-//   - Error if validation, gzip or encoding fails
-func HpccInitdata(contract string) (string, string, string, error) {
+//   - Signed contract YAML with workload, env, and envWorkloadSignature sections
+//   - SHA256 hash of the original contract (input checksum)
+//   - SHA256 hash of the final signed contract (output checksum)
+//   - Error if YAML parsing or signing fails
+func HpcrContractSign(contract, privateKey, password string) (string, string, string, error) {
+	var contractMap map[string]interface{}
+
+	err := yaml.Unmarshal([]byte(contract), &contractMap)
+	if err != nil {
+		return "", "", "", fmt.Errorf("failed to unmarshal YAML - %v", err)
+	}
+
+	workload := contractMap["workload"].(string)
+	env := contractMap["env"].(string)
+
+	workloadEnvSignature, err := enc.SignContract(workload, env, privateKey, password)
+	if err != nil {
+		return "", "", "", fmt.Errorf("failed to sign contract - %v", err)
+	}
+
+	attestationPublicKey, _ := contractMap["attestationPublicKey"].(string)
+
+	finalContract, err := enc.GenFinalSignedContract(workload, env, workloadEnvSignature, attestationPublicKey)
+	if err != nil {
+		return "", "", "", fmt.Errorf("failed to generate final contract - %v", err)
+	}
+
+	return finalContract, gen.GenerateSha256(contract), gen.GenerateSha256(finalContract), nil
+}
+
+// HpcrContractTemplate returns contract template content for workload, env, or both.
+//
+// Parameters:
+//   - templateType: "workload", "env", or "" (returns both templates combined)
+//
+// Returns:
+//   - Template content as string
+//   - Error if template type is unsupported or file read fails
+func HpcrContractTemplate(templateType string) (string, error) {
+	switch templateType {
+	case "workload":
+		workloadTemplate, err := readHpcrTemplateFile(workloadTemplateFilePath)
+		if err != nil {
+			return "", fmt.Errorf("failed to read workload template - %v", err)
+		}
+		return workloadTemplate, nil
+	case "env":
+		envTemplate, err := readHpcrTemplateFile(envTemplateFilePath)
+		if err != nil {
+			return "", fmt.Errorf("failed to read env template - %v", err)
+		}
+		return envTemplate, nil
+	case "":
+		workloadTemplate, err := readHpcrTemplateFile(workloadTemplateFilePath)
+		if err != nil {
+			return "", fmt.Errorf("failed to read workload template - %v", err)
+		}
+
+		envTemplate, err := readHpcrTemplateFile(envTemplateFilePath)
+		if err != nil {
+			return "", fmt.Errorf("failed to read env template - %v", err)
+		}
+
+		var templateBuilder strings.Builder
+		templateBuilder.WriteString("workload: |\n")
+		templateBuilder.WriteString(indentTemplateContent(workloadTemplate))
+		if !strings.HasSuffix(workloadTemplate, "\n") {
+			templateBuilder.WriteString("\n")
+		}
+		templateBuilder.WriteString("env: |\n")
+		templateBuilder.WriteString(indentTemplateContent(envTemplate))
+
+		return templateBuilder.String(), nil
+	default:
+		return "", fmt.Errorf("unsupported template type: %s", templateType)
+	}
+}
+
+// HpccInitdata generates gzipped and Base64-encoded initdata for IBM Confidential Computing
+// Containers for Red Hat OpenShift Container Platform (HPCC) peer pod deployments.
+//
+// Use this function to prepare initdata for Kata Containers peer pod VMs on OpenShift.
+// The initdata is a TOML file containing the contract, which is gzipped and Base64-encoded
+// for efficient transmission. The output is passed as the initdata parameter when creating
+// a peer pod VM.
+//
+// Parameters:
+//   - contract: Signed and encrypted contract string (output from [HpcrContractSignedEncrypted]
+//     or [HpcrContractSignedEncryptedContractExpiry]). Must contain workload and env sections.
+//   - encodedHdrBin: Optional Base64-encoded HDR binary string.
+//
+// Returns:
+//   - Gzipped and Base64-encoded initdata string
+//   - SHA256 hash of the original contract (input checksum)
+//   - SHA256 hash of the encoded initdata string (output checksum)
+//   - Error if the contract is empty, template parsing fails, or gzip/encoding fails
+func HpccInitdata(contract, encodedHdrBin string) (string, string, string, error) {
 
 	var buf bytes.Buffer
 
@@ -361,12 +558,26 @@ func HpccInitdata(contract string) (string, string, string, error) {
 		return "", "", "", fmt.Errorf(emptyParameterErrStatement)
 	}
 
-	tmpl, err := template.New("toml").Parse(tomlTemplate)
+	// Prepare template data
+	templateData := tomlTemplateData{
+		Contract: contract,
+		HdrBin:   encodedHdrBin,
+	}
+
+	// Select appropriate template based on whether HDR binary is provided
+	var selectedTemplate string
+	if encodedHdrBin != "" {
+		selectedTemplate = tomlTemplateWithHdr
+	} else {
+		selectedTemplate = tomlTemplate
+	}
+
+	tmpl, err := template.New("toml").Parse(selectedTemplate)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed while parsing the template toml %v", err)
 	}
 
-	err = tmpl.Execute(&buf, contract)
+	err = tmpl.Execute(&buf, templateData)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed while creating initdata.toml %v", err)
 	}
@@ -381,30 +592,32 @@ func HpccInitdata(contract string) (string, string, string, error) {
 	return encodedString, gen.GenerateSha256(contract), gen.GenerateSha256(encodedString), nil
 }
 
-// encryptWrapper is a helper function that signs and encrypts a contract.
+// encryptWrapper is an internal helper that signs and encrypts a contract.
 // It handles both regular signing and signing with contract expiry by accepting a publicKey
 // parameter that can be either a regular public key or a time-limited signing certificate.
-// The function encrypts the workload and env sections separately, injects the signing key,
-// and creates a signature over the encrypted sections.
+// The function encrypts the workload and env sections separately, injects the signing key
+// into the env section, and creates a signature over the encrypted sections.
 //
 // Parameters:
-//   - contract: YAML contract string with env and workload sections
-//   - hyperProtectOs: Target platform - "hpvs", "hpcr-rhvs", or "hpcc-peerpod" (default: hpvs)
-//   - encryptionCertificate: PEM certificate for encryption (optional)
+//   - contract: YAML contract string with workload and env sections
+//   - confidentialComputingOs: Target platform — "ccrt", "ccrv", or "ccco" (default: ccrt)
+//   - encryptionCertificate: PEM-formatted encryption certificate (optional, uses default if empty)
 //   - privateKey: RSA private key (PEM format) for signing
-//   - publicKey: Public key or signing certificate (PEM format)
+//   - password: Optional password to unlock the encrypted private key (empty string "" for unencrypted keys)
+//   - publicKey: Public key or signing certificate (PEM format) to inject into the env section
+//   - certVersion: Encryption Certificate version (e.g., "26.2.0", "25.11.0"). Uses latest if empty.
 //
 // Returns:
 //   - Final contract YAML with encrypted workload, env, and envWorkloadSignature
 //   - Error if encryption or signing fails
-func encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey, publicKey string) (string, error) {
+func encryptWrapper(contract, confidentialComputingOs, certVersion, encryptionCertificate, privateKey, password, publicKey string) (string, error) {
 	if gen.CheckIfEmpty(contract, privateKey, publicKey) {
 		return "", fmt.Errorf(emptyParameterErrStatement)
 	}
 
 	var contractMap map[string]interface{}
 
-	encryptCertificate, err := gen.FetchEncryptionCertificate(hyperProtectOs, encryptionCertificate)
+	encryptCertificate, err := gen.FetchEncryptionCertificate(confidentialComputingOs, encryptionCertificate, certVersion)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch encryption certificate - %v", err)
 	}
@@ -414,7 +627,7 @@ func encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey,
 		return "", fmt.Errorf("failed to unmarshal YAML - %v", err)
 	}
 
-	encryptedWorkload, err := encrypter(contractMap["workload"].(string), hyperProtectOs, encryptCertificate)
+	encryptedWorkload, err := encrypter(contractMap["workload"].(string), confidentialComputingOs, certVersion, encryptCertificate)
 	if err != nil {
 		return "", fmt.Errorf("failed to encrypt workload - %v", err)
 	}
@@ -424,12 +637,12 @@ func encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey,
 		return "", fmt.Errorf("failed to inject signingKey to env - %v", err)
 	}
 
-	encryptedEnv, err := encrypter(updatedEnv, hyperProtectOs, encryptCertificate)
+	encryptedEnv, err := encrypter(updatedEnv, confidentialComputingOs, certVersion, encryptCertificate)
 	if err != nil {
 		return "", fmt.Errorf("failed to encrypt env - %v", err)
 	}
 
-	workloadEnvSignature, err := enc.SignContract(encryptedWorkload, encryptedEnv, privateKey)
+	workloadEnvSignature, err := enc.SignContract(encryptedWorkload, encryptedEnv, privateKey, password)
 	if err != nil {
 		return "", fmt.Errorf("failed to sign contract - %v", err)
 	}
@@ -437,7 +650,7 @@ func encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey,
 	attestationPublicKey, _ := contractMap["attestationPublicKey"].(string)
 	var encryptedAttestationPublicKey string
 	if attestationPublicKey != "" {
-		encryptedAttestationPublicKey, err = encrypter(attestationPublicKey, hyperProtectOs, encryptCertificate)
+		encryptedAttestationPublicKey, err = encrypter(attestationPublicKey, confidentialComputingOs, certVersion, encryptCertificate)
 		if err != nil {
 			return "", fmt.Errorf("failed to encrypt attestationPublicKey - %v", err)
 		}
@@ -451,25 +664,28 @@ func encryptWrapper(contract, hyperProtectOs, encryptionCertificate, privateKey,
 	return finalContract, nil
 }
 
-// encrypter is a helper function that encrypts any string data using the Hyper Protect encryption format.
-// It generates a random password, encrypts it with the encryption certificate, encrypts the data
-// with the password, and returns the result in the format "hyper-protect-basic.<password>.<data>".
-// This function is used internally by all encryption functions (HpcrTextEncrypted, HpcrJsonEncrypted, etc.).
+// encrypter is an internal helper that encrypts any string using the IBM Confidential Computing
+// encryption format. It generates a random AES-256 password, encrypts the password with the
+// IBM encryption certificate (RSA), encrypts the data with the password (AES-256-CBC), and
+// returns the result in the format "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV
+// or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS.
 //
 // Parameters:
 //   - stringText: String data to encrypt (text, JSON, or Base64-encoded TGZ)
-//   - hyperProtectOs: Target platform - "hpvs", "hpcr-rhvs", or "hpcc-peerpod" (default: hpvs)
-//   - encryptionCertificate: PEM certificate for encryption (optional)
+//   - confidentialComputingOs: Target platform — "hpvs", "ccrt", "ccrv", or "ccco" (default: ccrt)
+//   - encryptionCertificate: PEM-formatted encryption certificate (optional, uses default if empty)
+//   - certVersion: Encryption Certificate version (e.g., "26.2.0", "25.11.0"). Uses latest if empty.
 //
 // Returns:
-//   - Encrypted string in format "hyper-protect-basic.<password>.<data>"
+//   - Encrypted string in format "contract-basic.<encrypted-password>.<encrypted-data>" for CCRT/CCRV
+//     or "hyper-protect-basic.<encrypted-password>.<encrypted-data>" for CCCO/HPVS
 //   - Error if encryption fails or certificate is invalid
-func encrypter(stringText, hyperProtectOs, encryptionCertificate string) (string, error) {
+func encrypter(stringText, confidentialComputingOs, certVersion, encryptionCertificate string) (string, error) {
 	if gen.CheckIfEmpty(stringText) {
 		return "", fmt.Errorf(emptyParameterErrStatement)
 	}
 
-	encCert, err := gen.FetchEncryptionCertificate(hyperProtectOs, encryptionCertificate)
+	encCert, err := gen.FetchEncryptionCertificate(confidentialComputingOs, encryptionCertificate, certVersion)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch encryption certificate - %v", err)
 	}
@@ -489,5 +705,40 @@ func encrypter(stringText, hyperProtectOs, encryptionCertificate string) (string
 		return "", fmt.Errorf("failed to encrypt key - %v", err)
 	}
 
-	return enc.EncryptFinalStr(encodedEncryptedPassword, encryptedString), nil
+	return enc.EncryptFinalStr(encodedEncryptedPassword, encryptedString, confidentialComputingOs), nil
+}
+
+// readHpcrTemplateFile resolves a template file path under contract/template and returns its content.
+func readHpcrTemplateFile(fileName string) (string, error) {
+	_, currentFile, _, ok := runtime.Caller(0)
+	if !ok {
+		return "", fmt.Errorf("failed to resolve contract template path")
+	}
+
+	templatePath := filepath.Join(filepath.Dir(currentFile), contractTemplateDirPath, fileName)
+	templateContent, err := gen.ReadDataFromFile(templatePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read template file %s - %v", fileName, err)
+	}
+
+	return templateContent, nil
+}
+
+// indentTemplateContent adds two-space indentation to each line for YAML block scalar formatting.
+func indentTemplateContent(content string) string {
+	if content == "" {
+		return "  "
+	}
+
+	var indentedContent strings.Builder
+	for _, line := range strings.SplitAfter(content, "\n") {
+		if line == "" {
+			continue
+		}
+
+		indentedContent.WriteString("  ")
+		indentedContent.WriteString(line)
+	}
+
+	return indentedContent.String()
 }
