@@ -409,14 +409,14 @@ Branch names must follow the format `<Type>/<name>`:
 | `Chore` | Changes to build process, dependencies, etc. |
 | `CI` | CI/CD configuration changes |
 
-✅ Valid: `Feature/add-encryption`, `Fix/null-pointer`, `Chore/upgrade-deps`
-❌ Invalid: `my-branch`, `fix-bug`, `HPVM-123`
+Valid: `Feature/add-encryption`, `Fix/null-pointer`, `Chore/upgrade-deps`
+Invalid: `my-branch`, `fix-bug`, `HPVM-123`
 
 ### 2. Commit Message
 Commits must follow [Conventional Commits](https://www.conventionalcommits.org/) format: `type(optional-scope): description`
 
-✅ Valid: `feat: add contract expiry`, `fix(api): handle null values`
-❌ Invalid: `updated stuff`, `WIP`, `bug fix`
+Valid: `feat: add contract expiry`, `fix(api): handle null values`
+Invalid: `updated stuff`, `WIP`, `bug fix`
 
 ### 3. No Force Pushes
 Force pushing to a PR branch is not allowed. If you need to update your branch, rebase and push normally:
