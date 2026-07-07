@@ -19,7 +19,7 @@ on:
 env:
   # Currently no way to detect automatically
   DEFAULT_BRANCH: main
-  GO_VERSION: 1.26.4 # renovate: datasource=golang-version depName=golang 
+  GO_VERSION: 1.26.4 # renovate: datasource=golang-version depName=golang
   NODE_VERSION: 25.5.0
 
 jobs:
@@ -68,7 +68,12 @@ jobs:
     steps:
       - name: Check for force push
         run: |
-          # On push to main, force push to main is still worth checking
+          # Only check for force push on pull requests
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "Not a pull request — skipping force push check."
+            exit 0
+          fi
+
           BEFORE="${{ github.event.before }}"
           ZERO_SHA="0000000000000000000000000000000000000000"
 
@@ -91,7 +96,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 2
 
@@ -133,7 +138,7 @@ jobs:
       contents: read
       pull-requests: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -198,7 +203,7 @@ jobs:
       contents: read
     steps:
       # full checkout for semantic-release
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -234,7 +239,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
