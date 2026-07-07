@@ -25,12 +25,17 @@ env:
 jobs:
   branch-name-check:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
     permissions:
       contents: read
     steps:
       - name: Validate branch name
         run: |
+          # On push to main, the branch is main itself — always valid
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "Push to main branch — branch name check not required."
+            exit 0
+          fi
+
           BRANCH="${{ github.head_ref }}"
           pattern='^(Feature|Fix|Docs|Refactor|Performance|Test|Chore|CI)/[a-zA-Z0-9._/-]+$'
 
@@ -58,12 +63,17 @@ jobs:
   force-push-check:
     runs-on: ubuntu-latest
     needs: [branch-name-check]
-    if: github.event_name == 'pull_request'
     permissions:
       contents: read
     steps:
       - name: Check for force push
         run: |
+          # Only check for force push on pull requests
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "Not a pull request — skipping force push check."
+            exit 0
+          fi
+
           BEFORE="${{ github.event.before }}"
           ZERO_SHA="0000000000000000000000000000000000000000"
 
@@ -83,7 +93,6 @@ jobs:
   commit-lint:
     needs: [branch-name-check, force-push-check]
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
     permissions:
       contents: read
     steps:
@@ -95,7 +104,11 @@ jobs:
         run: |
           pattern='^(feat|fix|docs|perf|revert|chore|refactor|test|build|ci)(\([a-z0-9-]+\))?!?: .{1,}'
 
-          commit_sha="${{ github.event.pull_request.head.sha }}"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            commit_sha="${{ github.event.pull_request.head.sha }}"
+          else
+            commit_sha="${{ github.sha }}"
+          fi
           commit_message=$(git log --format=%B -n 1 $commit_sha | head -n 1)
           short_sha=$(echo $commit_sha | cut -c1-7)
 
@@ -120,11 +133,12 @@ jobs:
   verify-commit-signatures:
     needs: [branch-name-check, force-push-check, commit-lint]
     runs-on: ubuntu-latest
+    if: always() && !failure() && !cancelled()
     permissions:
       contents: read
       pull-requests: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -182,13 +196,8 @@ jobs:
           fi
 
   build:
-    needs: [verify-commit-signatures, branch-name-check, force-push-check, commit-lint]
-    if: |
-      always() &&
-      (needs.verify-commit-signatures.result == 'success') &&
-      (needs.branch-name-check.result == 'success' || needs.branch-name-check.result == 'skipped') &&
-      (needs.force-push-check.result == 'success' || needs.force-push-check.result == 'skipped') &&
-      (needs.commit-lint.result == 'success' || needs.commit-lint.result == 'skipped')
+    needs: [verify-commit-signatures]
+    if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
     permissions:
       contents: read
