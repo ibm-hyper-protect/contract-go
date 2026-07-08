@@ -463,7 +463,7 @@ func TestVerifyNetworkSchemaInvalid(t *testing.T) {
 
 	err = VerifyNetworkSchema(network)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "additionalProperties 'enc' not allowed")
+	assert.Contains(t, err.Error(), "additional properties 'enc' not allowed")
 }
 
 // Testcase to check if yamlParse() is able to unmarshell the YAML file
