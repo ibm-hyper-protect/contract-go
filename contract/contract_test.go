@@ -81,9 +81,13 @@ const (
 	sampleSignEncryptOutputSha = "001e7c38bf6f34c80e0c1f7ca42ef420667f09687038bbe0233badda9cc210af"
 
 	// Contract template fixtures used by template retrieval tests.
-	sampleWorkloadCcrtTemplatePath = "./template/workload_ccrt.yaml"
-	sampleWorkloadCcrvTemplatePath = "./template/workload_ccrv.yaml"
-	sampleEnvTemplatePath          = "./template/env.yaml"
+	sampleWorkloadCcrtTemplatePath        = "./template/workload_ccrt.yaml"
+	sampleWorkloadCcrvTemplatePath        = "./template/workload_ccrv.yaml"
+	sampleWorkloadCccoPeerpodTemplatePath = "./template/workload_ccco_peerpod.yaml"
+	sampleWorkloadCccoBmtlTemplatePath    = "./template/workload_ccco_bmtl.yaml"
+	sampleEnvTemplatePath                 = "./template/env.yaml"
+	sampleEnvCccoPeerpodTemplatePath      = "./template/env_ccco_peerpod.yaml"
+	sampleEnvCccoBmtlTemplatePath         = "./template/env_ccco_bmtl.yaml"
 )
 
 var (
@@ -826,26 +830,27 @@ func TestHpcrVerifyContractInvalidSchema(t *testing.T) {
 }
 
 // Testcase to check if HpcrContractTemplate() returns correct workload template per OS.
-// hpvs/ccrt/ccco/"" use workload_ccrt.yaml; ccrv uses workload_ccrv.yaml.
+// hpvs/ccrt/"" use workload_ccrt.yaml; ccrv uses workload_ccrv.yaml;
+// ccco-peerpod uses workload_ccco_peerpod.yaml; ccco-bmtl uses workload_ccco_bmtl.yaml.
 func TestHpcrContractTemplateWorkload(t *testing.T) {
-	ccrtTemplate, err := gen.ReadDataFromFile(sampleWorkloadCcrtTemplatePath)
-	if err != nil {
-		t.Fatalf("failed to read CCRT workload template - %v", err)
-	}
-	ccrvTemplate, err := gen.ReadDataFromFile(sampleWorkloadCcrvTemplatePath)
-	if err != nil {
-		t.Fatalf("failed to read CCRV workload template - %v", err)
+	readTemplate := func(path string) string {
+		data, err := gen.ReadDataFromFile(path)
+		if err != nil {
+			t.Fatalf("failed to read template %s - %v", path, err)
+		}
+		return data
 	}
 
 	cases := []struct {
 		os       string
 		expected string
 	}{
-		{"", ccrtTemplate},
-		{"hpvs", ccrtTemplate},
-		{"ccrt", ccrtTemplate},
-		{"ccco", ccrtTemplate},
-		{"ccrv", ccrvTemplate},
+		{"", readTemplate(sampleWorkloadCcrtTemplatePath)},
+		{"hpvs", readTemplate(sampleWorkloadCcrtTemplatePath)},
+		{"ccrt", readTemplate(sampleWorkloadCcrtTemplatePath)},
+		{"ccrv", readTemplate(sampleWorkloadCcrvTemplatePath)},
+		{"ccco-peerpod", readTemplate(sampleWorkloadCccoPeerpodTemplatePath)},
+		{"ccco-bmtl", readTemplate(sampleWorkloadCccoBmtlTemplatePath)},
 	}
 	for _, tc := range cases {
 		result, err := HpcrContractTemplate("workload", tc.os)
@@ -854,30 +859,46 @@ func TestHpcrContractTemplateWorkload(t *testing.T) {
 	}
 }
 
-// Testcase to check if HpcrContractTemplate() returns the same env template for all OS values.
+// Testcase to check if HpcrContractTemplate() returns the correct env template per OS.
+// ""/hpvs/ccrt/ccrv use env.yaml; ccco-peerpod uses env_ccco_peerpod.yaml;
+// ccco-bmtl uses env_ccco_bmtl.yaml.
 func TestHpcrContractTemplateEnv(t *testing.T) {
-	expected, err := gen.ReadDataFromFile(sampleEnvTemplatePath)
-	if err != nil {
-		t.Fatalf("failed to read env template - %v", err)
+	readTemplate := func(path string) string {
+		data, err := gen.ReadDataFromFile(path)
+		if err != nil {
+			t.Fatalf("failed to read template %s - %v", path, err)
+		}
+		return data
 	}
 
-	for _, osVal := range []string{"", "hpvs", "ccrt", "ccrv", "ccco"} {
-		result, err := HpcrContractTemplate("env", osVal)
-		assert.NoError(t, err, "os=%s", osVal)
-		assert.Equal(t, expected, result, "os=%s", osVal)
+	cases := []struct {
+		os       string
+		expected string
+	}{
+		{"", readTemplate(sampleEnvTemplatePath)},
+		{"hpvs", readTemplate(sampleEnvTemplatePath)},
+		{"ccrt", readTemplate(sampleEnvTemplatePath)},
+		{"ccrv", readTemplate(sampleEnvTemplatePath)},
+		{"ccco-peerpod", readTemplate(sampleEnvCccoPeerpodTemplatePath)},
+		{"ccco-bmtl", readTemplate(sampleEnvCccoBmtlTemplatePath)},
+	}
+	for _, tc := range cases {
+		result, err := HpcrContractTemplate("env", tc.os)
+		assert.NoError(t, err, "os=%s", tc.os)
+		assert.Equal(t, tc.expected, result, "os=%s", tc.os)
 	}
 }
 
 // Testcase to check if HpcrContractTemplate() returns correct combined template per OS.
 func TestHpcrContractTemplateCombined(t *testing.T) {
-	buildExpected := func(workloadFile string) string {
+	buildExpected := func(workloadFile, envFile string) string {
 		wl, err := gen.ReadDataFromFile(workloadFile)
 		if err != nil {
 			t.Fatalf("failed to read %s - %v", workloadFile, err)
 		}
-		env, err := gen.ReadDataFromFile(sampleEnvTemplatePath)
+		env, err := gen.ReadDataFromFile(envFile)
 		if err != nil {
-			t.Fatalf("failed to read env template - %v", err)
+			t.Fatalf("failed to read %s - %v", envFile, err)
 		}
 		out := "workload: |\n" + indentTemplateBlockForTest(wl)
 		if !strings.HasSuffix(wl, "\n") {
@@ -889,15 +910,18 @@ func TestHpcrContractTemplateCombined(t *testing.T) {
 	cases := []struct {
 		os           string
 		workloadFile string
+		envFile      string
 	}{
-		{"", sampleWorkloadCcrtTemplatePath},
-		{"ccrt", sampleWorkloadCcrtTemplatePath},
-		{"ccrv", sampleWorkloadCcrvTemplatePath},
+		{"", sampleWorkloadCcrtTemplatePath, sampleEnvTemplatePath},
+		{"ccrt", sampleWorkloadCcrtTemplatePath, sampleEnvTemplatePath},
+		{"ccrv", sampleWorkloadCcrvTemplatePath, sampleEnvTemplatePath},
+		{"ccco-peerpod", sampleWorkloadCccoPeerpodTemplatePath, sampleEnvCccoPeerpodTemplatePath},
+		{"ccco-bmtl", sampleWorkloadCccoBmtlTemplatePath, sampleEnvCccoBmtlTemplatePath},
 	}
 	for _, tc := range cases {
 		result, err := HpcrContractTemplate("", tc.os)
 		assert.NoError(t, err, "os=%s", tc.os)
-		assert.Equal(t, buildExpected(tc.workloadFile), result, "os=%s", tc.os)
+		assert.Equal(t, buildExpected(tc.workloadFile, tc.envFile), result, "os=%s", tc.os)
 	}
 }
 
@@ -910,14 +934,30 @@ func TestHpcrContractTemplateInvalidType(t *testing.T) {
 // Testcase to check if resolveWorkloadTemplateFile() maps OS values to correct template files.
 func TestResolveWorkloadTemplateFile(t *testing.T) {
 	cases := map[string]string{
-		"ccrv": workloadCcrvTemplateFilePath,
-		"":     workloadCcrtTemplateFilePath,
-		"ccrt": workloadCcrtTemplateFilePath,
-		"hpvs": workloadCcrtTemplateFilePath,
-		"ccco": workloadCcrtTemplateFilePath,
+		"ccrv":         workloadCcrvTemplateFilePath,
+		"":             workloadCcrtTemplateFilePath,
+		"ccrt":         workloadCcrtTemplateFilePath,
+		"hpvs":         workloadCcrtTemplateFilePath,
+		"ccco-peerpod": workloadCccoPeerpodTemplateFilePath,
+		"ccco-bmtl":    workloadCccoBmtlTemplateFilePath,
 	}
 	for osVal, expected := range cases {
 		assert.Equal(t, expected, resolveWorkloadTemplateFile(osVal), "os=%s", osVal)
+	}
+}
+
+// Testcase to check if resolveEnvTemplateFile() maps OS values to correct template files.
+func TestResolveEnvTemplateFile(t *testing.T) {
+	cases := map[string]string{
+		"":             envTemplateFilePath,
+		"hpvs":         envTemplateFilePath,
+		"ccrt":         envTemplateFilePath,
+		"ccrv":         envTemplateFilePath,
+		"ccco-peerpod": envCccoPeerpodTemplateFilePath,
+		"ccco-bmtl":    envCccoBmtlTemplateFilePath,
+	}
+	for osVal, expected := range cases {
+		assert.Equal(t, expected, resolveEnvTemplateFile(osVal), "os=%s", osVal)
 	}
 }
 

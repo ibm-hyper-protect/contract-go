@@ -1,0 +1,14 @@
+type: env
+logging:
+  logRouter:
+    hostname: <host name of the service instance> /
+    iamApiKey: <iamApiKey of the service instance> / xxxx
+    port: <port of the service instance(443)
+volumes:
+  test:
+    seed: "seed_value_with_minimum_15_characters"
+host-attestation:
+  <hkd name>:
+    description: KEY-1
+    host-key-doc: <base64 encoded HKD cert>
+signingKey: <signing key or certificate>

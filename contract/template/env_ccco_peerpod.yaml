@@ -1,0 +1,7 @@
+type: env
+logging:
+  logRouter:
+    hostname: <host name of the service instance> /
+    iamApiKey: <iamApiKey of the service instance> / xxxx
+    port: <port of the service instance(443)
+signingKey: <signing key or certificate>
