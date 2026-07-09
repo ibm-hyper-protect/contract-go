@@ -830,7 +830,7 @@ func TestHpcrVerifyContractInvalidSchema(t *testing.T) {
 }
 
 // Testcase to check if HpcrContractTemplate() returns correct workload template per OS.
-// hpvs/ccrt/"" use workload_ccrt.yaml; ccrv uses workload_ccrv.yaml;
+// hpvs/ccrt/"" use workload_ccrt.yaml; ccrv uses workload_ccrv.yaml
 // ccco-peerpod uses workload_ccco_peerpod.yaml; ccco-bmtl uses workload_ccco_bmtl.yaml.
 func TestHpcrContractTemplateWorkload(t *testing.T) {
 	readTemplate := func(path string) string {
