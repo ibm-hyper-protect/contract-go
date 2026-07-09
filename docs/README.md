@@ -1163,8 +1163,8 @@ The workload and env template both vary by platform:
 |------------|-------------------|--------------|
 | `""` / `"hpvs"` / `"ccrt"` | Standard (compose + play + volumes) | Standard (syslog, env vars, volumes) |
 | `"ccrv"` | Podman play only (no compose) | Standard |
-| `"ccco-peerpod"` | confidential-containers (no volumes) | logRouter only |
-| `"ccco-bmtl"` | confidential-containers + volumes | logRouter + volumes + host-attestation |
+| `"ccco-peerpod"` | confidential-containers (no volumes) | logRouter + syslog |
+| `"ccco-bmtl"` | confidential-containers + volumes | logRouter + syslog + volumes + host-attestation |
 
 **Package:** `github.com/ibm-hyper-protect/contract-go/v2/contract`
 
