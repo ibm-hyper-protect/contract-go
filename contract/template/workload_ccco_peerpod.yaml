@@ -1,0 +1,15 @@
+type: workload
+auths:
+  <registry url>:
+    password: <password>
+    username: <user name>
+confidential-containers:
+  config:
+    cosign:
+      "<cosigned image>":
+        publicKey: <base64 publickey for cosign verification>
+  secret:
+    verificationKey: "verification public key"
+    decryptionKey: "decryption private key"
+  regoValidator:
+    policy: <base64 encoded policy>

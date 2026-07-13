@@ -1157,11 +1157,20 @@ MIIEpAIBAAKCAQEA...
 
 Returns built-in contract template content for `workload`, `env`, or both as a combined YAML scaffold.
 
+The workload and env template both vary by platform:
+
+| `os` value | Workload template | Env template |
+|------------|-------------------|--------------|
+| `""` / `"hpvs"` / `"ccrt"` | Standard (compose + play + volumes) | Standard (syslog, env vars, volumes) |
+| `"ccrv"` | Podman play only (no compose) | Standard |
+| `"ccco-peerpod"` | confidential-containers (no volumes) | logRouter + syslog |
+| `"ccco-bmtl"` | confidential-containers + volumes | logRouter + syslog + volumes + host-attestation |
+
 **Package:** `github.com/ibm-hyper-protect/contract-go/v2/contract`
 
 **Signature:**
 ```go
-func HpcrContractTemplate(templateType string) (string, error)
+func HpcrContractTemplate(templateType, os string) (string, error)
 ```
 
 **Parameters:**
@@ -1169,12 +1178,13 @@ func HpcrContractTemplate(templateType string) (string, error)
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
 | `templateType` | `string` | Optional | Template selector: `"workload"`, `"env"`, or `""` (returns combined output) |
+| `os` | `string` | Optional | Target platform: `"ccrv"` (play-only workload), `"ccco-peerpod"` (confidential-containers, no volumes), `"ccco-bmtl"` (confidential-containers + volumes + host-attestation), `"hpvs"`, `"ccrt"`, or `""` (standard compose+play workload) |
 
 **Returns:**
 
 | Return | Type | Description |
 |--------|------|-------------|
-| Template Content | `string` | YAML template content from `contract/template/workload.yaml`, `contract/template/env.yaml`, or both |
+| Template Content | `string` | YAML template from the resolved workload file (`workload_ccrt.yaml`, `workload_ccrv.yaml`, `workload_ccco_peerpod.yaml`, or `workload_ccco_bmtl.yaml`) and/or the resolved env file (`env.yaml`, `env_ccco_peerpod.yaml`, or `env_ccco_bmtl.yaml`) |
 | Error | `error` | Error if template type is invalid or template files cannot be read |
 
 **Example:**
@@ -1189,38 +1199,90 @@ import (
 )
 
 func main() {
-    workloadTemplate, err := contract.HpcrContractTemplate("workload")
+    // Standard workload template
+    workloadTemplate, err := contract.HpcrContractTemplate("workload", "ccrt")
     if err != nil {
         log.Fatal(err)
     }
-    fmt.Printf("Workload template:\n%s\n", workloadTemplate)
+    fmt.Printf("Workload template (CCRT):\n%s\n", workloadTemplate)
 
-    envTemplate, err := contract.HpcrContractTemplate("env")
+    // CCRV-specific workload template
+    workloadCcrvTemplate, err := contract.HpcrContractTemplate("workload", "ccrv")
     if err != nil {
         log.Fatal(err)
     }
-    fmt.Printf("Env template:\n%s\n", envTemplate)
+    fmt.Printf("Workload template (CCRV):\n%s\n", workloadCcrvTemplate)
 
-    combinedTemplate, err := contract.HpcrContractTemplate("")
+    // CCCO Peer Pod workload template
+    workloadPeerpodTemplate, err := contract.HpcrContractTemplate("workload", "ccco-peerpod")
     if err != nil {
         log.Fatal(err)
     }
-    fmt.Printf("Combined template:\n%s\n", combinedTemplate)
+    fmt.Printf("Workload template (CCCO Peer Pod):\n%s\n", workloadPeerpodTemplate)
+
+    // CCCO Baremetal workload template
+    workloadBmtlTemplate, err := contract.HpcrContractTemplate("workload", "ccco-bmtl")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Workload template (CCCO Baremetal):\n%s\n", workloadBmtlTemplate)
+
+    // Standard env template (hpvs/ccrt/ccrv)
+    envTemplate, err := contract.HpcrContractTemplate("env", "")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Env template (standard):\n%s\n", envTemplate)
+
+    // CCCO Peer Pod env template
+    envPeerpodTemplate, err := contract.HpcrContractTemplate("env", "ccco-peerpod")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Env template (CCCO Peer Pod):\n%s\n", envPeerpodTemplate)
+
+    // CCCO Baremetal env template
+    envBmtlTemplate, err := contract.HpcrContractTemplate("env", "ccco-bmtl")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Env template (CCCO Baremetal):\n%s\n", envBmtlTemplate)
+
+    // Combined template with standard workload (CCRT)
+    combinedTemplate, err := contract.HpcrContractTemplate("", "ccrt")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Combined template (CCRT):\n%s\n", combinedTemplate)
+
+    // Combined template with CCRV workload
+    combinedCcrvTemplate, err := contract.HpcrContractTemplate("", "ccrv")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Combined template (CCRV):\n%s\n", combinedCcrvTemplate)
+
+    // Combined CCCO Baremetal template
+    combinedBmtlTemplate, err := contract.HpcrContractTemplate("", "ccco-bmtl")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Combined template (CCCO Baremetal):\n%s\n", combinedBmtlTemplate)
 }
 ```
 
 **Combined Output Format (`templateType == ""`):**
 ```yaml
 workload: |
-  ...content of workload.yaml...
+  ...content of the resolved workload template for the given os...
 env: |
-  ...content of env.yaml...
+  ...content of the resolved env template for the given os...
 ```
 
 **Common Errors:**
 - `"unsupported template type: <value>"` - `templateType` is not one of `"workload"`, `"env"`, or `""`
-- `"failed to read workload template"` - Unable to read `contract/template/workload.yaml`
-- `"failed to read env template"` - Unable to read `contract/template/env.yaml`
+- `"failed to read workload template"` - Unable to read the resolved workload template file
+- `"failed to read env template"` - Unable to read the resolved env template file (`env.yaml`, `env_ccco_peerpod.yaml`, or `env_ccco_bmtl.yaml`)
 
 ---
 

@@ -166,28 +166,68 @@ import (
 )
 
 func main() {
-    // Retrieve workload template only
-    workloadTemplate, err := contract.HpcrContractTemplate("workload")
+    // Retrieve standard workload template (hpvs, ccrt)
+    workloadTemplate, err := contract.HpcrContractTemplate("workload", "ccrt")
     if err != nil {
         log.Fatal(err)
     }
-    fmt.Printf("Workload Template:\n%s\n", workloadTemplate)
+    fmt.Printf("Workload Template (CCRT):\n%s\n", workloadTemplate)
 
-    // Retrieve env template only
-    envTemplate, err := contract.HpcrContractTemplate("env")
+    // Retrieve CCRV-specific workload template (podman play only, no compose)
+    workloadCcrvTemplate, err := contract.HpcrContractTemplate("workload", "ccrv")
     if err != nil {
         log.Fatal(err)
     }
-    fmt.Printf("Env Template:\n%s\n", envTemplate)
+    fmt.Printf("Workload Template (CCRV):\n%s\n", workloadCcrvTemplate)
 
-    // Retrieve combined contract scaffold:
-    // workload: | <workload template>
-    // env: | <env template>
-    contractTemplate, err := contract.HpcrContractTemplate("")
+    // Retrieve CCCO Peer Pod workload template (confidential-containers)
+    workloadPeerpodTemplate, err := contract.HpcrContractTemplate("workload", "ccco-peerpod")
     if err != nil {
         log.Fatal(err)
     }
-    fmt.Printf("Combined Contract Template:\n%s\n", contractTemplate)
+    fmt.Printf("Workload Template (CCCO Peer Pod):\n%s\n", workloadPeerpodTemplate)
+
+    // Retrieve CCCO Baremetal workload template (confidential-containers + volumes)
+    workloadBmtlTemplate, err := contract.HpcrContractTemplate("workload", "ccco-bmtl")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Workload Template (CCCO Baremetal):\n%s\n", workloadBmtlTemplate)
+
+    // Retrieve env template (hpvs/ccrt/ccrv use standard; ccco-peerpod and ccco-bmtl differ)
+    envTemplate, err := contract.HpcrContractTemplate("env", "")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Env Template (standard):\n%s\n", envTemplate)
+
+    // Retrieve CCCO Peer Pod env template (logRouter only, no volumes/host-attestation)
+    envPeerpodTemplate, err := contract.HpcrContractTemplate("env", "ccco-peerpod")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Env Template (CCCO Peer Pod):\n%s\n", envPeerpodTemplate)
+
+    // Retrieve CCCO Baremetal env template (logRouter + volumes + host-attestation)
+    envBmtlTemplate, err := contract.HpcrContractTemplate("env", "ccco-bmtl")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Env Template (CCCO Baremetal):\n%s\n", envBmtlTemplate)
+
+    // Retrieve combined contract scaffold with CCRV workload
+    contractTemplate, err := contract.HpcrContractTemplate("", "ccrv")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Combined CCRV Contract Template:\n%s\n", contractTemplate)
+
+    // Retrieve combined CCCO Baremetal contract template
+    bmtlCombinedTemplate, err := contract.HpcrContractTemplate("", "ccco-bmtl")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Combined CCCO Baremetal Contract Template:\n%s\n", bmtlCombinedTemplate)
 }
 ```
 
