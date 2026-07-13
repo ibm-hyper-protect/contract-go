@@ -513,7 +513,7 @@
 
 * update certificate to latest version ([2e21c46](https://github.com/ibm-hyper-protect/contract-go/commit/2e21c46f22c05d438e089e16a2abf51726795a52))
 * update go version ([395d418](https://github.com/ibm-hyper-protect/contract-go/commit/395d418c6d5f0e7461cddbfd7a856b4c3bbcd035))
-* update REAME with doc link ([981c9d0](https://github.com/ibm-hyper-protect/contract-go/commit/981c9d02f19359184a35d122d0f94fbc964a1778))
+* update README with doc link ([981c9d0](https://github.com/ibm-hyper-protect/contract-go/commit/981c9d02f19359184a35d122d0f94fbc964a1778))
 * update schema to latest version ([431b4d7](https://github.com/ibm-hyper-protect/contract-go/commit/431b4d7cf4bb7800442cbd638fcb2b705531f070))
 
 ### Bug Fixes
