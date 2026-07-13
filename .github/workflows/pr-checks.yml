@@ -13,6 +13,12 @@ jobs:
     steps:
       - name: Validate branch name
         run: |
+          # Renovate and Dependabot manage their own branch naming — exempt both
+          if [[ "${{ github.actor }}" == "renovate[bot]" || "${{ github.actor }}" == "dependabot[bot]" ]]; then
+            echo "Actor is ${{ github.actor }} — skipping branch name check."
+            exit 0
+          fi
+
           BRANCH="${{ github.head_ref }}"
           pattern='^(Feature|Fix|Docs|Refactor|Performance|Test|Chore|CI)/[a-zA-Z0-9._/-]+$'
 
@@ -45,9 +51,9 @@ jobs:
     steps:
       - name: Check for force push
         run: |
-          # Renovate legitimately rebases its own PRs — exempt it from this check
-          if [ "${{ github.actor }}" = "renovate[bot]" ]; then
-            echo "Actor is renovate[bot] — skipping force push check."
+          # Renovate and Dependabot manage their own branches — exempt both
+          if [[ "${{ github.actor }}" == "renovate[bot]" || "${{ github.actor }}" == "dependabot[bot]" ]]; then
+            echo "Actor is ${{ github.actor }} — skipping force push check."
             exit 0
           fi
 
@@ -82,6 +88,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Renovate and Dependabot generate conventional-commit titles via dependabot.yml/renovate.json
+          if [[ "${{ github.actor }}" == "renovate[bot]" || "${{ github.actor }}" == "dependabot[bot]" ]]; then
+            echo "Actor is ${{ github.actor }} — skipping commit-lint."
+            exit 0
+          fi
+
           pattern='^(feat|fix|docs|perf|revert|chore|refactor|test|build|ci)(\([a-z0-9-]+\))?!?: .{1,}'
           failed=0
 
@@ -149,6 +161,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Renovate and Dependabot commits are signed by GitHub — skip user signature check
+          if [[ "${{ github.actor }}" == "renovate[bot]" || "${{ github.actor }}" == "dependabot[bot]" ]]; then
+            echo "Actor is ${{ github.actor }} — skipping signature check."
+            exit 0
+          fi
+
           echo "Verifying commit signature (latest commit only)"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo ""

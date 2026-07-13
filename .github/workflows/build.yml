@@ -1,4 +1,4 @@
-name: Contract Go - Build
+name: Contract Go - Build & Test
 
 on:
   push:
