@@ -92,7 +92,7 @@
 
 ### Documentation
 
-* Add Carsten has Emeritus Maintainer ([961d0de](https://github.com/ibm-hyper-protect/contract-go/commit/961d0de50ab2cc4dc7c63457b44caf5cd5d97402))
+* Add Carsten as Emeritus Maintainer ([961d0de](https://github.com/ibm-hyper-protect/contract-go/commit/961d0de50ab2cc4dc7c63457b44caf5cd5d97402))
 * Update README & user documentation ([26d02cc](https://github.com/ibm-hyper-protect/contract-go/commit/26d02cc704ddd005fd5615ecdcdad0fd99b85421))
 
 ## [2.22.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.21.2...v2.22.0) (2026-05-06)
