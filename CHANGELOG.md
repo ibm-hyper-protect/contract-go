@@ -369,7 +369,7 @@
 
 ### Documentation
 
-* fix url templete error ([092a148](https://github.com/ibm-hyper-protect/contract-go/commit/092a148fe5f4c7f8dc1be49e404d31a055413f5f))
+* fix url template error ([092a148](https://github.com/ibm-hyper-protect/contract-go/commit/092a148fe5f4c7f8dc1be49e404d31a055413f5f))
 * update user documentation with details of required and optional parameters and common errors ([5aa3f8f](https://github.com/ibm-hyper-protect/contract-go/commit/5aa3f8f5fb4c66a53db0c4f11d2bacf95a996593))
 
 ### Miscellaneous Chores
