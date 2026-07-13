@@ -1,3 +1,18 @@
+# Copyright (c) 2026 IBM Corp.
+# All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 name: Contract Go - PR Checks
 
 on:
@@ -13,6 +28,12 @@ jobs:
     steps:
       - name: Validate branch name
         run: |
+          # Renovate and Dependabot manage their own branch naming — exempt both
+          if [[ "${{ github.actor }}" == "renovate[bot]" || "${{ github.actor }}" == "dependabot[bot]" ]]; then
+            echo "Actor is ${{ github.actor }} — skipping branch name check."
+            exit 0
+          fi
+
           BRANCH="${{ github.head_ref }}"
           pattern='^(Feature|Fix|Docs|Refactor|Performance|Test|Chore|CI)/[a-zA-Z0-9._/-]+$'
 
@@ -45,9 +66,9 @@ jobs:
     steps:
       - name: Check for force push
         run: |
-          # Renovate legitimately rebases its own PRs — exempt it from this check
-          if [ "${{ github.actor }}" = "renovate[bot]" ]; then
-            echo "Actor is renovate[bot] — skipping force push check."
+          # Renovate and Dependabot manage their own branches — exempt both
+          if [[ "${{ github.actor }}" == "renovate[bot]" || "${{ github.actor }}" == "dependabot[bot]" ]]; then
+            echo "Actor is ${{ github.actor }} — skipping force push check."
             exit 0
           fi
 
@@ -82,6 +103,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Renovate and Dependabot generate conventional-commit titles via dependabot.yml/renovate.json
+          if [[ "${{ github.actor }}" == "renovate[bot]" || "${{ github.actor }}" == "dependabot[bot]" ]]; then
+            echo "Actor is ${{ github.actor }} — skipping commit-lint."
+            exit 0
+          fi
+
           pattern='^(feat|fix|docs|perf|revert|chore|refactor|test|build|ci)(\([a-z0-9-]+\))?!?: .{1,}'
           failed=0
 
@@ -149,6 +176,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # Renovate and Dependabot commits are signed by GitHub — skip user signature check
+          if [[ "${{ github.actor }}" == "renovate[bot]" || "${{ github.actor }}" == "dependabot[bot]" ]]; then
+            echo "Actor is ${{ github.actor }} — skipping signature check."
+            exit 0
+          fi
+
           echo "Verifying commit signature (latest commit only)"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo ""
