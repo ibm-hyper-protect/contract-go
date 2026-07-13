@@ -27,7 +27,7 @@
 
 ### Features
 
-* Added Support for Baremetal Initdata Annotation Ceration ([e925e36](https://github.com/ibm-hyper-protect/contract-go/commit/e925e3663f73d85adb7de21a7cb312d4c7f5b476))
+* Added Support for Baremetal Initdata Annotation Creation ([e925e36](https://github.com/ibm-hyper-protect/contract-go/commit/e925e3663f73d85adb7de21a7cb312d4c7f5b476))
 
 ### Miscellaneous Chores
 
