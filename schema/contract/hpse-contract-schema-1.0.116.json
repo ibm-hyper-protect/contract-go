@@ -7681,6 +7681,20 @@
               ]
             }
           ],
+          "allOf": [
+            {
+              "if": {
+                "required": [
+                  "uv-previous-secret-id"
+                ]
+              },
+              "then": {
+                "required": [
+                  "uv-secret-id"
+                ]
+              }
+            }
+          ],
           "additionalProperties": false
         },
         "workloadVolume": {
@@ -7877,10 +7891,10 @@
           "type": "object",
           "properties": {
             "aesKeyBlob": {
-              "$ref": "#/allOf/3/$defs/base64Material"
+              "$ref": "#/allOf/3/$defs/base64MaterialOrMasked"
             },
             "previousaesKeyBlob": {
-              "$ref": "#/allOf/3/$defs/base64Material"
+              "$ref": "#/allOf/3/$defs/base64MaterialOrMasked"
             }
           },
           "required": [
@@ -7938,6 +7952,17 @@
           "pattern": "^[A-Za-z0-9+/=]+$",
           "examples": [
             "QkFTRTY0X0RBVEE="
+          ]
+        },
+        "base64MaterialOrMasked": {
+          "type": "string",
+          "title": "Base64 material or masked value",
+          "description": "Base64-encoded wrapped AES blob material, or a masked placeholder (asterisks) written by the system after the value has been consumed.",
+          "minLength": 1,
+          "pattern": "^([A-Za-z0-9+/=]+|\\*+)$",
+          "examples": [
+            "QkFTRTY0X0RBVEE=",
+            "***************"
           ]
         },
         "kmsTimeout": {
