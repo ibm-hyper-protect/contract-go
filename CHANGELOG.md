@@ -27,7 +27,7 @@
 
 ### Features
 
-* Added Support for Baremetal Initdata Annotation Ceration ([e925e36](https://github.com/ibm-hyper-protect/contract-go/commit/e925e3663f73d85adb7de21a7cb312d4c7f5b476))
+* Added Support for Baremetal Initdata Annotation creation ([e925e36](https://github.com/ibm-hyper-protect/contract-go/commit/e925e3663f73d85adb7de21a7cb312d4c7f5b476))
 
 ### Miscellaneous Chores
 
@@ -92,7 +92,7 @@
 
 ### Documentation
 
-* Add Carsten has Emeritus Maintainer ([961d0de](https://github.com/ibm-hyper-protect/contract-go/commit/961d0de50ab2cc4dc7c63457b44caf5cd5d97402))
+* Add Carsten as Emeritus Maintainer ([961d0de](https://github.com/ibm-hyper-protect/contract-go/commit/961d0de50ab2cc4dc7c63457b44caf5cd5d97402))
 * Update README & user documentation ([26d02cc](https://github.com/ibm-hyper-protect/contract-go/commit/26d02cc704ddd005fd5615ecdcdad0fd99b85421))
 
 ## [2.22.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.21.2...v2.22.0) (2026-05-06)
@@ -369,7 +369,7 @@
 
 ### Documentation
 
-* fix url templete error ([092a148](https://github.com/ibm-hyper-protect/contract-go/commit/092a148fe5f4c7f8dc1be49e404d31a055413f5f))
+* fix url template error ([092a148](https://github.com/ibm-hyper-protect/contract-go/commit/092a148fe5f4c7f8dc1be49e404d31a055413f5f))
 * update user documentation with details of required and optional parameters and common errors ([5aa3f8f](https://github.com/ibm-hyper-protect/contract-go/commit/5aa3f8f5fb4c66a53db0c4f11d2bacf95a996593))
 
 ### Miscellaneous Chores
@@ -513,7 +513,7 @@
 
 * update certificate to latest version ([2e21c46](https://github.com/ibm-hyper-protect/contract-go/commit/2e21c46f22c05d438e089e16a2abf51726795a52))
 * update go version ([395d418](https://github.com/ibm-hyper-protect/contract-go/commit/395d418c6d5f0e7461cddbfd7a856b4c3bbcd035))
-* update REAME with doc link ([981c9d0](https://github.com/ibm-hyper-protect/contract-go/commit/981c9d02f19359184a35d122d0f94fbc964a1778))
+* update README with doc link ([981c9d0](https://github.com/ibm-hyper-protect/contract-go/commit/981c9d02f19359184a35d122d0f94fbc964a1778))
 * update schema to latest version ([431b4d7](https://github.com/ibm-hyper-protect/contract-go/commit/431b4d7cf4bb7800442cbd638fcb2b705531f070))
 
 ### Bug Fixes
