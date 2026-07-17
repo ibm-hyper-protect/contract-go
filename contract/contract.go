@@ -330,16 +330,7 @@ func HpcrTgzEncrypted(folderPath, confidentialComputingOs, certVersion, encrypti
 //   - nil if the contract is valid
 //   - Error with details about validation failures
 //
-// Example:
-//
-//	// Validate complete contract (both sections with wrappers)
-//	err := contract.HpcrVerifyContract(contractYAML, "ccrt", contract.SectionBoth)
-//
-//	// Validate only workload section (raw format, no wrapper)
-//	err := contract.HpcrVerifyContract(workloadYAML, "ccrt", contract.SectionWorkload)
-//
-//	// Validate only env section (raw format, no wrapper)
-//	err := contract.HpcrVerifyContract(envYAML, "ccrt", contract.SectionEnv)
+
 func HpcrVerifyContract(contract, version, section string) error {
 	return gen.VerifyContractWithSchema(contract, version, section)
 }
