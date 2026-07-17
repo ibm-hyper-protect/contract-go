@@ -74,7 +74,8 @@ Learn more:
   - Create signed and encrypted & signed contracts
   - Support contract expiry with CSR (Certificate Signing Request)
   - Load built-in workload and env contract templates
-  - Validate contract schemas
+  - **Validate complete contracts** (both workload and env sections together) against platform-specific JSON schemas
+  - **Validate individual sections** (workload or env independently) for multi-persona workflows where different teams author each section separately
   - Decrypt encrypted text in Hyper Protect format
   - Password-protected private key support for decrypting attestation records and generate signed contracts
   - **Specify certificate version** for encryption operations (optional certVersion parameter)
@@ -190,6 +191,76 @@ func main() {
     fmt.Printf("Combined Contract Template:\n%s\n", contractTemplate)
 }
 ```
+
+### Validate Contract Schema
+
+Use `HpcrVerifyContract` to validate a contract YAML against the platform-specific JSON schema before signing and encrypting. The third parameter controls which section(s) to validate:
+
+| Value | Constant | Input format | What is validated |
+|-------|----------|--------------|-------------------|
+| `""` | `contract.SectionBoth` | Complete contract with `workload:` and `env:` wrapper keys | Both sections together (default) |
+| `"workload"` | `contract.SectionWorkload` | Raw content starting with `type: workload` (no wrapper) | Workload section only |
+| `"env"` | `contract.SectionEnv` | Raw content starting with `type: env` (no wrapper) | Env section only |
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+)
+
+func main() {
+    // Mode 1: Validate a complete contract (both sections with wrapper keys)
+    completeContract := `
+env: |
+  type: env
+  logging:
+    logRouter:
+      hostname: 5c2d6b69-c7f0-41bd-b69b-240695369d6e.ingress.us-south.logs.cloud.ibm.com
+      iamApiKey: ab00e3c09p1d4ff7fff9f04c12183413
+workload: |
+  type: workload
+  compose:
+    archive: your-archive
+`
+    err := contract.HpcrVerifyContract(completeContract, "ccrt", contract.SectionBoth)
+    if err != nil {
+        log.Fatalf("Complete contract validation failed: %v", err)
+    }
+    fmt.Println("Complete contract is valid")
+
+    // Mode 2: Validate only the workload section (raw format, no wrapper key)
+    workloadOnly := `
+type: workload
+compose:
+  archive: your-archive
+`
+    err = contract.HpcrVerifyContract(workloadOnly, "ccrt", contract.SectionWorkload)
+    if err != nil {
+        log.Fatalf("Workload section validation failed: %v", err)
+    }
+    fmt.Println("Workload section is valid")
+
+    // Mode 3: Validate only the env section (raw format, no wrapper key)
+    envOnly := `
+type: env
+logging:
+  logRouter:
+    hostname: 5c2d6b69-c7f0-41bd-b69b-240695369d6e.ingress.us-south.logs.cloud.ibm.com
+    iamApiKey: ab00e3c09p1d4ff7fff9f04c12183413
+`
+    err = contract.HpcrVerifyContract(envOnly, "ccrt", contract.SectionEnv)
+    if err != nil {
+        log.Fatalf("Env section validation failed: %v", err)
+    }
+    fmt.Println("Env section is valid")
+}
+```
+
+> **Multi-persona workflow:** When the workload and env sections are authored by different teams, each team can validate their section independently using `SectionWorkload` or `SectionEnv` before the contract is assembled and signed.
 
 ### Generate a Signed and Encrypted Contract
 
@@ -479,7 +550,9 @@ Comprehensive documentation is available at:
 
 The [`samples/`](samples/) directory contains example configurations:
 
-- [Simple Contract](samples/simple_contract.yaml)
+- [Simple Contract](samples/simple_contract.yaml) — complete contract with `workload:` and `env:` wrapper keys (use with `SectionBoth`)
+- [Workload Only](samples/workload_only.yaml) — raw workload section starting with `type: workload` (use with `SectionWorkload`)
+- [Env Only](samples/env_only.yaml) — raw env section starting with `type: env` (use with `SectionEnv`)
 - [Contract with Attestation Public Key](samples/attest_pub_key_contract.yaml)
 - [Workload Configuration](samples/workload.yaml)
 - [Encrypted Contract](samples/sign/contract.enc.yaml)

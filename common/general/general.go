@@ -663,6 +663,11 @@ func GenerateTgzBase64(folderFilesPath []string) (string, error) {
 //   - nil if contract is valid
 //   - Error if contract parsing, schema retrieval, or validation fails
 func VerifyContractWithSchema(contract, version, section string) error {
+	// Reject unrecognised section values immediately.
+	if section != "" && section != "workload" && section != "env" {
+		return fmt.Errorf("invalid section %q: must be \"\" (both), \"workload\", or \"env\"", section)
+	}
+
 	// First, check what sections exist in the contract
 	data := Contract{}
 	yaml.Unmarshal([]byte(contract), &data)
@@ -675,7 +680,7 @@ func VerifyContractWithSchema(contract, version, section string) error {
 		// Rule: If wrapper format detected, reject
 		if hasWrapper {
 			if hasWorkload && hasEnv {
-				return fmt.Errorf("contract contains both env and workload sections. To validate individual sections, provide raw section content without 'env:' or 'workload:' wrappers, or use section=\"\" to validate the complete contract")
+				return fmt.Errorf("contract contains both env and workload sections. To validate individual sections, provide raw section content without 'env:' or 'workload:' wrappers, or use type=\"\" to validate the complete contract")
 			}
 			// Even if only one wrapper exists, reject for individual section validation
 			return fmt.Errorf("wrapper format detected. For individual section validation, provide raw section content starting with 'type: %s' (without 'env:' or 'workload:' wrapper)", section)

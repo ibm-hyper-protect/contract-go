@@ -912,6 +912,39 @@ func TestHpcrVerifyContractCompleteValidationWithOnlyWorkload(t *testing.T) {
 	assert.Contains(t, err.Error(), "both 'env:' and 'workload:' sections", "Error should mention both sections required")
 }
 
+// Testcase to verify error when an unrecognised section value is passed to HpcrVerifyContract()
+func TestHpcrVerifyContractInvalidSection(t *testing.T) {
+	contract, err := gen.ReadDataFromFile(simpleContractPath)
+	if err != nil {
+		t.Errorf("failed to read contract - %v", err)
+	}
+
+	err = HpcrVerifyContract(contract, "", "invalid-section")
+	assert.Error(t, err, "Should fail when an unrecognised section value is passed")
+	assert.Contains(t, err.Error(), "invalid section", "Error should mention invalid section")
+}
+
+// Testcase to verify HpcrContractSignedEncryptedContractExpiry() calls schema validation
+// and fails when the contract does not satisfy the complete contract (SectionBoth) requirement
+func TestHpcrContractSignedEncryptedContractExpirySchemaVerification(t *testing.T) {
+	// Contract missing the env section — should fail SectionBoth schema check inside the function
+	incompleteContract := `workload: |
+  type: workload
+  compose:
+    archive: kdsbfoijdfojsnbo`
+
+	csrParams, err := json.Marshal(sampleCeCSRPems)
+	if err != nil {
+		t.Errorf("failed to marshal CSR parameters - %v", err)
+	}
+
+	_, _, _, err = HpcrContractSignedEncryptedContractExpiry(incompleteContract, sampleConfidentialComputingOsVersion, "", "", "privateKey", "", "caCert", "caKey", string(csrParams), "", sampleContractExpiryDays)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "schema verification failed", "Error should indicate schema verification failure")
+}
+
+
+
 // Testcase to check if HpcrContractTemplate() is able to return workload template content.
 func TestHpcrContractTemplateWorkload(t *testing.T) {
 	expectedTemplate, err := gen.ReadDataFromFile(sampleWorkloadTemplatePath)
