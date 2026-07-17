@@ -828,7 +828,7 @@ func TestHpcrVerifyContractInvalidSchema(t *testing.T) {
 
 // Testcase to verify individual workload section validation (positive case)
 func TestHpcrVerifyContractWorkloadOnly(t *testing.T) {
-	workloadContract, err := gen.ReadDataFromFile("../samples/workload_only.yaml")
+	workloadContract, err := gen.ReadDataFromFile("../samples/workload.yaml")
 	if err != nil {
 		t.Errorf("failed to read workload contract - %v", err)
 	}
@@ -889,7 +889,7 @@ func TestHpcrVerifyContractBothSectionsWithEnvRequest(t *testing.T) {
 // Testcase to verify error when section type mismatch
 func TestHpcrVerifyContractSectionTypeMismatch(t *testing.T) {
 	// Workload content but requesting env validation
-	workloadContract, err := gen.ReadDataFromFile("../samples/workload_only.yaml")
+	workloadContract, err := gen.ReadDataFromFile("../samples/workload.yaml")
 	if err != nil {
 		t.Errorf("failed to read workload contract - %v", err)
 	}

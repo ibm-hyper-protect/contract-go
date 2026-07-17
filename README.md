@@ -551,10 +551,9 @@ Comprehensive documentation is available at:
 The [`samples/`](samples/) directory contains example configurations:
 
 - [Simple Contract](samples/simple_contract.yaml) — complete contract with `workload:` and `env:` wrapper keys (use with `SectionBoth`)
-- [Workload Only](samples/workload_only.yaml) — raw workload section starting with `type: workload` (use with `SectionWorkload`)
+- [Workload](samples/workload.yaml) — raw workload section starting with `type: workload` (use with `SectionWorkload`)
 - [Env Only](samples/env_only.yaml) — raw env section starting with `type: env` (use with `SectionEnv`)
 - [Contract with Attestation Public Key](samples/attest_pub_key_contract.yaml)
-- [Workload Configuration](samples/workload.yaml)
 - [Encrypted Contract](samples/sign/contract.enc.yaml)
 - [CCCO Signed & Encrypted Contract](samples/ccco/signed-encrypt-ccco.yaml)
 - [Docker Compose](samples/tgz/docker-compose.yaml)
