@@ -45,5 +45,5 @@ func TestProcessNetworkSchemaInvalid(t *testing.T) {
 	}
 	err = HpcrVerifyNetworkConfig(network_config_invalid)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "additionalProperties 'enc' not allowed")
+	assert.Contains(t, err.Error(), "additional properties 'enc' not allowed")
 }

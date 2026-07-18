@@ -34,9 +34,14 @@ const (
 	emptyParameterErrStatement = "required parameter is empty"
 
 	// Contract template locations relative to this package.
-	contractTemplateDirPath  = "template"
-	workloadTemplateFilePath = "workload.yaml"
-	envTemplateFilePath      = "env.yaml"
+	contractTemplateDirPath             = "template"
+	workloadCcrtTemplateFilePath        = "workload_ccrt.yaml"
+	workloadCcrvTemplateFilePath        = "workload_ccrv.yaml"
+	workloadCccoPeerpodTemplateFilePath = "workload_ccco_peerpod.yaml"
+	workloadCccoBmtlTemplateFilePath    = "workload_ccco_bmtl.yaml"
+	envTemplateFilePath                 = "env.yaml"
+	envCccoPeerpodTemplateFilePath      = "env_ccco_peerpod.yaml"
+	envCccoBmtlTemplateFilePath         = "env_ccco_bmtl.yaml"
 	// Section validation constants for HpcrVerifyContract.
 	// Use these when calling HpcrVerifyContract to specify which section(s) to validate.
 	SectionBoth     = ""         // Validate both workload and env sections (default, backward compatible)
@@ -509,31 +514,40 @@ func HpcrContractSign(contract, privateKey, password string) (string, string, st
 //
 // Parameters:
 //   - templateType: "workload", "env", or "" (returns both templates combined)
+//   - os: Target IBM Confidential Computing platform:
+//     "ccrv" — workload template (podman play only, no compose)
+//     "ccco-peerpod" — confidential-containers workload/env template
+//     "ccco-bmtl" — confidential-containers workload/env template (with volumes and host-attestation)
+//     "hpvs", "ccrt", or "" — standard workload template (compose + play)
 //
 // Returns:
 //   - Template content as string
 //   - Error if template type is unsupported or file read fails
-func HpcrContractTemplate(templateType string) (string, error) {
+func HpcrContractTemplate(templateType, os string) (string, error) {
+	workloadFile := resolveWorkloadTemplateFile(os)
+
+	envFile := resolveEnvTemplateFile(os)
+
 	switch templateType {
 	case "workload":
-		workloadTemplate, err := readHpcrTemplateFile(workloadTemplateFilePath)
+		workloadTemplate, err := readHpcrTemplateFile(workloadFile)
 		if err != nil {
 			return "", fmt.Errorf("failed to read workload template - %v", err)
 		}
 		return workloadTemplate, nil
 	case "env":
-		envTemplate, err := readHpcrTemplateFile(envTemplateFilePath)
+		envTemplate, err := readHpcrTemplateFile(envFile)
 		if err != nil {
 			return "", fmt.Errorf("failed to read env template - %v", err)
 		}
 		return envTemplate, nil
 	case "":
-		workloadTemplate, err := readHpcrTemplateFile(workloadTemplateFilePath)
+		workloadTemplate, err := readHpcrTemplateFile(workloadFile)
 		if err != nil {
 			return "", fmt.Errorf("failed to read workload template - %v", err)
 		}
 
-		envTemplate, err := readHpcrTemplateFile(envTemplateFilePath)
+		envTemplate, err := readHpcrTemplateFile(envFile)
 		if err != nil {
 			return "", fmt.Errorf("failed to read env template - %v", err)
 		}
@@ -550,6 +564,32 @@ func HpcrContractTemplate(templateType string) (string, error) {
 		return templateBuilder.String(), nil
 	default:
 		return "", fmt.Errorf("unsupported template type: %s", templateType)
+	}
+}
+
+// resolveWorkloadTemplateFile returns the workload template filename for the given OS.
+func resolveWorkloadTemplateFile(os string) string {
+	switch os {
+	case "ccrv":
+		return workloadCcrvTemplateFilePath
+	case "ccco-peerpod":
+		return workloadCccoPeerpodTemplateFilePath
+	case "ccco-bmtl":
+		return workloadCccoBmtlTemplateFilePath
+	default:
+		return workloadCcrtTemplateFilePath
+	}
+}
+
+// resolveEnvTemplateFile returns the env template filename for the given OS.
+func resolveEnvTemplateFile(os string) string {
+	switch os {
+	case "ccco-peerpod":
+		return envCccoPeerpodTemplateFilePath
+	case "ccco-bmtl":
+		return envCccoBmtlTemplateFilePath
+	default:
+		return envTemplateFilePath
 	}
 }
 

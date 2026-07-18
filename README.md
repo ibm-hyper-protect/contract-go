@@ -1,8 +1,24 @@
+<!--
+Copyright (c) 2026 IBM Corp.
+All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
 # Contract Go
 
 [![contract-go CI](https://github.com/ibm-hyper-protect/contract-go/actions/workflows/build.yml/badge.svg)](https://github.com/ibm-hyper-protect/contract-go/actions/workflows/build.yml)
 [![Latest Release](https://img.shields.io/github/v/release/ibm-hyper-protect/contract-go?include_prereleases)](https://github.com/ibm-hyper-protect/contract-go/releases/latest)
-[![Go Report Card](https://goreportcard.com/badge/github.com/ibm-hyper-protect/contract-go)](https://goreportcard.com/report/ibm-hyper-protect/contract-go)
 [![Go Reference](https://pkg.go.dev/badge/github.com/ibm-hyper-protect/contract-go.svg)](https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go/v2)
 [![User Documentation](https://img.shields.io/badge/User%20Documentation-GitHub%20Pages-blue.svg)](https://ibm-hyper-protect.github.io/contract-go)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -167,28 +183,68 @@ import (
 )
 
 func main() {
-    // Retrieve workload template only
-    workloadTemplate, err := contract.HpcrContractTemplate("workload")
+    // Retrieve standard workload template (hpvs, ccrt)
+    workloadTemplate, err := contract.HpcrContractTemplate("workload", "ccrt")
     if err != nil {
         log.Fatal(err)
     }
-    fmt.Printf("Workload Template:\n%s\n", workloadTemplate)
+    fmt.Printf("Workload Template (CCRT):\n%s\n", workloadTemplate)
 
-    // Retrieve env template only
-    envTemplate, err := contract.HpcrContractTemplate("env")
+    // Retrieve CCRV-specific workload template (podman play only, no compose)
+    workloadCcrvTemplate, err := contract.HpcrContractTemplate("workload", "ccrv")
     if err != nil {
         log.Fatal(err)
     }
-    fmt.Printf("Env Template:\n%s\n", envTemplate)
+    fmt.Printf("Workload Template (CCRV):\n%s\n", workloadCcrvTemplate)
 
-    // Retrieve combined contract scaffold:
-    // workload: | <workload template>
-    // env: | <env template>
-    contractTemplate, err := contract.HpcrContractTemplate("")
+    // Retrieve CCCO Peer Pod workload template (confidential-containers)
+    workloadPeerpodTemplate, err := contract.HpcrContractTemplate("workload", "ccco-peerpod")
     if err != nil {
         log.Fatal(err)
     }
-    fmt.Printf("Combined Contract Template:\n%s\n", contractTemplate)
+    fmt.Printf("Workload Template (CCCO Peer Pod):\n%s\n", workloadPeerpodTemplate)
+
+    // Retrieve CCCO Baremetal workload template (confidential-containers + volumes)
+    workloadBmtlTemplate, err := contract.HpcrContractTemplate("workload", "ccco-bmtl")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Workload Template (CCCO Baremetal):\n%s\n", workloadBmtlTemplate)
+
+    // Retrieve env template (hpvs/ccrt/ccrv use standard; ccco-peerpod and ccco-bmtl differ)
+    envTemplate, err := contract.HpcrContractTemplate("env", "")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Env Template (standard):\n%s\n", envTemplate)
+
+    // Retrieve CCCO Peer Pod env template (logRouter only, no volumes/host-attestation)
+    envPeerpodTemplate, err := contract.HpcrContractTemplate("env", "ccco-peerpod")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Env Template (CCCO Peer Pod):\n%s\n", envPeerpodTemplate)
+
+    // Retrieve CCCO Baremetal env template (logRouter + volumes + host-attestation)
+    envBmtlTemplate, err := contract.HpcrContractTemplate("env", "ccco-bmtl")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Env Template (CCCO Baremetal):\n%s\n", envBmtlTemplate)
+
+    // Retrieve combined contract scaffold with CCRV workload
+    contractTemplate, err := contract.HpcrContractTemplate("", "ccrv")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Combined CCRV Contract Template:\n%s\n", contractTemplate)
+
+    // Retrieve combined CCCO Baremetal contract template
+    bmtlCombinedTemplate, err := contract.HpcrContractTemplate("", "ccco-bmtl")
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("Combined CCCO Baremetal Contract Template:\n%s\n", bmtlCombinedTemplate)
 }
 ```
 

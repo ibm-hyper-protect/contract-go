@@ -463,10 +463,10 @@ func TestVerifyNetworkSchemaInvalid(t *testing.T) {
 
 	err = VerifyNetworkSchema(network)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "additionalProperties 'enc' not allowed")
+	assert.Contains(t, err.Error(), "additional properties 'enc' not allowed")
 }
 
-// Testcase to check if yamlParse() is able to unmarshell the YAML file
+// Testcase to check if yamlParse() is able to unmarshal the YAML file
 func TestNetworkConfigYamlParse(t *testing.T) {
 	network, err := ReadDataFromFile(simpleInvalidNetworkConfigPath)
 	if err != nil {
@@ -474,7 +474,7 @@ func TestNetworkConfigYamlParse(t *testing.T) {
 	}
 	result, err := yamlParse(network)
 	if err != nil {
-		t.Errorf("failed to unmarshell the YAML file - %v", err)
+		t.Errorf("failed to unmarshal the YAML file - %v", err)
 	}
 
 	assert.NotEmpty(t, result)
@@ -530,6 +530,9 @@ func TestCheckExpiredEncryptionCertValidityDuringContractEncryption(t *testing.T
 // Testcase to gzip the initdata string
 func TestGzipInitData(t *testing.T) {
 	compressedData, err := GzipInitData(sampleStringData)
+	if err != nil {
+		t.Fatalf("failed to gzip initdata: %v", err)
+	}
 
 	reader, err := gzip.NewReader(bytes.NewReader(compressedData))
 	if err != nil {

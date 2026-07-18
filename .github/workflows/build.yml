@@ -1,4 +1,19 @@
-name: contract-go CI
+# Copyright (c) 2026 IBM Corp.
+# All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Contract Go - Build & Test
 
 on:
   push:
@@ -6,85 +21,29 @@ on:
       - main
 
   pull_request:
-
-  workflow_dispatch:
-    inputs:
-      dryRun:
-        description: 'Dry-Run'
-        default: 'true'
-        required: false
+    branches:
+      - main
 
 env:
-  # Currently no way to detect automatically
-  DEFAULT_BRANCH: main
-  GO_VERSION: 1.26.1 # renovate: datasource=golang-version depName=golang
-  NODE_VERSION: 25.5.0
+  GO_VERSION: 1.26.4 # renovate: datasource=golang-version depName=golang
 
 jobs:
-  commit-lint:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 2
-
-      - name: Validate commit message
-        run: |
-          # Conventional commit regex pattern
-          # Matches: type(optional-scope): description
-          # Valid types from .releaserc: feat, fix, docs, perf, revert, chore, refactor, test, build, ci
-          pattern='^(feat|fix|docs|perf|revert|chore|refactor|test|build|ci)(\([a-z0-9-]+\))?!?: .{1,}'
-
-          # Get the latest commit message (HEAD)
-          commit_sha="${{ github.event.pull_request.head.sha }}"
-          commit_message=$(git log --format=%B -n 1 $commit_sha | head -n 1)
-          short_sha=$(echo $commit_sha | cut -c1-7)
-
-          echo "Checking commit: $short_sha"
-          echo "Message: $commit_message"
-          echo ""
-
-          if ! echo "$commit_message" | grep -qE "$pattern"; then
-            echo "Invalid commit message format!"
-            echo ""
-            echo "Commit: $short_sha"
-            echo "Message: $commit_message"
-            echo ""
-            echo "────────────────────────────────────────"
-            echo "Valid format: <type>(<optional-scope>): <description>"
-            echo ""
-            echo "Allowed types: feat, fix, docs, perf, revert, chore, refactor, test, build, ci"
-            echo ""
-            echo "Examples:"
-            echo "  feat: add new feature"
-            echo "  fix(api): resolve null pointer exception"
-            echo "  docs: update README"
-            echo "  chore!: breaking change in build process"
-            exit 1
-          fi
-
-          echo "Commit message is valid!"
-
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      # full checkout for semantic-release
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
       - name: Set up Go
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
           go-version: ${{ env.GO_VERSION }}
 
       - name: Cache Go modules
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cache/go-build
@@ -97,103 +56,3 @@ jobs:
         run: |
           make tidy
           make test
-
-  release:
-    needs: build
-    if: github.repository == 'ibm-hyper-protect/contract-go' && github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Set up Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: ${{ env.GO_VERSION }}
-
-      - name: Cache Node modules
-        uses: actions/cache@v5
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - name: Install cyclonedx-gomod
-        run: |
-          go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@latest
-          echo "$HOME/go/bin" >> $GITHUB_PATH
-
-      - name: Determine dry run mode
-        id: dry_run
-        run: |
-          dry_run=true
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.dryRun }}" != "true" ]]; then
-            dry_run=false
-          elif [[ "${{ github.ref }}" == "refs/heads/${{ env.DEFAULT_BRANCH }}" ]]; then
-            dry_run=false
-          elif [[ "${{ github.ref }}" =~ ^refs/heads/v[0-9]+(\.[0-9]+)?$ ]]; then
-            dry_run=false
-          fi
-          echo "dry_run=$dry_run" >> $GITHUB_OUTPUT
-
-      - name: Semantic Release
-        run: |
-          if [[ "${{ steps.dry_run.outputs.dry_run }}" == "true" ]]; then
-            npx -p @semantic-release/changelog \
-                -p @semantic-release/git \
-                -p @semantic-release/github \
-                -p conventional-changelog-conventionalcommits \
-                -p semantic-release \
-                semantic-release --dry-run
-          else
-            npx -p @semantic-release/changelog \
-                -p @semantic-release/git \
-                -p @semantic-release/github \
-                -p conventional-changelog-conventionalcommits \
-                -p semantic-release \
-                semantic-release
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Get latest Git tag
-        id: get_tag
-        if: steps.dry_run.outputs.dry_run == 'false'
-        run: |
-          tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          if [ -z "$tag" ]; then
-            echo "No tags found in repository"
-            exit 1
-          fi
-          echo "tag=$tag" >> $GITHUB_OUTPUT
-
-      - name: Generate SBOM
-        id: generate_sbom
-        if: steps.dry_run.outputs.dry_run == 'false'
-        run: |
-          sbom_file="contract-go-${{ steps.get_tag.outputs.tag }}.sbom.json"
-          cyclonedx-gomod mod -licenses -json -output "$sbom_file"
-          echo "sbom_file=$sbom_file" >> $GITHUB_OUTPUT
-
-      - name: Upload SBOM to GitHub Release
-        if: steps.dry_run.outputs.dry_run == 'false'
-        uses: softprops/action-gh-release@v3
-        with:
-          files: ${{ steps.generate_sbom.outputs.sbom_file }}
-          tag_name: ${{ steps.get_tag.outputs.tag }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

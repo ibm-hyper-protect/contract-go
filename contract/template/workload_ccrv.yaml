@@ -1,0 +1,12 @@
+type: workload
+auths:
+  <registry url>:
+    password: <password>
+    username: <user name>
+play:
+  archive: <base64 TGZ of podman play support files>
+volumes:
+  <volume key>:
+    mount: "<data volume mount path>"
+    seed: "seed_value_with_minimum_15_characters"
+    filesystem: "ext4"

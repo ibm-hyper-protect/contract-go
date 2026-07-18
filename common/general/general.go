@@ -36,7 +36,7 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/santhosh-tekuri/jsonschema/v5"
+	"github.com/santhosh-tekuri/jsonschema/v6"
 	"gopkg.in/yaml.v3"
 
 	cert "github.com/ibm-hyper-protect/contract-go/v2/encryption"
@@ -113,7 +113,6 @@ func ExecCommand(commandName, stdinInput string, args ...string) (string, error)
 		if err != nil {
 			return "", err
 		}
-		defer stdinPipe.Close()
 
 		go func() {
 			defer stdinPipe.Close()
@@ -717,12 +716,12 @@ func VerifyContractWithSchema(contract, version, section string) error {
 
 // validateCompleteContract validates a complete contract with both workload and env sections.
 func validateCompleteContract(contractMap map[string]any, schemaJSON string) error {
-	sch, err := jsonschema.CompileString("schema.json", schemaJSON)
+	compiled, err := compileSchema(schemaJSON)
 	if err != nil {
-		return fmt.Errorf("failed to parse schema - %v", err)
+		return err
 	}
 
-	if err := sch.Validate(contractMap); err != nil {
+	if err := compiled.Validate(contractMap); err != nil {
 		return fmt.Errorf("contract validation failed - %v", err)
 	}
 
@@ -750,7 +749,7 @@ func validateIndividualSection(contractMap map[string]any, schemaJSON string, se
 		return fmt.Errorf("failed to create wrapper schema - %v", err)
 	}
 
-	sch, err := jsonschema.CompileString("schema.json", string(wrapperBytes))
+	compiled, err := compileSchema(string(wrapperBytes))
 	if err != nil {
 		return fmt.Errorf("failed to compile %s schema - %v", section, err)
 	}
@@ -761,7 +760,7 @@ func validateIndividualSection(contractMap map[string]any, schemaJSON string, se
 		return fmt.Errorf("section '%s' not found in contract", section)
 	}
 
-	if err := sch.Validate(sectionData); err != nil {
+	if err := compiled.Validate(sectionData); err != nil {
 		return fmt.Errorf("%s section validation failed - %v", section, err)
 	}
 
@@ -988,16 +987,41 @@ func VerifyNetworkSchema(Network_Config_File string) error {
 	if err != nil {
 		return fmt.Errorf("Invalid schema file %s: ", err)
 	}
-	sch, err := jsonschema.CompileString("schema.json", schn.NetworkSchema)
+	compiled, err := compileSchema(schn.NetworkSchema)
 	if err != nil {
-		return fmt.Errorf("failed to parse schema - %v", err)
+		return err
 	}
 
-	if err := sch.Validate(data); err != nil {
+	if err := compiled.Validate(data); err != nil {
 		return fmt.Errorf("network schema verification failed - %v", err)
 	}
 
 	return nil
+}
+
+// compileSchema parses a JSON schema string and returns a compiled schema
+// ready for validation using the jsonschema v6 API.
+//
+// Parameters:
+//   - schemaStr: JSON schema string to compile
+//
+// Returns:
+//   - Compiled *jsonschema.Schema ready for validation
+//   - Error if parsing, resource registration, or compilation fails
+func compileSchema(schemaStr string) (*jsonschema.Schema, error) {
+	schemaDoc, err := jsonschema.UnmarshalJSON(strings.NewReader(schemaStr))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse schema - %v", err)
+	}
+	c := jsonschema.NewCompiler()
+	if err := c.AddResource("schema.json", schemaDoc); err != nil {
+		return nil, fmt.Errorf("failed to add schema resource - %v", err)
+	}
+	compiled, err := c.Compile("schema.json")
+	if err != nil {
+		return nil, fmt.Errorf("failed to compile schema - %v", err)
+	}
+	return compiled, nil
 }
 
 // yamlParse parses and unmarshals a YAML string into a map.

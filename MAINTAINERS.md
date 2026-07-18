@@ -1,3 +1,20 @@
+<!--
+Copyright (c) 2026 IBM Corp.
+All rights reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
 # Maintainers
 
 This document lists the maintainers of the `contract-go` project, their roles, and responsibilities.
@@ -7,6 +24,7 @@ This document lists the maintainers of the `contract-go` project, their roles, a
 | Name      | GitHub Handle | Role          | Email | Focus Areas |
 |-----------|---------------|---------------|-------|-------------|
 | Sashwat K | [@Sashwat-K](https://github.com/Sashwat-K) | Lead Maintainer | Sashwat.K@ibm.com | Overall project direction, releases, core features |
+| Dirk Herrendörfer | [@dherrend](https://github.com/dherrend) | Lead Maintainer | d.herrendoerfer@de.ibm.com | Overall project direction, releases, core features |
 | Vikas Sharma | [@vikas-sharma24](https://github.com/vikas-sharma24) | Maintainer | Vikas.Sharma24@ibm.com | Releases and core features |
 | Rohit Singh | [@Rohit-Singh43-1](https://github.com/Rohit-Singh43-1) | Maintainer | Rohit.Singh@ibm.com | Releases and core features |
 | Lokesh Puthalapattu | [@Lokesh-Puthalapattu](https://github.com/Lokesh-Puthalapattu) | Security Lead | lokesh.puthalapattu@ibm.com | Overall Security |
