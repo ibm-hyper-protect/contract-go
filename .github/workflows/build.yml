@@ -54,5 +54,6 @@ jobs:
 
       - name: Run Tests
         run: |
+          set -euo pipefail
           make tidy
           make test

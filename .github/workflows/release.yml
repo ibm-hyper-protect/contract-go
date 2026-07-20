@@ -16,9 +16,13 @@
 name: Contract Go - Release
 
 on:
-  push:
+  workflow_run:
+    workflows:
+      - "Contract Go - Build & Test"
     branches:
       - main
+    types:
+      - completed
 
   workflow_dispatch:
     inputs:
@@ -35,7 +39,10 @@ env:
 
 jobs:
   release:
-    if: github.repository == 'ibm-hyper-protect/contract-go'
+    if: |
+      github.repository == 'ibm-hyper-protect/contract-go' &&
+      (github.event_name == 'workflow_dispatch' ||
+       github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
