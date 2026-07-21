@@ -1621,13 +1621,13 @@ func main() {
 
 ### HpcrVerifyContract
 
-Validates a contract against the JSON schema for the specified Confidential Computing platform.
+Validates a contract against the JSON schema for the specified Confidential Computing platform. Supports validating a complete contract (both `workload` and `env` sections together) or an individual section independently — useful for multi-persona workflows where different teams author each section separately.
 
 **Package:** `github.com/ibm-hyper-protect/contract-go/v2/contract`
 
 **Signature:**
 ```go
-func HpcrVerifyContract(contract, version string) error
+func HpcrVerifyContract(contract, version, section string) error
 ```
 
 **Parameters:**
@@ -1636,6 +1636,15 @@ func HpcrVerifyContract(contract, version string) error
 |-----------|------|-------------------|-------------|
 | `contract` | `string` | Required | YAML contract to validate |
 | `version` | `string` | Optional | Platform: `"ccrt"`, `"ccrv"`, or `"ccco"` (defaults to `"ccrt"` if empty) |
+| `section` | `string` | Optional | Section to validate — use constants `SectionBoth` (default), `SectionWorkload`, or `SectionEnv` |
+
+**Section validation modes:**
+
+| Constant | Value | Input format | What is validated |
+|----------|-------|--------------|-------------------|
+| `contract.SectionBoth` | `""` | Complete contract with `workload:` and `env:` wrapper keys | Both sections together (default) |
+| `contract.SectionWorkload` | `"workload"` | Raw content starting with `type: workload` (no wrapper) | Workload section only |
+| `contract.SectionEnv` | `"env"` | Raw content starting with `type: env` (no wrapper) | Env section only |
 
 **Returns:**
 
@@ -1655,6 +1664,7 @@ import (
 )
 
 func main() {
+    // Mode 1: Validate a complete contract (both sections with wrapper keys)
     contractYAML := `
 env: |
   type: env
@@ -1667,14 +1677,37 @@ workload: |
   compose:
     archive: ZGF0YQ==
 `
-
-    // Validate for CCRT
-    err := contract.HpcrVerifyContract(contractYAML, "ccrt")
+    err := contract.HpcrVerifyContract(contractYAML, "ccrt", contract.SectionBoth)
     if err != nil {
         log.Fatalf("Contract validation failed: %v", err)
     }
-
     fmt.Println("Contract is valid!")
+
+    // Mode 2: Validate only the workload section (raw format, no wrapper key)
+    workloadOnly := `
+type: workload
+compose:
+  archive: ZGF0YQ==
+`
+    err = contract.HpcrVerifyContract(workloadOnly, "ccrt", contract.SectionWorkload)
+    if err != nil {
+        log.Fatalf("Workload section validation failed: %v", err)
+    }
+    fmt.Println("Workload section is valid!")
+
+    // Mode 3: Validate only the env section (raw format, no wrapper key)
+    envOnly := `
+type: env
+logging:
+  logRouter:
+    hostname: 5c2d6b69-c7f0-41bd-b69b-240695369d6e.ingress.us-south.logs.cloud.ibm.com
+    iamApiKey: ab00e3c09p1d4ff7fff9f04c12183413
+`
+    err = contract.HpcrVerifyContract(envOnly, "ccrt", contract.SectionEnv)
+    if err != nil {
+        log.Fatalf("Env section validation failed: %v", err)
+    }
+    fmt.Println("Env section is valid!")
 }
 ```
 
@@ -1689,6 +1722,9 @@ workload: |
 - `"error fetching contract schema"` - Invalid version/platform specified
 - `"failed to parse schema"` - Internal schema parsing error
 - `"contract validation failed"` - Contract does not match the required schema
+- `"invalid section"` - Unrecognised value passed for the `section` parameter
+- `"wrapper format detected"` - Wrapper keys (`env:` / `workload:`) used when individual section validation was requested
+- `"complete contract validation requires both 'env:' and 'workload:' sections"` - One section missing when using `SectionBoth`
 
 ---
 
