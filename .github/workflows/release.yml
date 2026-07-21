@@ -42,7 +42,8 @@ jobs:
     if: |
       github.repository == 'ibm-hyper-protect/contract-go' &&
       (github.event_name == 'workflow_dispatch' ||
-       github.event.workflow_run.conclusion == 'success')
+       (github.event.workflow_run.conclusion == 'success' &&
+        !contains(github.event.workflow_run.head_commit.message, '[skip ci]')))
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -130,6 +131,16 @@ jobs:
           sbom_file="contract-go-${{ steps.get_tag.outputs.tag }}.sbom.json"
           cyclonedx-gomod mod -licenses -json -output "$sbom_file"
           echo "sbom_file=$sbom_file" >> $GITHUB_OUTPUT
+
+      - name: Append contributors section to GitHub Release
+        if: steps.dry_run.outputs.dry_run == 'false'
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ steps.get_tag.outputs.tag }}
+          generate_release_notes: true
+          append_body: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload SBOM to GitHub Release
         if: steps.dry_run.outputs.dry_run == 'false'
