@@ -982,6 +982,7 @@ func fetchContractSchema(version string) (string, error) {
 // Returns:
 //   - nil if network configuration is valid
 //   - Error if YAML parsing or schema validation fails
+
 func VerifyNetworkSchema(Network_Config_File string) error {
 	data, err := yamlParse(Network_Config_File)
 	if err != nil {
