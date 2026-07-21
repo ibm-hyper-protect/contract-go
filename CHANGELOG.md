@@ -1,3 +1,5 @@
+## [2.37.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.36.0...v2.37.0) (2026-07-21)
+
 ## [2.36.0](https://github.com/ibm-hyper-protect/contract-go/compare/v2.35.0...v2.36.0) (2026-07-21)
 
 ### Features
