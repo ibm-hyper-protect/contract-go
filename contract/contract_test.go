@@ -124,7 +124,9 @@ func common(testType string) (string, string, string, string, string, error) {
 		return "", "", "", "", "", err
 	}
 
-	if testType == "TestHpcrVerifyContract" || testType == "TestHpcrVerifyContractAttestPubKey" {
+	if testType == "TestHpcrVerifyContract" || testType == "TestHpcrVerifyContractAttestPubKey" ||
+		testType == "TestHpcrVerifyContractBothSectionsWithWorkloadRequest" ||
+		testType == "TestHpcrVerifyContractBothSectionsWithEnvRequest" {
 		return contract, "", "", "", "", nil
 	} else if testType == "TestHpcrContractSignedEncrypted" {
 		return contract, privateKey, "", "", "", nil
@@ -231,7 +233,7 @@ func TestHpcrVerifyContract(t *testing.T) {
 		t.Errorf("failed to get contract - %v", err)
 	}
 
-	err = HpcrVerifyContract(contract, "")
+	err = HpcrVerifyContract(contract, "", SectionBoth)
 	if err != nil {
 		t.Errorf("failed to verify contract schema - %v", err)
 	}
@@ -244,7 +246,7 @@ func TestHpcrVerifyContractAttestPubKey(t *testing.T) {
 		t.Errorf("failed to get contract - %v", err)
 	}
 
-	err = HpcrVerifyContract(contract, "")
+	err = HpcrVerifyContract(contract, "", SectionBoth)
 	if err != nil {
 		t.Errorf("failed to verify contract schema - %v", err)
 	}
@@ -825,8 +827,125 @@ func TestHpcrContractSignedEncryptedContractExpiryInvalidPrivateKey(t *testing.T
 // Testcase to check if HpcrVerifyContract() handles invalid schema
 func TestHpcrVerifyContractInvalidSchema(t *testing.T) {
 	invalidContract := `workload: test`
-	err := HpcrVerifyContract(invalidContract, "")
+	err := HpcrVerifyContract(invalidContract, "", SectionBoth)
 	assert.Error(t, err)
+}
+
+// Testcase to verify individual workload section validation (positive case)
+func TestHpcrVerifyContractWorkloadOnly(t *testing.T) {
+	workloadContract, err := gen.ReadDataFromFile("../samples/workload.yaml")
+	if err != nil {
+		t.Errorf("failed to read workload contract - %v", err)
+	}
+
+	err = HpcrVerifyContract(workloadContract, "", SectionWorkload)
+	assert.NoError(t, err, "Workload-only validation should pass with raw format")
+}
+
+// Testcase to verify individual env section validation (positive case)
+func TestHpcrVerifyContractEnvOnly(t *testing.T) {
+	envContract, err := gen.ReadDataFromFile("../samples/env_only.yaml")
+	if err != nil {
+		t.Errorf("failed to read env contract - %v", err)
+	}
+
+	err = HpcrVerifyContract(envContract, "", SectionEnv)
+	assert.NoError(t, err, "Env-only validation should pass with raw format")
+}
+
+// Testcase to verify error when validating individual section with wrapper format
+func TestHpcrVerifyContractWorkloadWithWrapper(t *testing.T) {
+	// Contract with only workload wrapper
+	wrappedWorkload := `workload: |
+  type: workload
+  volumes:
+    test:
+      filesystem: ext4`
+
+	err := HpcrVerifyContract(wrappedWorkload, "", SectionWorkload)
+	assert.Error(t, err, "Should fail when wrapper format is used for individual section validation")
+	assert.Contains(t, err.Error(), "wrapper format detected", "Error should mention wrapper format")
+}
+
+// Testcase to verify error when validating individual section but contract has both sections
+func TestHpcrVerifyContractBothSectionsWithWorkloadRequest(t *testing.T) {
+	contract, _, _, _, _, err := common(t.Name())
+	if err != nil {
+		t.Errorf("failed to get contract - %v", err)
+	}
+
+	err = HpcrVerifyContract(contract, "", SectionWorkload)
+	assert.Error(t, err, "Should fail when contract has both sections but only workload is requested")
+	assert.Contains(t, err.Error(), "both env and workload sections", "Error should mention both sections")
+}
+
+// Testcase to verify error when validating individual section but contract has both sections
+func TestHpcrVerifyContractBothSectionsWithEnvRequest(t *testing.T) {
+	contract, _, _, _, _, err := common(t.Name())
+	if err != nil {
+		t.Errorf("failed to get contract - %v", err)
+	}
+
+	err = HpcrVerifyContract(contract, "", SectionEnv)
+	assert.Error(t, err, "Should fail when contract has both sections but only env is requested")
+	assert.Contains(t, err.Error(), "both env and workload sections", "Error should mention both sections")
+}
+
+// Testcase to verify error when section type mismatch
+func TestHpcrVerifyContractSectionTypeMismatch(t *testing.T) {
+	// Workload content but requesting env validation
+	workloadContract, err := gen.ReadDataFromFile("../samples/workload.yaml")
+	if err != nil {
+		t.Errorf("failed to read workload contract - %v", err)
+	}
+
+	err = HpcrVerifyContract(workloadContract, "", SectionEnv)
+	assert.Error(t, err, "Should fail when section type doesn't match requested section")
+	assert.Contains(t, err.Error(), "type mismatch", "Error should mention type mismatch")
+}
+
+// Testcase to verify error when complete contract validation but only one section provided
+func TestHpcrVerifyContractCompleteValidationWithOnlyWorkload(t *testing.T) {
+	wrappedWorkload := `workload: |
+  type: workload
+  volumes:
+    test:
+      filesystem: ext4`
+
+	err := HpcrVerifyContract(wrappedWorkload, "", SectionBoth)
+	assert.Error(t, err, "Should fail when complete validation requested but only one section provided")
+	assert.Contains(t, err.Error(), "both 'env:' and 'workload:' sections", "Error should mention both sections required")
+}
+
+// Testcase to verify error when an unrecognised section value is passed to HpcrVerifyContract()
+func TestHpcrVerifyContractInvalidSection(t *testing.T) {
+	contract, err := gen.ReadDataFromFile(simpleContractPath)
+	if err != nil {
+		t.Errorf("failed to read contract - %v", err)
+	}
+
+	err = HpcrVerifyContract(contract, "", "invalid-section")
+	assert.Error(t, err, "Should fail when an unrecognised section value is passed")
+	assert.Contains(t, err.Error(), "invalid section", "Error should mention invalid section")
+}
+
+// Testcase to verify HpcrContractSignedEncryptedContractExpiry() calls schema validation
+// and fails when the contract does not satisfy the complete contract (SectionBoth) requirement
+func TestHpcrContractSignedEncryptedContractExpirySchemaVerification(t *testing.T) {
+	// Contract missing the env section — should fail SectionBoth schema check inside the function
+	incompleteContract := `workload: |
+  type: workload
+  compose:
+    archive: kdsbfoijdfojsnbo`
+
+	csrParams, err := json.Marshal(sampleCeCSRPems)
+	if err != nil {
+		t.Errorf("failed to marshal CSR parameters - %v", err)
+	}
+
+	_, _, _, err = HpcrContractSignedEncryptedContractExpiry(incompleteContract, sampleConfidentialComputingOsVersion, "", "", "privateKey", "", "caCert", "caKey", string(csrParams), "", sampleContractExpiryDays)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "schema verification failed", "Error should indicate schema verification failure")
 }
 
 // Testcase to check if HpcrContractTemplate() returns correct workload template per OS.

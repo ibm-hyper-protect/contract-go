@@ -90,7 +90,7 @@ Learn more:
   - Create signed and encrypted & signed contracts
   - Support contract expiry with CSR (Certificate Signing Request)
   - Load built-in workload and env contract templates
-  - Validate contract schemas
+  - Validate contract schemas (complete contract or individual workload/env sections independently)
   - Decrypt encrypted text in Hyper Protect format
   - Password-protected private key support for decrypting attestation records and generate signed contracts
   - **Specify certificate version** for encryption operations (optional certVersion parameter)
@@ -246,6 +246,43 @@ func main() {
     fmt.Printf("Combined CCCO Baremetal Contract Template:\n%s\n", bmtlCombinedTemplate)
 }
 ```
+
+### Validate Contract Schema
+
+Use `HpcrVerifyContract` to validate a contract YAML against the platform-specific JSON schema before signing and encrypting. The optional third parameter controls which section(s) to validate — use `contract.SectionBoth` (default) for a complete contract, or `contract.SectionWorkload` / `contract.SectionEnv` to validate each section independently.
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+)
+
+func main() {
+    contractYAML := `
+env: |
+  type: env
+  logging:
+    logRouter:
+      hostname: 5c2d6b69-c7f0-41bd-b69b-240695369d6e.ingress.us-south.logs.cloud.ibm.com
+      iamApiKey: ab00e3c09p1d4ff7fff9f04c12183413
+workload: |
+  type: workload
+  compose:
+    archive: your-archive
+`
+    err := contract.HpcrVerifyContract(contractYAML, "ccrt", contract.SectionBoth)
+    if err != nil {
+        log.Fatalf("Contract validation failed: %v", err)
+    }
+    fmt.Println("Contract is valid")
+}
+```
+
+> For individual section validation and full parameter reference, see [docs/README.md](docs/README.md#hpcrverifycontract).
 
 ### Generate a Signed and Encrypted Contract
 
@@ -535,9 +572,10 @@ Comprehensive documentation is available at:
 
 The [`samples/`](samples/) directory contains example configurations:
 
-- [Simple Contract](samples/simple_contract.yaml)
+- [Complete Contract](samples/simple_contract.yaml) — complete contract with `workload:` and `env:` wrapper keys (use with `SectionBoth`)
+- [Env](samples/env_only.yaml) — raw env section starting with `type: env` (use with `SectionEnv`)
+- [Workload](samples/workload.yaml) — raw workload section starting with `type: workload` (use with `SectionWorkload`)
 - [Contract with Attestation Public Key](samples/attest_pub_key_contract.yaml)
-- [Workload Configuration](samples/workload.yaml)
 - [Encrypted Contract](samples/sign/contract.enc.yaml)
 - [CCCO Signed & Encrypted Contract](samples/ccco/signed-encrypt-ccco.yaml)
 - [Docker Compose](samples/tgz/docker-compose.yaml)
