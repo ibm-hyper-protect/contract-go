@@ -88,8 +88,6 @@ body:
         - Security enhancement
         - Platform support
         - Testing/CI improvement
-        - Feature development
-        - Maintenance
         - Other
     validations:
       required: true
