@@ -32,6 +32,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sort"
+	"regexp"
 	"strings"
 	"time"
 
@@ -58,6 +59,10 @@ type Contract struct {
 	Workload          string `yaml:"workload"`
 	WorkloadSignature string `yaml:"envWorkloadSignature"`
 }
+
+// allOfDefsRefRe matches any $ref of the form #/allOf/N/$defs/ so they can be
+// rewritten to #/$defs/ after all definitions are merged into one place.
+var allOfDefsRefRe = regexp.MustCompile(`#/allOf/[0-9]+/\$defs/`)
 
 // CheckIfEmpty checks if any of the provided values are empty strings.
 // It iterates through all provided arguments and returns true if at least one value is an empty string.
@@ -767,9 +772,10 @@ func validateIndividualSection(contractMap map[string]any, schemaJSON string, se
 	return nil
 }
 
-// mergeSchemaDefinitions merges schema definitions from root $defs and allOf[1]/$defs.
-// The JSON schema has definitions in two locations, and we need them all in one place.
-// It also fixes references from #/allOf/1/$defs/... to #/$defs/...
+// mergeSchemaDefinitions merges schema definitions from root $defs and all allOf[i]/$defs entries.
+// The JSON schema spreads definitions across multiple allOf entries; we need them all in one place.
+// It also fixes references from #/allOf/N/$defs/... to #/$defs/...
+// Later allOf entries take precedence over earlier ones for the same key.
 func mergeSchemaDefinitions(schemaMap map[string]interface{}) map[string]interface{} {
 	mergedDefs := make(map[string]interface{})
 
@@ -780,14 +786,20 @@ func mergeSchemaDefinitions(schemaMap map[string]interface{}) map[string]interfa
 		}
 	}
 
-	// Copy definitions from allOf[1]/$defs and fix their internal references
-	if allOf, ok := schemaMap["allOf"].([]interface{}); ok && len(allOf) > 1 {
-		if allOfItem, ok := allOf[1].(map[string]interface{}); ok {
-			if allOfDefs, ok := allOfItem["$defs"].(map[string]interface{}); ok {
-				for k, v := range allOfDefs {
-					// Fix references so they point to the merged $defs location
-					mergedDefs[k] = fixSchemaReferences(v)
-				}
+	// Copy definitions from every allOf[i]/$defs and fix their internal references
+	if allOf, ok := schemaMap["allOf"].([]interface{}); ok {
+		for _, item := range allOf {
+			allOfItem, ok := item.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			allOfDefs, ok := allOfItem["$defs"].(map[string]interface{})
+			if !ok {
+				continue
+			}
+			for k, v := range allOfDefs {
+				// Fix references so they point to the merged $defs location
+				mergedDefs[k] = fixSchemaReferences(v)
 			}
 		}
 	}
@@ -804,8 +816,8 @@ func createSectionWrapperSchema(section string, definitions map[string]interface
 	}
 }
 
-// fixSchemaReferences recursively updates schema references from #/allOf/1/$defs/... to #/$defs/...
-// This is needed because we're merging definitions from allOf[1]/$defs into the root $defs.
+// fixSchemaReferences recursively updates schema references from #/allOf/N/$defs/... to #/$defs/...
+// This is needed because we're merging definitions from all allOf[i]/$defs into the root $defs.
 func fixSchemaReferences(v interface{}) interface{} {
 	switch val := v.(type) {
 	case map[string]interface{}:
@@ -814,7 +826,7 @@ func fixSchemaReferences(v interface{}) interface{} {
 			if k == "$ref" {
 				// Fix the reference path
 				if ref, ok := v.(string); ok {
-					result[k] = strings.Replace(ref, "#/allOf/1/$defs/", "#/$defs/", 1)
+					result[k] = allOfDefsRefRe.ReplaceAllLiteralString(ref, "#/$defs/")
 				} else {
 					result[k] = v
 				}
