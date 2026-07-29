@@ -19,6 +19,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -866,21 +867,41 @@ func TestSignContractWithEncryptedPrivateKeyNoPassword(t *testing.T) {
 	assert.Contains(t, err.Error(), "private key is encrypted but no password provided")
 }
 
-// countTempFiles returns the number of files whose name starts with
-// gen.TempFolderNamePrefix ("ccrt-") currently present in os.TempDir().
-func countTempFiles(t *testing.T) int {
+// snapshotTempFiles returns the set of ccrt-* file paths currently in os.TempDir().
+// Using a set of paths (rather than a count) makes cleanup checks immune to
+// other tests creating/deleting their own ccrt-* files concurrently.
+func snapshotTempFiles(t *testing.T) map[string]struct{} {
 	t.Helper()
 	entries, err := os.ReadDir(os.TempDir())
 	if err != nil {
 		t.Fatalf("failed to read temp dir: %v", err)
 	}
-	count := 0
+	snap := make(map[string]struct{})
 	for _, e := range entries {
 		if strings.HasPrefix(e.Name(), gen.TempFolderNamePrefix) {
-			count++
+			snap[filepath.Join(os.TempDir(), e.Name())] = struct{}{}
 		}
 	}
-	return count
+	return snap
+}
+
+// assertNoNewTempFiles fails the test if any ccrt-* path that did not exist
+// before the call still exists after it.
+func assertNoNewTempFiles(t *testing.T, before map[string]struct{}) {
+	t.Helper()
+	entries, err := os.ReadDir(os.TempDir())
+	if err != nil {
+		t.Fatalf("failed to read temp dir: %v", err)
+	}
+	for _, e := range entries {
+		if !strings.HasPrefix(e.Name(), gen.TempFolderNamePrefix) {
+			continue
+		}
+		path := filepath.Join(os.TempDir(), e.Name())
+		if _, existed := before[path]; !existed {
+			t.Errorf("temp file leaked: %s", path)
+		}
+	}
 }
 
 // --- GeneratePublicKey ---
@@ -892,18 +913,18 @@ func TestGeneratePublicKey_TempFileCleanedOnSuccess(t *testing.T) {
 		t.Fatalf("failed to read private key - %v", err)
 	}
 
-	before := countTempFiles(t)
+	before := snapshotTempFiles(t)
 	_, err = GeneratePublicKey(privateKey, "")
 	assert.NoError(t, err)
-	assert.Equal(t, before, countTempFiles(t), "temp file leaked after GeneratePublicKey success")
+	assertNoNewTempFiles(t, before)
 }
 
 // Testcase to verify GeneratePublicKey cleans up temp file on openssl error
 func TestGeneratePublicKey_TempFileCleanedOnError(t *testing.T) {
-	before := countTempFiles(t)
+	before := snapshotTempFiles(t)
 	_, err := GeneratePublicKey("invalid-private-key", "")
 	assert.Error(t, err)
-	assert.Equal(t, before, countTempFiles(t), "temp file leaked after GeneratePublicKey error")
+	assertNoNewTempFiles(t, before)
 }
 
 // --- EncryptPassword ---
@@ -915,36 +936,36 @@ func TestEncryptPassword_TempFileCleanedOnSuccess(t *testing.T) {
 		t.Fatalf("failed to get encryption certificate - %v", err)
 	}
 
-	before := countTempFiles(t)
+	before := snapshotTempFiles(t)
 	_, err = EncryptPassword("testpassword", encryptCertificate)
 	assert.NoError(t, err)
-	assert.Equal(t, before, countTempFiles(t), "temp file leaked after EncryptPassword success")
+	assertNoNewTempFiles(t, before)
 }
 
 // Testcase to verify EncryptPassword cleans up temp file on openssl error
 func TestEncryptPassword_TempFileCleanedOnError(t *testing.T) {
-	before := countTempFiles(t)
+	before := snapshotTempFiles(t)
 	_, err := EncryptPassword("testpassword", "invalid-certificate")
 	assert.Error(t, err)
-	assert.Equal(t, before, countTempFiles(t), "temp file leaked after EncryptPassword error")
+	assertNoNewTempFiles(t, before)
 }
 
 // --- EncryptString ---
 
 // Testcase to verify EncryptString cleans up temp file on success
 func TestEncryptString_TempFileCleanedOnSuccess(t *testing.T) {
-	before := countTempFiles(t)
+	before := snapshotTempFiles(t)
 	_, err := EncryptString("testpassword", "test data")
 	assert.NoError(t, err)
-	assert.Equal(t, before, countTempFiles(t), "temp file leaked after EncryptString success")
+	assertNoNewTempFiles(t, before)
 }
 
 // Testcase to verify EncryptString cleans up temp file on openssl error (empty password)
 func TestEncryptString_TempFileCleanedOnError(t *testing.T) {
-	before := countTempFiles(t)
+	before := snapshotTempFiles(t)
 	_, err := EncryptString("", "test data") // empty password triggers openssl failure
 	assert.Error(t, err)
-	assert.Equal(t, before, countTempFiles(t), "temp file leaked after EncryptString error")
+	assertNoNewTempFiles(t, before)
 }
 
 // --- CreateSigningCert (CSR params path) ---
@@ -969,10 +990,10 @@ func TestCreateSigningCert_TempFilesCleanedOnSuccess(t *testing.T) {
 	}
 	csrParamsJSON, _ := json.Marshal(csrParams)
 
-	before := countTempFiles(t)
+	before := snapshotTempFiles(t)
 	_, err = CreateSigningCert(privateKey, cacert, caKey, string(csrParamsJSON), "", sampleExpiryDays)
 	assert.NoError(t, err)
-	assert.Equal(t, before, countTempFiles(t), "temp files leaked after CreateSigningCert success")
+	assertNoNewTempFiles(t, before)
 }
 
 // Testcase to verify CreateSigningCert cleans up private-key temp file on JSON unmarshal error
@@ -990,10 +1011,10 @@ func TestCreateSigningCert_TempFileCleanedOnJSONError(t *testing.T) {
 		t.Fatalf("failed to read CA key - %v", err)
 	}
 
-	before := countTempFiles(t)
+	before := snapshotTempFiles(t)
 	_, err = CreateSigningCert(privateKey, cacert, caKey, "invalid-json", "", sampleExpiryDays)
 	assert.Error(t, err)
-	assert.Equal(t, before, countTempFiles(t), "temp file leaked after CreateSigningCert JSON error")
+	assertNoNewTempFiles(t, before)
 }
 
 // Testcase to verify CreateSigningCert cleans up all temp files on openssl error (invalid private key)
@@ -1012,10 +1033,10 @@ func TestCreateSigningCert_TempFilesCleanedOnOpensslError(t *testing.T) {
 	}
 	csrParamsJSON, _ := json.Marshal(csrParams)
 
-	before := countTempFiles(t)
+	before := snapshotTempFiles(t)
 	_, err = CreateSigningCert("invalid-private-key", cacert, caKey, string(csrParamsJSON), "", sampleExpiryDays)
 	assert.Error(t, err)
-	assert.Equal(t, before, countTempFiles(t), "temp files leaked after CreateSigningCert openssl error")
+	assertNoNewTempFiles(t, before)
 }
 
 // Testcase to verify CreateSigningCert cleans up all temp files on success (CSR PEM path)
@@ -1037,10 +1058,10 @@ func TestCreateSigningCert_TempFilesCleanedOnSuccessCsrPem(t *testing.T) {
 		t.Fatalf("failed to read CSR file - %v", err)
 	}
 
-	before := countTempFiles(t)
+	before := snapshotTempFiles(t)
 	_, err = CreateSigningCert(privateKey, cacert, caKey, "", csr, sampleExpiryDays)
 	assert.NoError(t, err)
-	assert.Equal(t, before, countTempFiles(t), "temp files leaked after CreateSigningCert (CSR PEM) success")
+	assertNoNewTempFiles(t, before)
 }
 
 // Testcase to verify CreateSigningCert cleans up temp files when CreateCert fails (invalid CA key, CSR PEM path)
@@ -1058,10 +1079,10 @@ func TestCreateSigningCert_TempFilesCleanedOnCreateCertError(t *testing.T) {
 		t.Fatalf("failed to read CSR file - %v", err)
 	}
 
-	before := countTempFiles(t)
+	before := snapshotTempFiles(t)
 	_, err = CreateSigningCert(privateKey, cacert, "invalid-ca-key", "", csr, sampleExpiryDays)
 	assert.Error(t, err)
-	assert.Equal(t, before, countTempFiles(t), "temp files leaked after CreateSigningCert CreateCert error")
+	assertNoNewTempFiles(t, before)
 }
 
 // --- SignContract ---
@@ -1073,18 +1094,18 @@ func TestSignContract_TempFileCleanedOnSuccess(t *testing.T) {
 		t.Fatalf("failed to read private key - %v", err)
 	}
 
-	before := countTempFiles(t)
+	before := snapshotTempFiles(t)
 	_, err = SignContract("test-workload", "test-env", privateKey, "")
 	assert.NoError(t, err)
-	assert.Equal(t, before, countTempFiles(t), "temp file leaked after SignContract success")
+	assertNoNewTempFiles(t, before)
 }
 
 // Testcase to verify SignContract cleans up temp file on openssl error
 func TestSignContract_TempFileCleanedOnError(t *testing.T) {
-	before := countTempFiles(t)
+	before := snapshotTempFiles(t)
 	_, err := SignContract("test-workload", "test-env", "invalid-private-key", "")
 	assert.Error(t, err)
-	assert.Equal(t, before, countTempFiles(t), "temp file leaked after SignContract error")
+	assertNoNewTempFiles(t, before)
 }
 
 // --- ExtractPublicKeyFromCert ---
@@ -1096,18 +1117,18 @@ func TestExtractPublicKeyFromCert_TempFileCleanedOnSuccess(t *testing.T) {
 		t.Fatalf("failed to read CA cert - %v", err)
 	}
 
-	before := countTempFiles(t)
+	before := snapshotTempFiles(t)
 	_, err = ExtractPublicKeyFromCert(cacert)
 	assert.NoError(t, err)
-	assert.Equal(t, before, countTempFiles(t), "temp file leaked after ExtractPublicKeyFromCert success")
+	assertNoNewTempFiles(t, before)
 }
 
 // Testcase to verify ExtractPublicKeyFromCert cleans up temp file on openssl error
 func TestExtractPublicKeyFromCert_TempFileCleanedOnError(t *testing.T) {
-	before := countTempFiles(t)
+	before := snapshotTempFiles(t)
 	_, err := ExtractPublicKeyFromCert("invalid-certificate")
 	assert.Error(t, err)
-	assert.Equal(t, before, countTempFiles(t), "temp file leaked after ExtractPublicKeyFromCert error")
+	assertNoNewTempFiles(t, before)
 }
 
 // --- VerifySignature ---
@@ -1136,10 +1157,10 @@ func TestVerifySignature_TempFilesCleanedOnSuccess(t *testing.T) {
 		t.Fatalf("failed to generate public key - %v", err)
 	}
 
-	before := countTempFiles(t)
+	before := snapshotTempFiles(t)
 	err = VerifySignature(testData, signature, publicKey)
 	assert.NoError(t, err)
-	assert.Equal(t, before, countTempFiles(t), "temp files leaked after VerifySignature success")
+	assertNoNewTempFiles(t, before)
 }
 
 // Testcase to verify VerifySignature cleans up all three temp files on verification failure
@@ -1154,8 +1175,8 @@ func TestVerifySignature_TempFilesCleanedOnError(t *testing.T) {
 		t.Fatalf("failed to generate public key - %v", err)
 	}
 
-	before := countTempFiles(t)
+	before := snapshotTempFiles(t)
 	err = VerifySignature("test data", "invalid-signature", publicKey)
 	assert.Error(t, err)
-	assert.Equal(t, before, countTempFiles(t), "temp files leaked after VerifySignature error")
+	assertNoNewTempFiles(t, before)
 }
