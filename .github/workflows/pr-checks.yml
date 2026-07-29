@@ -27,18 +27,20 @@ jobs:
       contents: read
     steps:
       - name: Validate branch name
+        env:
+          BRANCH: ${{ github.head_ref }}
+          ACTOR: ${{ github.actor }}
         run: |
           # Renovate and Dependabot manage their own branch naming — exempt both
-          if [[ "${{ github.actor }}" == "renovate[bot]" || "${{ github.actor }}" == "dependabot[bot]" ]]; then
-            echo "Actor is ${{ github.actor }} — skipping branch name check."
+          if [[ "$ACTOR" == "renovate[bot]" || "$ACTOR" == "dependabot[bot]" ]]; then
+            echo "Actor is $ACTOR — skipping branch name check."
             exit 0
           fi
 
-          BRANCH="${{ github.head_ref }}"
           pattern='^(Feature|Fix|Docs|Refactor|Performance|Test|Chore|CI)/[a-zA-Z0-9._/-]+$'
 
           if ! echo "$BRANCH" | grep -qE "$pattern"; then
-            echo "Invalid branch name: '$BRANCH'"
+            echo "Invalid branch name: '$BRANCH'"  # safe — $BRANCH is an env var, not inline expression
             echo ""
             echo "Branch names must follow the format: <Type>/<name>"
             echo ""
@@ -65,14 +67,18 @@ jobs:
       contents: read
     steps:
       - name: Check for force push
+        env:
+          ACTOR: ${{ github.actor }}
+          BEFORE: ${{ github.event.before }}
+          FORCED: ${{ github.event.forced }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
           # Renovate and Dependabot manage their own branches — exempt both
-          if [[ "${{ github.actor }}" == "renovate[bot]" || "${{ github.actor }}" == "dependabot[bot]" ]]; then
-            echo "Actor is ${{ github.actor }} — skipping force push check."
+          if [[ "$ACTOR" == "renovate[bot]" || "$ACTOR" == "dependabot[bot]" ]]; then
+            echo "Actor is $ACTOR — skipping force push check."
             exit 0
           fi
 
-          BEFORE="${{ github.event.before }}"
           ZERO_SHA="0000000000000000000000000000000000000000"
 
           if [ "$BEFORE" = "$ZERO_SHA" ]; then
@@ -80,8 +86,8 @@ jobs:
             exit 0
           fi
 
-          if [ "${{ github.event.forced }}" = "true" ]; then
-            echo "FORCE PUSH DETECTED on branch: ${{ github.head_ref }}"
+          if [ "$FORCED" = "true" ]; then
+            echo "FORCE PUSH DETECTED on branch: $HEAD_REF"
             echo "Force pushes are not allowed. Please rebase and push normally."
             exit 1
           fi
@@ -102,10 +108,14 @@ jobs:
       - name: Validate PR title and latest branch commit
         env:
           GH_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          GH_REPO: ${{ github.repository }}
         run: |
           # Renovate and Dependabot generate conventional-commit titles via dependabot.yml/renovate.json
-          if [[ "${{ github.actor }}" == "renovate[bot]" || "${{ github.actor }}" == "dependabot[bot]" ]]; then
-            echo "Actor is ${{ github.actor }} — skipping commit-lint."
+          if [[ "$ACTOR" == "renovate[bot]" || "$ACTOR" == "dependabot[bot]" ]]; then
+            echo "Actor is $ACTOR — skipping commit-lint."
             exit 0
           fi
 
@@ -129,20 +139,18 @@ jobs:
             fi
           }
 
-          pr_number="${{ github.event.pull_request.number }}"
-
           # 1. Validate the PR title — this becomes the squash commit message on main
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Checking PR title (becomes the squash commit message on main)"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          pr_title=$(gh api repos/${{ github.repository }}/pulls/${pr_number} --jq '.title')
-          check_message "PR #${pr_number} title" "$pr_title"
+          pr_title=$(gh api "repos/${GH_REPO}/pulls/${PR_NUMBER}" --jq '.title')
+          check_message "PR #${PR_NUMBER} title" "$pr_title"
 
           # 2. Validate only the latest commit on the PR branch
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "Checking latest branch commit"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          head_sha="${{ github.event.pull_request.head.sha }}"
+          head_sha="$HEAD_SHA"
           head_msg=$(git log --format=%s -n 1 "$head_sha")
           check_message "commit ${head_sha:0:7} (HEAD)" "$head_msg"
 
@@ -175,18 +183,21 @@ jobs:
       - name: Verify latest commit is signed
         env:
           GH_TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          COMMIT: ${{ github.event.pull_request.head.sha }}
+          GH_REPO: ${{ github.repository }}
         run: |
           # Renovate and Dependabot commits are signed by GitHub — skip user signature check
-          if [[ "${{ github.actor }}" == "renovate[bot]" || "${{ github.actor }}" == "dependabot[bot]" ]]; then
-            echo "Actor is ${{ github.actor }} — skipping signature check."
+          if [[ "$ACTOR" == "renovate[bot]" || "$ACTOR" == "dependabot[bot]" ]]; then
+            echo "Actor is $ACTOR — skipping signature check."
             exit 0
           fi
 
           echo "Verifying commit signature (latest commit only)"
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo ""
-          echo "Event: Pull Request #${{ github.event.pull_request.number }}"
-          COMMIT="${{ github.event.pull_request.head.sha }}"
+          echo "Event: Pull Request #${PR_NUMBER}"
 
           SHORT_SHA=$(echo $COMMIT | cut -c1-7)
           COMMIT_MSG=$(git log --format=%s -n 1 $COMMIT)
@@ -197,7 +208,7 @@ jobs:
           echo "   Message: $COMMIT_MSG"
           echo ""
 
-          VERIFICATION=$(gh api repos/${{ github.repository }}/commits/$COMMIT --jq '.commit.verification')
+          VERIFICATION=$(gh api "repos/${GH_REPO}/commits/${COMMIT}" --jq '.commit.verification')
           VERIFIED=$(echo "$VERIFICATION" | jq -r '.verified')
           REASON=$(echo "$VERIFICATION" | jq -r '.reason')
 
