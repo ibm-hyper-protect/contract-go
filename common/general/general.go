@@ -31,8 +31,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sort"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -125,13 +125,18 @@ func ExecCommand(commandName, stdinInput string, args ...string) (string, error)
 		}()
 	}
 
-	// Buffer to capture the output from the command.
-	var out bytes.Buffer
+	// Buffer to capture stdout and stderr separately.
+	var out, stderr bytes.Buffer
 	cmd.Stdout = &out
+	cmd.Stderr = &stderr
 
 	// Run the command.
 	err := cmd.Run()
 	if err != nil {
+		msg := strings.TrimSpace(stderr.String())
+		if msg != "" {
+			return "", fmt.Errorf("%w - %s", err, msg)
+		}
 		return "", err
 	}
 
