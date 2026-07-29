@@ -66,6 +66,7 @@ func GeneratePublicKey(privateKey, password string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
+	defer gen.RemoveTempFile(privateKeyPath)
 
 	args := []string{"rsa", "-in", privateKeyPath}
 	args = gen.AppendPasswordArgs(args, password)
@@ -120,15 +121,11 @@ func EncryptPassword(password, cert string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
+	defer gen.RemoveTempFile(encryptCertPath)
 
 	result, err := gen.ExecCommand(gen.GetOpenSSLPath(), password, "pkeyutl", "-encrypt", "-inkey", encryptCertPath, "-certin", "-pkeyopt", "rsa_padding_mode:pkcs1")
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
-	}
-
-	err = gen.RemoveTempFile(encryptCertPath)
-	if err != nil {
-		return "", fmt.Errorf("failed to remove file - %v", err)
 	}
 
 	return gen.EncodeToBase64([]byte(result)), nil
@@ -168,15 +165,11 @@ func EncryptString(password, section string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
+	defer gen.RemoveTempFile(contractPath)
 
 	result, err := gen.ExecCommand(gen.GetOpenSSLPath(), password, "enc", "-aes-256-cbc", "-pbkdf2", "-pass", "stdin", "-in", contractPath)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
-	}
-
-	err = gen.RemoveTempFile(contractPath)
-	if err != nil {
-		return "", fmt.Errorf("failed to remove temp file - %v", err)
 	}
 
 	return gen.EncodeToBase64([]byte(result)), nil
@@ -228,6 +221,7 @@ func CreateSigningCert(privateKey, cacert, cakey, csrData, csrPemData string, ex
 		if err != nil {
 			return "", fmt.Errorf("failed to create temp file - %v", err)
 		}
+		defer gen.RemoveTempFile(privateKeyPath)
 
 		var csrDataMap map[string]interface{}
 		err = json.Unmarshal([]byte(csrData), &csrDataMap)
@@ -242,11 +236,6 @@ func CreateSigningCert(privateKey, cacert, cakey, csrData, csrPemData string, ex
 			return "", fmt.Errorf("failed to execute openssl command - %v", err)
 		}
 
-		err = gen.RemoveTempFile(privateKeyPath)
-		if err != nil {
-			return "", fmt.Errorf("failed to remove temp file - %v", err)
-		}
-
 	} else {
 		csr = csrPemData
 	}
@@ -255,26 +244,23 @@ func CreateSigningCert(privateKey, cacert, cakey, csrData, csrPemData string, ex
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
+	defer gen.RemoveTempFile(csrPath)
 
 	caCertPath, err := gen.CreateTempFile(cacert)
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
+	defer gen.RemoveTempFile(caCertPath)
+
 	caKeyPath, err := gen.CreateTempFile(cakey)
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
+	defer gen.RemoveTempFile(caKeyPath)
 
 	signingCert, err := CreateCert(csrPath, caCertPath, caKeyPath, expiryDays)
 	if err != nil {
 		return "", fmt.Errorf("failed to create signing certificate - %v", err)
-	}
-
-	for _, path := range []string{csrPath, caCertPath, caKeyPath} {
-		err := gen.RemoveTempFile(path)
-		if err != nil {
-			return "", fmt.Errorf("failed to remove temp file - %v", err)
-		}
 	}
 
 	return gen.EncodeToBase64([]byte(signingCert)), nil
@@ -293,6 +279,10 @@ func CreateSigningCert(privateKey, cacert, cakey, csrData, csrPemData string, ex
 //   - Signed certificate in PEM format
 //   - Error if OpenSSL execution fails or certificate generation fails
 func CreateCert(csrPath, caCertPath, caKeyPath string, expiryDays int) (string, error) {
+	// -CAcreateserial writes <caCertPath>.srl alongside the CA cert file.
+	// Defer its removal — it is the only file CreateCert itself causes to be created.
+	defer gen.RemoveTempFile(caCertPath + ".srl")
+
 	signingCert, err := gen.ExecCommand(gen.GetOpenSSLPath(), "", "x509", "-req", "-in", csrPath, "-CA", caCertPath, "-CAkey", caKeyPath, "-CAcreateserial", "-days", fmt.Sprintf("%d", expiryDays))
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
@@ -330,6 +320,7 @@ func SignContract(encryptedWorkload, encryptedEnv, privateKey, password string) 
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
+	defer gen.RemoveTempFile(privateKeyPath)
 
 	args := []string{"dgst", "-sha256", "-sign", privateKeyPath}
 	args = gen.AppendPasswordArgs(args, password)
@@ -337,11 +328,6 @@ func SignContract(encryptedWorkload, encryptedEnv, privateKey, password string) 
 	workloadEnvSignature, err := gen.ExecCommand(gen.GetOpenSSLPath(), combinedContract, args...)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
-	}
-
-	err = gen.RemoveTempFile(privateKeyPath)
-	if err != nil {
-		return "", fmt.Errorf("failed to remove temp file - %v", err)
 	}
 
 	return gen.EncodeToBase64([]byte(workloadEnvSignature)), nil
@@ -398,15 +384,11 @@ func ExtractPublicKeyFromCert(cert string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
+	defer gen.RemoveTempFile(certPath)
 
 	publicKey, err := gen.ExecCommand(gen.GetOpenSSLPath(), "", "x509", "-in", certPath, "-pubkey", "-noout")
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
-	}
-
-	err = gen.RemoveTempFile(certPath)
-	if err != nil {
-		return "", fmt.Errorf("failed to remove temp file - %v", err)
 	}
 
 	return publicKey, nil
@@ -434,27 +416,23 @@ func VerifySignature(data string, signature string, publicKey string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create temp file for data - %v", err)
 	}
+	defer gen.RemoveTempFile(dataPath)
 
 	signaturePath, err := gen.CreateTempBinaryFile([]byte(signature))
 	if err != nil {
 		return fmt.Errorf("failed to create temp file for signature - %v", err)
 	}
+	defer gen.RemoveTempFile(signaturePath)
 
 	publicKeyPath, err := gen.CreateTempFile(publicKey)
 	if err != nil {
 		return fmt.Errorf("failed to create temp file for public key - %v", err)
 	}
+	defer gen.RemoveTempFile(publicKeyPath)
 
 	_, err = gen.ExecCommand(gen.GetOpenSSLPath(), "", "dgst", "-sha256", "-verify", publicKeyPath, "-signature", signaturePath, dataPath)
 	if err != nil {
 		return err
-	}
-
-	for _, path := range []string{dataPath, signaturePath, publicKeyPath} {
-		err := gen.RemoveTempFile(path)
-		if err != nil {
-			return fmt.Errorf("failed to remove temp file - %v", err)
-		}
 	}
 
 	return nil
