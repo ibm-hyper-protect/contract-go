@@ -326,3 +326,35 @@ func TestDecryptPasswordWithEncryptedPrivateKeySuccess(t *testing.T) {
 	assert.NotEmpty(t, result)
 	assert.Contains(t, result, "Test encrypted data")
 }
+
+// Testcase to check if DecryptText() returns an error (not a panic) for a blob with no dots
+func TestDecryptTextNoDots(t *testing.T) {
+	_, err := DecryptText("nodotsinhere", "any-key", "")
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to parse encrypted data")
+}
+
+// Testcase to check if DecryptText() returns an error (not a panic) for a blob with only one dot (2 segments)
+func TestDecryptTextTwoSegments(t *testing.T) {
+	_, err := DecryptText("hyper-protect-basic.onlyone", "any-key", "")
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to parse encrypted data")
+}
+
+// Testcase to check if DecryptText() returns an error (not a panic) for an empty blob
+func TestDecryptTextEmptyBlob(t *testing.T) {
+	_, err := DecryptText("", "any-key", "")
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to parse encrypted data")
+}
+
+// Testcase to check if DecryptText() returns an error (not a panic) for a blob with too many dots
+func TestDecryptTextTooManySegments(t *testing.T) {
+	_, err := DecryptText("hyper-protect-basic.pass.workload.extra", "any-key", "")
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to parse encrypted data")
+}

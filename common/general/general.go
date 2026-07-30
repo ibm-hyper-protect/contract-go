@@ -546,8 +546,13 @@ func CertificateDownloader(url string) (string, error) {
 // Returns:
 //   - Encrypted password (Base64-encoded)
 //   - Encrypted workload (Base64-encoded)
-func GetEncryptPassWorkload(encryptedData string) (string, string) {
-	return strings.Split(encryptedData, ".")[1], strings.Split(encryptedData, ".")[2]
+//   - Error if encryptedData does not contain exactly 3 dot-separated segments
+func GetEncryptPassWorkload(encryptedData string) (string, string, error) {
+	parts := strings.Split(encryptedData, ".")
+	if len(parts) != 3 {
+		return "", "", fmt.Errorf("malformed encrypted data: expected exactly 3 dot-separated segments, got %d", len(parts))
+	}
+	return parts[1], parts[2], nil
 }
 
 // CheckUrlExists verifies if a URL is accessible by sending an HTTP HEAD request.

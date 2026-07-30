@@ -124,7 +124,10 @@ func DecryptWorkload(password, encryptedWorkload string) (string, error) {
 //   - Decrypted data
 //   - Error if OpenSSL is not found, Base64 decoding fails, or decryption fails
 func DecryptText(data, privateKey, password string) (string, error) {
-	encodedEncryptedPassword, encodedEncryptedData := gen.GetEncryptPassWorkload(data)
+	encodedEncryptedPassword, encodedEncryptedData, err := gen.GetEncryptPassWorkload(data)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse encrypted data - %v", err)
+	}
 
 	pass, err := DecryptPassword(encodedEncryptedPassword, privateKey, password)
 	if err != nil {

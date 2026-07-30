@@ -260,14 +260,54 @@ func TestCertificateDownloader(t *testing.T) {
 	assert.Contains(t, certificate, "-----BEGIN CERTIFICATE-----")
 }
 
-// Testcase to check if GetEncryptPassWorkload() can fetch encoded encrypted password and encoded encrypted data from string
+// Testcase to check if GetEncryptPassWorkload() parses hyper-protect-basic format
 func TestGetEncryptPassWorkload(t *testing.T) {
-	encryptedData := "hyper-protect-basic.sashwat.k"
+	a, b, err := GetEncryptPassWorkload("hyper-protect-basic.sashwat.k")
 
-	a, b := GetEncryptPassWorkload(encryptedData)
+	assert.NoError(t, err)
+	assert.Equal(t, "sashwat", a)
+	assert.Equal(t, "k", b)
+}
 
-	assert.Equal(t, a, "sashwat")
-	assert.Equal(t, b, "k")
+// Testcase to check if GetEncryptPassWorkload() parses contract-basic format
+func TestGetEncryptPassWorkloadContractBasic(t *testing.T) {
+	a, b, err := GetEncryptPassWorkload("contract-basic.encpass.encworkload")
+
+	assert.NoError(t, err)
+	assert.Equal(t, "encpass", a)
+	assert.Equal(t, "encworkload", b)
+}
+
+// Testcase to check if GetEncryptPassWorkload() returns an error for an empty string
+func TestGetEncryptPassWorkloadEmpty(t *testing.T) {
+	_, _, err := GetEncryptPassWorkload("")
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "malformed encrypted data")
+}
+
+// Testcase to check if GetEncryptPassWorkload() returns an error when there are no dots (0 segments)
+func TestGetEncryptPassWorkloadNoDots(t *testing.T) {
+	_, _, err := GetEncryptPassWorkload("nodotsinhere")
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "malformed encrypted data")
+}
+
+// Testcase to check if GetEncryptPassWorkload() returns an error for only one dot (2 segments)
+func TestGetEncryptPassWorkloadTwoSegments(t *testing.T) {
+	_, _, err := GetEncryptPassWorkload("hyper-protect-basic.onlyone")
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "malformed encrypted data")
+}
+
+// Testcase to check if GetEncryptPassWorkload() returns an error when there are more than 2 dots (too many segments)
+func TestGetEncryptPassWorkloadTooManySegments(t *testing.T) {
+	_, _, err := GetEncryptPassWorkload("hyper-protect-basic.encpass.encworkload.extra")
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "malformed encrypted data")
 }
 
 // Testcase to check if CheckUrlExists() is able to validate URL
