@@ -69,10 +69,10 @@ func GeneratePublicKey(privateKey, password string) (string, error) {
 	defer gen.RemoveTempFile(privateKeyPath)
 
 	args := []string{"rsa", "-in", privateKeyPath}
-	args = gen.AppendPasswordArgs(args, password)
+	args = gen.AppendPasswordFdArgs(args, password)
 	args = append(args, "-pubout")
 
-	publicKey, err := gen.ExecCommand(gen.GetOpenSSLPath(), "", args...)
+	publicKey, err := gen.ExecCommandWithPassword(gen.GetOpenSSLPath(), "", password, args...)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
 	}
@@ -323,9 +323,9 @@ func SignContract(encryptedWorkload, encryptedEnv, privateKey, password string) 
 	defer gen.RemoveTempFile(privateKeyPath)
 
 	args := []string{"dgst", "-sha256", "-sign", privateKeyPath}
-	args = gen.AppendPasswordArgs(args, password)
+	args = gen.AppendPasswordFdArgs(args, password)
 
-	workloadEnvSignature, err := gen.ExecCommand(gen.GetOpenSSLPath(), combinedContract, args...)
+	workloadEnvSignature, err := gen.ExecCommandWithPassword(gen.GetOpenSSLPath(), combinedContract, password, args...)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
 	}

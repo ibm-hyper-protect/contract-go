@@ -52,6 +52,11 @@ const (
 	ConfidentialComputingOsCcrv = "ccrv"
 	ConfidentialComputingOsCcco = "ccco"
 	HyperProtectOsHpvs          = "hpvs"
+
+	// passFd is the file-descriptor number used to pass a private-key
+	// passphrase to OpenSSL without exposing it on the command line.
+	// fd 3 is the first fd beyond stdin(0), stdout(1), stderr(2).
+	passFd = 3
 )
 
 type Contract struct {
@@ -144,19 +149,90 @@ func ExecCommand(commandName, stdinInput string, args ...string) (string, error)
 	return out.String(), nil
 }
 
-// AppendPasswordArgs appends OpenSSL password arguments to an args slice if a password is provided.
-// This helper function eliminates code duplication when building OpenSSL commands that support
-// password-protected private keys.
+// ExecCommandWithPassword runs commandName with args, delivering the password
+// to the child process through an inherited anonymous pipe (fd passFd) instead
+// of the command line.  This prevents the passphrase from appearing in
+// /proc/<pid>/cmdline or ps output for the lifetime of the child process.
+//
+// Use AppendPasswordFdArgs to build the args slice; it emits
+// "-passin fd:<passFd>" so OpenSSL reads the password from the pipe.
 //
 // Parameters:
-//   - args: Existing slice of command arguments
-//   - password: Optional password for encrypted private keys (empty string for unencrypted keys)
+//   - commandName: Path or name of the executable
+//   - stdinInput:  Optional data written to the child's stdin (empty = none)
+//   - password:    Passphrase to deliver over the pipe; empty string delegates to ExecCommand
+//   - args:        Command arguments already containing "-passin fd:<passFd>"
+func ExecCommandWithPassword(commandName, stdinInput, password string, args ...string) (string, error) {
+	if password == "" {
+		return ExecCommand(commandName, stdinInput, args...)
+	}
+
+	// Create an anonymous pipe. The read end is inherited by the child as
+	// fd passFd; the write end stays in the parent.
+	pr, pw, err := os.Pipe()
+	if err != nil {
+		return "", fmt.Errorf("failed to create password pipe - %v", err)
+	}
+
+	cmd := exec.Command(commandName, args...)
+
+	// ExtraFiles[0] → fd 3, ExtraFiles[1] → fd 4, …
+	// passFd == 3, so index = passFd - 3 = 0.
+	cmd.ExtraFiles = []*os.File{pr}
+
+	if stdinInput != "" {
+		stdinPipe, err := cmd.StdinPipe()
+		if err != nil {
+			pw.Close()
+			pr.Close()
+			return "", err
+		}
+		go func() {
+			defer stdinPipe.Close()
+			stdinPipe.Write([]byte(stdinInput))
+		}()
+	}
+
+	var out, stderr bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = &stderr
+
+	if err := cmd.Start(); err != nil {
+		pw.Close()
+		pr.Close()
+		return "", err
+	}
+
+	// Deliver the password and signal EOF to the child.
+	pw.WriteString(password)
+	pw.Close()
+	// Close our copy of the read end now that the child has it.
+	pr.Close()
+
+	if err := cmd.Wait(); err != nil {
+		msg := strings.TrimSpace(stderr.String())
+		if msg != "" {
+			return "", fmt.Errorf("%w - %s", err, msg)
+		}
+		return "", err
+	}
+
+	return out.String(), nil
+}
+
+// AppendPasswordFdArgs appends "-passin fd:<passFd>" to args when a password
+// is provided.  The password is never placed on the command line; it is
+// delivered through an inherited pipe by ExecCommandWithPassword.
+//
+// Parameters:
+//   - args:     Existing slice of command arguments
+//   - password: Optional password (empty string = no-op)
 //
 // Returns:
-//   - Updated args slice with password arguments appended if password is non-empty
-func AppendPasswordArgs(args []string, password string) []string {
+//   - Updated args slice
+func AppendPasswordFdArgs(args []string, password string) []string {
 	if password != "" {
-		args = append(args, "-passin", fmt.Sprintf("pass:%s", password))
+		args = append(args, "-passin", fmt.Sprintf("fd:%d", passFd))
 	}
 	return args
 }

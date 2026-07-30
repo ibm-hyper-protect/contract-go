@@ -23,6 +23,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -669,57 +670,6 @@ func TestCheckEncryptionCertValidityForContractEncryptionInvalid(t *testing.T) {
 	assert.Error(t, err)
 }
 
-// Testcase to check if AppendPasswordArgs() appends password arguments when password is provided
-func TestAppendPasswordArgsWithPassword(t *testing.T) {
-	args := []string{"openssl", "rsa", "-in", "key.pem"}
-	password := "testpassword"
-
-	result := AppendPasswordArgs(args, password)
-
-	assert.Equal(t, 6, len(result))
-	assert.Equal(t, "openssl", result[0])
-	assert.Equal(t, "rsa", result[1])
-	assert.Equal(t, "-in", result[2])
-	assert.Equal(t, "key.pem", result[3])
-	assert.Equal(t, "-passin", result[4])
-	assert.Equal(t, "pass:testpassword", result[5])
-}
-
-// Testcase to check if AppendPasswordArgs() does not modify args when password is empty
-func TestAppendPasswordArgsWithoutPassword(t *testing.T) {
-	args := []string{"openssl", "rsa", "-in", "key.pem"}
-	password := ""
-
-	result := AppendPasswordArgs(args, password)
-
-	assert.Equal(t, 4, len(result))
-	assert.Equal(t, args, result)
-}
-
-// Testcase to check if AppendPasswordArgs() handles empty args slice
-func TestAppendPasswordArgsEmptyArgs(t *testing.T) {
-	args := []string{}
-	password := "testpassword"
-
-	result := AppendPasswordArgs(args, password)
-
-	assert.Equal(t, 2, len(result))
-	assert.Equal(t, "-passin", result[0])
-	assert.Equal(t, "pass:testpassword", result[1])
-}
-
-// Testcase to check if AppendPasswordArgs() handles special characters in password
-func TestAppendPasswordArgsSpecialCharacters(t *testing.T) {
-	args := []string{"openssl", "dgst"}
-	password := "p@ssw0rd!#$"
-
-	result := AppendPasswordArgs(args, password)
-
-	assert.Equal(t, 4, len(result))
-	assert.Equal(t, "-passin", result[2])
-	assert.Equal(t, "pass:p@ssw0rd!#$", result[3])
-}
-
 // Testcase to check if IsPrivateKeyEncrypted() detects encrypted keys
 func TestIsPrivateKeyEncrypted(t *testing.T) {
 	assert.True(t, IsPrivateKeyEncrypted(sampleEncryptedPrivateKey))
@@ -774,4 +724,93 @@ func TestVerifyContractWithSchemaMissingRegoValidatorPolicy(t *testing.T) {
 
 	assert.Error(t, err, "Validation should fail when regoValidator.policy is missing")
 	assert.Contains(t, err.Error(), "policy", "Error message should mention policy")
+}
+
+// Testcase to check AppendPasswordFdArgs() appends fd passin args when password is provided
+func TestAppendPasswordFdArgsWithPassword(t *testing.T) {
+	args := []string{"openssl", "rsa", "-in", "key.pem"}
+	password := "testpassword"
+
+	result := AppendPasswordFdArgs(args, password)
+
+	assert.Equal(t, 6, len(result))
+	assert.Equal(t, "-passin", result[4])
+	assert.Equal(t, "fd:3", result[5])
+}
+
+// Testcase to check AppendPasswordFdArgs() does not modify args when password is empty
+func TestAppendPasswordFdArgsWithoutPassword(t *testing.T) {
+	args := []string{"openssl", "rsa", "-in", "key.pem"}
+
+	result := AppendPasswordFdArgs(args, "")
+
+	assert.Equal(t, args, result)
+}
+
+// Testcase to check AppendPasswordFdArgs() with empty args slice and a password
+func TestAppendPasswordFdArgsEmptyArgs(t *testing.T) {
+	result := AppendPasswordFdArgs([]string{}, "secret")
+
+	assert.Equal(t, 2, len(result))
+	assert.Equal(t, "-passin", result[0])
+	assert.Equal(t, "fd:3", result[1])
+}
+
+// Testcase to check AppendPasswordFdArgs() with special characters in password (args only; value never on cmdline)
+func TestAppendPasswordFdArgsSpecialCharacters(t *testing.T) {
+	args := []string{"openssl", "dgst"}
+	result := AppendPasswordFdArgs(args, "p@ssw0rd!#$")
+
+	assert.Equal(t, 4, len(result))
+	assert.Equal(t, "-passin", result[2])
+	assert.Equal(t, "fd:3", result[3])
+}
+
+// Testcase to check ExecCommandWithPassword() runs successfully without a password (delegates to ExecCommand)
+func TestExecCommandWithPasswordNoPassword(t *testing.T) {
+	out, err := ExecCommandWithPassword("openssl", "", "", "version")
+
+	assert.NoError(t, err)
+	assert.NotEmpty(t, out)
+}
+
+// Testcase to check ExecCommandWithPassword() delivers the password via fd 3, not via argv
+func TestExecCommandWithPasswordDeliveredViaPipe(t *testing.T) {
+	// sh reads the password from fd 3 and prints it; the password must NOT
+	// appear anywhere in the argument list (only "fd:3" does).
+	out, err := ExecCommandWithPassword("sh", "", "secretpassword", "-c", "cat /dev/fd/3")
+
+	assert.NoError(t, err)
+	assert.Equal(t, "secretpassword", strings.TrimSpace(out))
+}
+
+// Testcase to check ExecCommandWithPassword() also writes stdin when both stdinInput and password are set
+func TestExecCommandWithPasswordWithStdin(t *testing.T) {
+	// cat reads stdin and echoes it; the pipe fd is also open but unused here.
+	out, err := ExecCommandWithPassword("sh", "hello from stdin", "somepassword", "-c", "cat")
+
+	assert.NoError(t, err)
+	assert.Equal(t, "hello from stdin", out)
+}
+
+// Testcase to check ExecCommandWithPassword() returns an error when the command does not exist
+func TestExecCommandWithPasswordInvalidCommand(t *testing.T) {
+	_, err := ExecCommandWithPassword("nonexistent-command-xyz", "", "password", "--flag")
+
+	assert.Error(t, err)
+}
+
+// Testcase to check ExecCommandWithPassword() returns an error when the command exits non-zero
+func TestExecCommandWithPasswordNonZeroExit(t *testing.T) {
+	_, err := ExecCommandWithPassword("sh", "", "password", "-c", "exit 1")
+
+	assert.Error(t, err)
+}
+
+// Testcase to check ExecCommandWithPassword() wraps stderr in the error when the command fails
+func TestExecCommandWithPasswordStderrInError(t *testing.T) {
+	_, err := ExecCommandWithPassword("sh", "", "password", "-c", "echo 'error detail' >&2; exit 1")
+
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "error detail")
 }
