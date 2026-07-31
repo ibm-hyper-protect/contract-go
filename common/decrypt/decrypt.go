@@ -53,26 +53,21 @@ func DecryptPassword(base64EncryptedData, privateKey, password string) (string, 
 	if err != nil {
 		return "", fmt.Errorf("failed to generate temp file - %v", err)
 	}
+	defer gen.RemoveTempFile(encryptedDataPath)
 
 	privateKeyPath, err := gen.CreateTempFile(privateKey)
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
+	defer gen.RemoveTempFile(privateKeyPath)
 
 	args := []string{"pkeyutl", "-decrypt", "-inkey", privateKeyPath}
-	args = gen.AppendPasswordArgs(args, password)
+	args = gen.AppendPasswordFdArgs(args, password)
 	args = append(args, "-in", encryptedDataPath)
 
-	result, err := gen.ExecCommand(gen.GetOpenSSLPath(), "", args...)
+	result, err := gen.ExecCommandWithPassword(gen.GetOpenSSLPath(), "", password, args...)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
-	}
-
-	for _, path := range []string{encryptedDataPath, privateKeyPath} {
-		err := gen.RemoveTempFile(path)
-		if err != nil {
-			return "", fmt.Errorf("failed to remove tmp file - %v", err)
-		}
 	}
 
 	return result, nil
@@ -129,7 +124,10 @@ func DecryptWorkload(password, encryptedWorkload string) (string, error) {
 //   - Decrypted data
 //   - Error if OpenSSL is not found, Base64 decoding fails, or decryption fails
 func DecryptText(data, privateKey, password string) (string, error) {
-	encodedEncryptedPassword, encodedEncryptedData := gen.GetEncryptPassWorkload(data)
+	encodedEncryptedPassword, encodedEncryptedData, err := gen.GetEncryptPassWorkload(data)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse encrypted data - %v", err)
+	}
 
 	pass, err := DecryptPassword(encodedEncryptedPassword, privateKey, password)
 	if err != nil {

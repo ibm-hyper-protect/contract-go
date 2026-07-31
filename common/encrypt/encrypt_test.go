@@ -18,6 +18,9 @@ package encrypt
 import (
 	_ "embed"
 	"encoding/json"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -862,4 +865,292 @@ func TestSignContractWithEncryptedPrivateKeyNoPassword(t *testing.T) {
 	_, err = SignContract("test-workload", "test-env", privateKey, "")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "private key is encrypted but no password provided")
+}
+
+// isolateTempDir redirects os.CreateTemp (used by gen.CreateTempFile) into the
+// test's private t.TempDir() by setting TMPDIR for the duration of the test.
+// This makes cleanup assertions immune to ccrt-* files created by other
+// packages running in parallel under `go test ./...`.
+// Returns the isolated temp directory path.
+func isolateTempDir(t *testing.T) string {
+	t.Helper()
+	dir := t.TempDir()
+	t.Setenv("TMPDIR", dir)
+	return dir
+}
+
+// assertNoTempFilesRemain fails the test if any ccrt-* file still exists in dir.
+func assertNoTempFilesRemain(t *testing.T, dir string) {
+	t.Helper()
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatalf("failed to read temp dir %s: %v", dir, err)
+	}
+	for _, e := range entries {
+		if strings.HasPrefix(e.Name(), gen.TempFolderNamePrefix) {
+			t.Errorf("temp file leaked: %s", filepath.Join(dir, e.Name()))
+		}
+	}
+}
+
+// --- GeneratePublicKey ---
+
+// Testcase to verify GeneratePublicKey cleans up temp file on success
+func TestGeneratePublicKey_TempFileCleanedOnSuccess(t *testing.T) {
+	dir := isolateTempDir(t)
+	privateKey, err := gen.ReadDataFromFile(simplePrivateKeyPath)
+	if err != nil {
+		t.Fatalf("failed to read private key - %v", err)
+	}
+	_, err = GeneratePublicKey(privateKey, "")
+	assert.NoError(t, err)
+	assertNoTempFilesRemain(t, dir)
+}
+
+// Testcase to verify GeneratePublicKey cleans up temp file on openssl error
+func TestGeneratePublicKey_TempFileCleanedOnError(t *testing.T) {
+	dir := isolateTempDir(t)
+	_, err := GeneratePublicKey("invalid-private-key", "")
+	assert.Error(t, err)
+	assertNoTempFilesRemain(t, dir)
+}
+
+// --- EncryptPassword ---
+
+// Testcase to verify EncryptPassword cleans up temp file on success
+func TestEncryptPassword_TempFileCleanedOnSuccess(t *testing.T) {
+	dir := isolateTempDir(t)
+	encryptCertificate, err := gen.CertificateDownloader(certificateUrl)
+	if err != nil {
+		t.Fatalf("failed to get encryption certificate - %v", err)
+	}
+	_, err = EncryptPassword("testpassword", encryptCertificate)
+	assert.NoError(t, err)
+	assertNoTempFilesRemain(t, dir)
+}
+
+// Testcase to verify EncryptPassword cleans up temp file on openssl error
+func TestEncryptPassword_TempFileCleanedOnError(t *testing.T) {
+	dir := isolateTempDir(t)
+	_, err := EncryptPassword("testpassword", "invalid-certificate")
+	assert.Error(t, err)
+	assertNoTempFilesRemain(t, dir)
+}
+
+// --- EncryptString ---
+
+// Testcase to verify EncryptString cleans up temp file on success
+func TestEncryptString_TempFileCleanedOnSuccess(t *testing.T) {
+	dir := isolateTempDir(t)
+	_, err := EncryptString("testpassword", "test data")
+	assert.NoError(t, err)
+	assertNoTempFilesRemain(t, dir)
+}
+
+// Testcase to verify EncryptString cleans up temp file on openssl error (empty password)
+func TestEncryptString_TempFileCleanedOnError(t *testing.T) {
+	dir := isolateTempDir(t)
+	_, err := EncryptString("", "test data") // empty password triggers openssl failure
+	assert.Error(t, err)
+	assertNoTempFilesRemain(t, dir)
+}
+
+// --- CreateSigningCert (CSR params path) ---
+
+// Testcase to verify CreateSigningCert cleans up all temp files on success (CSR params path)
+func TestCreateSigningCert_TempFilesCleanedOnSuccess(t *testing.T) {
+	dir := isolateTempDir(t)
+	privateKey, err := gen.ReadDataFromFile(samplePrivateKeyPath)
+	if err != nil {
+		t.Fatalf("failed to read private key - %v", err)
+	}
+	cacert, err := gen.ReadDataFromFile(sampleCaCertPath)
+	if err != nil {
+		t.Fatalf("failed to read CA cert - %v", err)
+	}
+	caKey, err := gen.ReadDataFromFile(sampleCaKeyPath)
+	if err != nil {
+		t.Fatalf("failed to read CA key - %v", err)
+	}
+	csrParams := map[string]interface{}{
+		"country": sampleCsrCountry, "state": sampleCsrState, "location": sampleCsrLocation,
+		"org": sampleCsrOrg, "unit": sampleCsrUnit, "domain": sampleCsrDomain, "mail": sampleCsrMailId,
+	}
+	csrParamsJSON, _ := json.Marshal(csrParams)
+	_, err = CreateSigningCert(privateKey, cacert, caKey, string(csrParamsJSON), "", sampleExpiryDays)
+	assert.NoError(t, err)
+	assertNoTempFilesRemain(t, dir)
+}
+
+// Testcase to verify CreateSigningCert cleans up private-key temp file on JSON unmarshal error
+func TestCreateSigningCert_TempFileCleanedOnJSONError(t *testing.T) {
+	dir := isolateTempDir(t)
+	privateKey, err := gen.ReadDataFromFile(samplePrivateKeyPath)
+	if err != nil {
+		t.Fatalf("failed to read private key - %v", err)
+	}
+	cacert, err := gen.ReadDataFromFile(sampleCaCertPath)
+	if err != nil {
+		t.Fatalf("failed to read CA cert - %v", err)
+	}
+	caKey, err := gen.ReadDataFromFile(sampleCaKeyPath)
+	if err != nil {
+		t.Fatalf("failed to read CA key - %v", err)
+	}
+	_, err = CreateSigningCert(privateKey, cacert, caKey, "invalid-json", "", sampleExpiryDays)
+	assert.Error(t, err)
+	assertNoTempFilesRemain(t, dir)
+}
+
+// Testcase to verify CreateSigningCert cleans up all temp files on openssl error (invalid private key)
+func TestCreateSigningCert_TempFilesCleanedOnOpensslError(t *testing.T) {
+	dir := isolateTempDir(t)
+	cacert, err := gen.ReadDataFromFile(sampleCaCertPath)
+	if err != nil {
+		t.Fatalf("failed to read CA cert - %v", err)
+	}
+	caKey, err := gen.ReadDataFromFile(sampleCaKeyPath)
+	if err != nil {
+		t.Fatalf("failed to read CA key - %v", err)
+	}
+	csrParams := map[string]interface{}{
+		"country": sampleCsrCountry, "state": sampleCsrState, "location": sampleCsrLocation,
+		"org": sampleCsrOrg, "unit": sampleCsrUnit, "domain": sampleCsrDomain, "mail": sampleCsrMailId,
+	}
+	csrParamsJSON, _ := json.Marshal(csrParams)
+	_, err = CreateSigningCert("invalid-private-key", cacert, caKey, string(csrParamsJSON), "", sampleExpiryDays)
+	assert.Error(t, err)
+	assertNoTempFilesRemain(t, dir)
+}
+
+// Testcase to verify CreateSigningCert cleans up all temp files on success (CSR PEM path)
+func TestCreateSigningCert_TempFilesCleanedOnSuccessCsrPem(t *testing.T) {
+	dir := isolateTempDir(t)
+	privateKey, err := gen.ReadDataFromFile(samplePrivateKeyPath)
+	if err != nil {
+		t.Fatalf("failed to read private key - %v", err)
+	}
+	cacert, err := gen.ReadDataFromFile(sampleCaCertPath)
+	if err != nil {
+		t.Fatalf("failed to read CA cert - %v", err)
+	}
+	caKey, err := gen.ReadDataFromFile(sampleCaKeyPath)
+	if err != nil {
+		t.Fatalf("failed to read CA key - %v", err)
+	}
+	csr, err := gen.ReadDataFromFile(sampleCsrFilePath)
+	if err != nil {
+		t.Fatalf("failed to read CSR file - %v", err)
+	}
+	_, err = CreateSigningCert(privateKey, cacert, caKey, "", csr, sampleExpiryDays)
+	assert.NoError(t, err)
+	assertNoTempFilesRemain(t, dir)
+}
+
+// Testcase to verify CreateSigningCert cleans up temp files when CreateCert fails (invalid CA key, CSR PEM path)
+func TestCreateSigningCert_TempFilesCleanedOnCreateCertError(t *testing.T) {
+	dir := isolateTempDir(t)
+	privateKey, err := gen.ReadDataFromFile(samplePrivateKeyPath)
+	if err != nil {
+		t.Fatalf("failed to read private key - %v", err)
+	}
+	cacert, err := gen.ReadDataFromFile(sampleCaCertPath)
+	if err != nil {
+		t.Fatalf("failed to read CA cert - %v", err)
+	}
+	csr, err := gen.ReadDataFromFile(sampleCsrFilePath)
+	if err != nil {
+		t.Fatalf("failed to read CSR file - %v", err)
+	}
+	_, err = CreateSigningCert(privateKey, cacert, "invalid-ca-key", "", csr, sampleExpiryDays)
+	assert.Error(t, err)
+	assertNoTempFilesRemain(t, dir)
+}
+
+// --- SignContract ---
+
+// Testcase to verify SignContract cleans up temp file on success
+func TestSignContract_TempFileCleanedOnSuccess(t *testing.T) {
+	dir := isolateTempDir(t)
+	privateKey, err := gen.ReadDataFromFile(samplePrivateKeyPath)
+	if err != nil {
+		t.Fatalf("failed to read private key - %v", err)
+	}
+	_, err = SignContract("test-workload", "test-env", privateKey, "")
+	assert.NoError(t, err)
+	assertNoTempFilesRemain(t, dir)
+}
+
+// Testcase to verify SignContract cleans up temp file on openssl error
+func TestSignContract_TempFileCleanedOnError(t *testing.T) {
+	dir := isolateTempDir(t)
+	_, err := SignContract("test-workload", "test-env", "invalid-private-key", "")
+	assert.Error(t, err)
+	assertNoTempFilesRemain(t, dir)
+}
+
+// --- ExtractPublicKeyFromCert ---
+
+// Testcase to verify ExtractPublicKeyFromCert cleans up temp file on success
+func TestExtractPublicKeyFromCert_TempFileCleanedOnSuccess(t *testing.T) {
+	dir := isolateTempDir(t)
+	cacert, err := gen.ReadDataFromFile(sampleCaCertPath)
+	if err != nil {
+		t.Fatalf("failed to read CA cert - %v", err)
+	}
+	_, err = ExtractPublicKeyFromCert(cacert)
+	assert.NoError(t, err)
+	assertNoTempFilesRemain(t, dir)
+}
+
+// Testcase to verify ExtractPublicKeyFromCert cleans up temp file on openssl error
+func TestExtractPublicKeyFromCert_TempFileCleanedOnError(t *testing.T) {
+	dir := isolateTempDir(t)
+	_, err := ExtractPublicKeyFromCert("invalid-certificate")
+	assert.Error(t, err)
+	assertNoTempFilesRemain(t, dir)
+}
+
+// --- VerifySignature ---
+
+// Testcase to verify VerifySignature cleans up all three temp files on success
+func TestVerifySignature_TempFilesCleanedOnSuccess(t *testing.T) {
+	dir := isolateTempDir(t)
+	testData := "cleanup verification data"
+	privateKey, err := gen.ReadDataFromFile(samplePrivateKeyPath)
+	if err != nil {
+		t.Fatalf("failed to read private key - %v", err)
+	}
+	privateKeyPath, err := gen.CreateTempFile(privateKey)
+	if err != nil {
+		t.Fatalf("failed to create temp file - %v", err)
+	}
+	signature, err := gen.ExecCommand(gen.GetOpenSSLPath(), testData, "dgst", "-sha256", "-sign", privateKeyPath)
+	_ = gen.RemoveTempFile(privateKeyPath)
+	if err != nil {
+		t.Fatalf("failed to create signature - %v", err)
+	}
+	publicKey, err := GeneratePublicKey(privateKey, "")
+	if err != nil {
+		t.Fatalf("failed to generate public key - %v", err)
+	}
+	err = VerifySignature(testData, signature, publicKey)
+	assert.NoError(t, err)
+	assertNoTempFilesRemain(t, dir)
+}
+
+// Testcase to verify VerifySignature cleans up all three temp files on verification failure
+func TestVerifySignature_TempFilesCleanedOnError(t *testing.T) {
+	dir := isolateTempDir(t)
+	privateKey, err := gen.ReadDataFromFile(samplePrivateKeyPath)
+	if err != nil {
+		t.Fatalf("failed to read private key - %v", err)
+	}
+	publicKey, err := GeneratePublicKey(privateKey, "")
+	if err != nil {
+		t.Fatalf("failed to generate public key - %v", err)
+	}
+	err = VerifySignature("test data", "invalid-signature", publicKey)
+	assert.Error(t, err)
+	assertNoTempFilesRemain(t, dir)
 }
