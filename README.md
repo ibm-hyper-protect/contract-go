@@ -115,6 +115,13 @@ Learn more:
   - JWS (JSON Web Signature) compact serialization format
   - Compatible with Go crypto packages for decryption
 
+- **Image Spec Generation**
+  - Fetch OCI image config from any registry (public or private)
+  - Generate Kubernetes pod YAML snippet with correct `env`, `command`, `args`, `securityContext`, and `ports`
+  - Designed for use with `registryMapping` in confidential-containers workload contracts
+  - Auto-derives container name from image reference when not specified
+  - Returns SHA256 checksums of input and output for auditability
+
 ## Installation
 
 ```bash
@@ -549,6 +556,45 @@ MIIEpAIBAAKCAQEA...
     }
 
     fmt.Println("Sealed Secret with Custom Keys:", sealedSecret2)
+}
+```
+
+### Generate a Pod YAML Spec from an OCI Image
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/imagespec"
+)
+
+func main() {
+    // Public image — container name auto-derived
+    yaml, inputSHA, outputSHA, err := imagespec.GenerateImageSpec(
+        "quay.io/sclorg/postgresql-15-c9s:latest",
+        "",    // empty → derived from image reference
+        nil,   // nil → anonymous / public registry
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println(yaml)
+    fmt.Println("Input SHA256: ", inputSHA)
+    fmt.Println("Output SHA256:", outputSHA)
+
+    // Private registry
+    yaml, _, _, err = imagespec.GenerateImageSpec(
+        "us.icr.io/my-ns/my-app:latest",
+        "my-app",
+        &imagespec.AuthConfig{Username: "iamapikey", Password: "<API_KEY>"},
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println(yaml)
 }
 ```
 
