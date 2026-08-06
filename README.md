@@ -115,6 +115,16 @@ Learn more:
   - JWS (JSON Web Signature) compact serialization format
   - Compatible with Go crypto packages for decryption
 
+- **Rego Policy Generation**
+  - Generate OPA v1 Rego policy from a Kubernetes pod YAML (Pod, Deployment, StatefulSet, DaemonSet, CronJob)
+  - Automatically extract container images and commands to generate `allow_image()` and `allow_command()` rules
+  - Strict per-argument validation for containers with explicit `command`/`args`
+  - Permissive image-only validation for ENTRYPOINT-only containers (no `command`/`args` in spec)
+  - Multiline shell scripts extracted into named validator functions
+  - OCP baseline rules for Kata pause/infra containers included automatically
+  - Returns plain policy string, Base64 of input pod YAML, and Base64 of generated policy
+  - Compatible with IBM Kata Agent Policy enforcement in Confidential Computing environments
+
 ## Installation
 
 ```bash
@@ -551,6 +561,49 @@ MIIEpAIBAAKCAQEA...
     fmt.Println("Sealed Secret with Custom Keys:", sealedSecret2)
 }
 ```
+
+### Generate a Rego Policy
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/rego"
+)
+
+func main() {
+    // Read pod YAML
+    podYAML, err := os.ReadFile("pod.yaml")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Generate OPA Rego policy from the pod spec
+    policy, podYAMLBase64, policyBase64, err := rego.GenerateRegoPolicy(string(podYAML), "")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Println("Generated Policy:")
+    fmt.Println(policy)
+    fmt.Println("Pod YAML (Base64):", podYAMLBase64)
+    fmt.Println("Policy (Base64):", policyBase64)
+
+    // Optionally save the policy to a file
+    err = os.WriteFile("policy.rego", []byte(policy), 0644)
+    if err != nil {
+        log.Fatal(err)
+    }
+    fmt.Println("Policy saved to policy.rego")
+}
+```
+
+> **Note:** Pass an empty string `""` as `templatePath` to use the embedded default OPA v1 template.
+> Provide a custom file path to use your own Rego template with the generator marker.
 
 ## Documentation
 
