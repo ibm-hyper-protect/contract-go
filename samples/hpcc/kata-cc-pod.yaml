@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: busybox-kata-cc
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: b151-a01
+  runtimeClassName: kata-cc
+  initContainers:
+  - name: busybox-init-masked
+    securityContext:
+      privileged: true
+    image: quay.io/prometheus/busybox:latest
+    command: ["/bin/sh", "-c"]
+    args:
+      - |
+        echo "Check resolv.conf"
+        cat /etc/resolv.conf
+    volumeMounts:
+    - mountPath: /host
+      name: host-volume
+  containers:
+  - name: busybox-main
+    securityContext:
+      privileged: true
+    image: quay.io/prometheus/busybox:latest
+    command: ["/bin/sh", "-c", "sleep 90"]
+    args:
+      - echo "Container started"; sleep 90; echo "Crashing now"; exit 1
+    volumeMounts:
+    - mountPath: /host
+      name: host-volume
+    volumeDevices:
+    - name: shared-volume1
+      devicePath: /dev/pgblock
+  volumes:
+  - name: host-volume
+    hostPath:
+      path: /proc/
+      type: Directory
+  - name: shared-volume1
+    persistentVolumeClaim:
+      claimName: template-storage
