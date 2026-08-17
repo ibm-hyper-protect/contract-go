@@ -262,22 +262,22 @@ func TestInferUsernameFromEnv(t *testing.T) {
 		env  []string
 		want string
 	}{
-		{"pguser",            []string{"PGUSER=postgres", "HOME=/var/lib/pgsql"}, "postgres"},
-		{"mysql_user",        []string{"MYSQL_USER=root"}, "root"},
-		{"mariadb_user",      []string{"MARIADB_USER=myuser"}, "myuser"},
-		{"app_user",          []string{"APP_USER=appuser"}, "appuser"},
-		{"run_user",          []string{"RUN_USER=runner"}, "runner"},
-		{"mongodb_username",  []string{"MONGODB_USERNAME=mongodb"}, "mongodb"},
-		{"custom_svc_user",   []string{"MY_SVC_USER=myapp"}, "myapp"},
-		{"username_key",      []string{"USERNAME=admin"}, "admin"},
-		{"no_user_key",       []string{"REDIS_VERSION=7.0.0"}, ""},
-		{"empty_env",         []string{}, ""},
-		{"empty_value",       []string{"PGUSER="}, ""},
-		{"path_value",        []string{"APP_USER=/home/app"}, ""},
-		{"url_value",         []string{"APP_USER=http://x.com"}, ""},
-		{"integer_value",     []string{"APP_USER=1001"}, ""},
-		{"too_long",          []string{"APP_USER=averylongusernamethatexceedsthirtytwocharacters"}, ""},
-		{"first_wins",        []string{"APP_USER=first", "RUN_USER=second"}, "first"},
+		{"pguser", []string{"PGUSER=postgres", "HOME=/var/lib/pgsql"}, "postgres"},
+		{"mysql_user", []string{"MYSQL_USER=root"}, "root"},
+		{"mariadb_user", []string{"MARIADB_USER=myuser"}, "myuser"},
+		{"app_user", []string{"APP_USER=appuser"}, "appuser"},
+		{"run_user", []string{"RUN_USER=runner"}, "runner"},
+		{"mongodb_username", []string{"MONGODB_USERNAME=mongodb"}, "mongodb"},
+		{"custom_svc_user", []string{"MY_SVC_USER=myapp"}, "myapp"},
+		{"username_key", []string{"USERNAME=admin"}, "admin"},
+		{"no_user_key", []string{"REDIS_VERSION=7.0.0"}, ""},
+		{"empty_env", []string{}, ""},
+		{"empty_value", []string{"PGUSER="}, ""},
+		{"path_value", []string{"APP_USER=/home/app"}, ""},
+		{"url_value", []string{"APP_USER=http://x.com"}, ""},
+		{"integer_value", []string{"APP_USER=1001"}, ""},
+		{"too_long", []string{"APP_USER=averylongusernamethatexceedsthirtytwocharacters"}, ""},
+		{"first_wins", []string{"APP_USER=first", "RUN_USER=second"}, "first"},
 	}
 	for _, tc := range cases {
 		assert.Equal(t, tc.want, inferUsernameFromEnv(tc.env), "case %q", tc.desc)
