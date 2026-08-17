@@ -2483,11 +2483,20 @@ Where:
 
 Fetches the OCI image config from a container registry and generates a Kubernetes pod YAML snippet in a single call. Designed for use with the `registryMapping` feature of confidential-containers workload contracts.
 
+The generated YAML includes a `# image user: <value>` comment at the top that identifies the user declared by the image. The `imageUser` return value carries the same information programmatically.
+
+| Image `USER` field | `imageUser` returned | `securityContext` generated |
+|--------------------|----------------------|-----------------------------|
+| `"26"` | `"26"` | `runAsUser: 26` |
+| `"26:26"` | `"26:26"` | `runAsUser: 26`, `runAsGroup: 26` |
+| `"postgres"` | `"postgres"` | _(none — named users cannot be represented as a UID)_ |
+| _(empty)_ | `"no user specified"` | _(none)_ |
+
 **Package:** `github.com/ibm-hyper-protect/contract-go/v2/imagespec`
 
 **Signature:**
 ```go
-func GenerateImageSpec(imageRef, containerName string, auth *AuthConfig) (string, string, string, error)
+func GenerateImageSpec(imageRef, containerName string, auth *AuthConfig) (string, string, string, string, error)
 ```
 
 **Parameters:**
@@ -2502,7 +2511,8 @@ func GenerateImageSpec(imageRef, containerName string, auth *AuthConfig) (string
 
 | Value | Type | Description |
 |-------|------|-------------|
-| `yaml` | `string` | Kubernetes pod YAML snippet (`spec.containers[...]`) |
+| `yaml` | `string` | Kubernetes pod YAML snippet (`spec.containers[...]`) with a leading `# image user:` comment |
+| `imageUser` | `string` | Raw USER value from the image config, or `"no user specified"` when unset |
 | `inputSHA` | `string` | SHA256 hex of `imageRef` |
 | `outputSHA` | `string` | SHA256 hex of the generated YAML |
 | `error` | `error` | Non-nil if the image cannot be fetched or reference is malformed |
@@ -2511,15 +2521,27 @@ func GenerateImageSpec(imageRef, containerName string, auth *AuthConfig) (string
 ```go
 import "github.com/ibm-hyper-protect/contract-go/v2/imagespec"
 
-// Public image
-yaml, inputSHA, outputSHA, err := imagespec.GenerateImageSpec(
+// Public image — postgres uses numeric UID 26
+yaml, imageUser, inputSHA, outputSHA, err := imagespec.GenerateImageSpec(
     "quay.io/sclorg/postgresql-15-c9s:latest",
     "",   // auto-derive name → "postgresql-15-c9s"
     nil,
 )
+// imageUser == "26"
+// yaml starts with: # image user: 26
+
+// Image with a named user (e.g. "postgres")
+yaml, imageUser, _, _, err = imagespec.GenerateImageSpec(
+    "docker.io/library/postgres:16",
+    "postgres",
+    nil,
+)
+// imageUser == "postgres"
+// yaml starts with: # image user: postgres
+// NOTE: no securityContext.runAsUser is emitted for named users.
 
 // Private registry
-yaml, _, _, err = imagespec.GenerateImageSpec(
+yaml, imageUser, _, _, err = imagespec.GenerateImageSpec(
     "us.icr.io/my-ns/my-app:latest",
     "my-app",
     &imagespec.AuthConfig{Username: "iamapikey", Password: "<API_KEY>"},
