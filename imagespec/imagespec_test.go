@@ -26,7 +26,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// makeConfig creates a *v1.Config for testing generatePodYAMLTemplate.
 func makeConfig(user string, env, entrypoint, cmd []string, ports map[string]struct{}, workingDir string) *v1.Config {
 	cfg := &v1.Config{
 		User:         user,
@@ -42,7 +41,6 @@ func makeConfig(user string, env, entrypoint, cmd []string, ports map[string]str
 	return cfg
 }
 
-// TestGeneratePodYAMLTemplate_BasicFields ensures required keys appear in YAML.
 func TestGeneratePodYAMLTemplate_BasicFields(t *testing.T) {
 	cfg := makeConfig(
 		"26:26",
@@ -53,9 +51,11 @@ func TestGeneratePodYAMLTemplate_BasicFields(t *testing.T) {
 		"/opt/app-root/src",
 	)
 
-	out, inputSHA, outputSHA, err := generatePodYAMLTemplate("quay.io/sclorg/postgresql-15-c9s:latest", cfg, "postgres")
+	out, imageUser, inputSHA, outputSHA, err := generatePodYAMLTemplate("quay.io/sclorg/postgresql-15-c9s:latest", cfg, "postgres")
 	require.NoError(t, err)
 
+	assert.Equal(t, "26:26", imageUser)
+	assert.Contains(t, out, "# image user: 26:26")
 	assert.Contains(t, out, "spec:")
 	assert.Contains(t, out, "containers:")
 	assert.NotContains(t, out, "apiVersion:")
@@ -76,85 +76,120 @@ func TestGeneratePodYAMLTemplate_BasicFields(t *testing.T) {
 	assert.NotEqual(t, inputSHA, outputSHA)
 }
 
-// TestGeneratePodYAMLTemplate_DefaultContainerName verifies fallback to "app".
 func TestGeneratePodYAMLTemplate_DefaultContainerName(t *testing.T) {
 	cfg := makeConfig("", nil, nil, nil, nil, "")
-	out, _, _, err := generatePodYAMLTemplate("quay.io/ramachandra_ch/redis@sha256:abc", cfg, "app")
+	out, imageUser, _, _, err := generatePodYAMLTemplate("quay.io/ramachandra_ch/redis@sha256:abc", cfg, "app")
 	require.NoError(t, err)
+	assert.Equal(t, "no user specified", imageUser)
+	assert.Contains(t, out, "# image user: no user specified")
 	assert.Contains(t, out, "name: app")
 	assert.NotContains(t, out, "apiVersion:")
 }
 
-// TestGeneratePodYAMLTemplate_UserUIDOnly verifies that "uid"-only user is parsed.
 func TestGeneratePodYAMLTemplate_UserUIDOnly(t *testing.T) {
 	cfg := makeConfig("26", nil, nil, nil, nil, "")
-	out, _, _, err := generatePodYAMLTemplate("quay.io/sclorg/postgresql-15-c9s:latest", cfg, "postgres")
+	out, imageUser, _, _, err := generatePodYAMLTemplate("quay.io/sclorg/postgresql-15-c9s:latest", cfg, "postgres")
 	require.NoError(t, err)
+	assert.Equal(t, "26", imageUser)
+	assert.Contains(t, out, "# image user: 26")
 	assert.Contains(t, out, "runAsUser: 26")
 	assert.Contains(t, out, "allowPrivilegeEscalation: false")
 	assert.NotContains(t, out, "runAsGroup")
 }
 
-// TestGeneratePodYAMLTemplate_NoEntrypointNoCmd ensures command/args are omitted.
 func TestGeneratePodYAMLTemplate_NoEntrypointNoCmd(t *testing.T) {
 	cfg := makeConfig("", nil, nil, nil, nil, "")
-	out, _, _, err := generatePodYAMLTemplate("example.com/img:tag", cfg, "myapp")
+	out, _, _, _, err := generatePodYAMLTemplate("example.com/img:tag", cfg, "myapp")
 	require.NoError(t, err)
 	assert.NotContains(t, out, "command:")
 	assert.NotContains(t, out, "args:")
 }
 
-// TestGeneratePodYAMLTemplate_MultipleExposedPorts verifies multiple ports rendered.
 func TestGeneratePodYAMLTemplate_MultipleExposedPorts(t *testing.T) {
 	cfg := makeConfig("", nil, nil, nil, map[string]struct{}{
 		"50000/tcp": {},
 		"55000/tcp": {},
 		"22/tcp":    {},
 	}, "")
-	out, _, _, err := generatePodYAMLTemplate("us.icr.io/hpvsonprem/testdb2:hpcc", cfg, "db2")
+	out, _, _, _, err := generatePodYAMLTemplate("us.icr.io/hpvsonprem/testdb2:hpcc", cfg, "db2")
 	require.NoError(t, err)
 	assert.Contains(t, out, "containerPort: 50000")
 	assert.Contains(t, out, "containerPort: 55000")
 	assert.Contains(t, out, "containerPort: 22")
 }
 
-// TestFetchImageConfig_EmptyRef verifies an error for empty image reference.
 func TestFetchImageConfig_EmptyRef(t *testing.T) {
 	_, err := fetchImageConfig("", nil)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "imageRef must not be empty")
+	assert.ErrorContains(t, err, "imageRef must not be empty")
 }
 
-// TestFetchImageConfig_InvalidRef verifies an error for malformed image reference.
 func TestFetchImageConfig_InvalidRef(t *testing.T) {
 	_, err := fetchImageConfig(":::invalid:::", nil)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to parse image reference")
+	assert.ErrorContains(t, err, "failed to parse image reference")
 }
 
-// TestGenerateImageSpec_EmptyRef verifies the public API returns an error for empty ref.
 func TestGenerateImageSpec_EmptyRef(t *testing.T) {
-	_, _, _, err := GenerateImageSpec("", "", nil)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "imageRef must not be empty")
+	_, _, _, _, err := GenerateImageSpec("", "", nil)
+	assert.ErrorContains(t, err, "imageRef must not be empty")
 }
 
-// TestGenerateImageSpec_InvalidRef verifies the public API returns an error for bad ref.
 func TestGenerateImageSpec_InvalidRef(t *testing.T) {
-	_, _, _, err := GenerateImageSpec(":::bad:::", "", nil)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to parse image reference")
+	_, _, _, _, err := GenerateImageSpec(":::bad:::", "", nil)
+	assert.ErrorContains(t, err, "failed to parse image reference")
 }
 
-// TestGeneratePodYAMLTemplate_EnvWithoutValue verifies env without "=" marshals correctly.
 func TestGeneratePodYAMLTemplate_EnvWithoutValue(t *testing.T) {
 	cfg := makeConfig("", []string{"NOVALUE"}, nil, nil, nil, "")
-	out, _, _, err := generatePodYAMLTemplate("example.com/img:tag", cfg, "test")
+	out, _, _, _, err := generatePodYAMLTemplate("example.com/img:tag", cfg, "test")
 	require.NoError(t, err)
 	assert.Contains(t, out, "NOVALUE")
 }
 
-// TestGeneratePodYAMLTemplate_PostgresInspectValues validates real-world postgres values.
+// TestGeneratePodYAMLTemplate_NamedUser: named USER string → comment only, no securityContext.
+func TestGeneratePodYAMLTemplate_NamedUser(t *testing.T) {
+	cfg := makeConfig("postgres", nil, nil, nil, nil, "")
+	out, imageUser, _, _, err := generatePodYAMLTemplate("quay.io/sclorg/postgresql-15-c9s:latest", cfg, "postgres")
+	require.NoError(t, err)
+	assert.Equal(t, "postgres", imageUser)
+	assert.Contains(t, out, "# image user: postgres")
+	assert.NotContains(t, out, "securityContext:")
+	assert.NotContains(t, out, "runAsUser:")
+}
+
+// TestGeneratePodYAMLTemplate_NoUser: empty USER → "no user specified", no securityContext.
+func TestGeneratePodYAMLTemplate_NoUser(t *testing.T) {
+	cfg := makeConfig("", nil, nil, nil, nil, "")
+	out, imageUser, _, _, err := generatePodYAMLTemplate("example.com/img:tag", cfg, "app")
+	require.NoError(t, err)
+	assert.Equal(t, "no user specified", imageUser)
+	assert.Contains(t, out, "# image user: no user specified")
+	assert.NotContains(t, out, "securityContext:")
+}
+
+func TestResolveImageUser(t *testing.T) {
+	cases := []struct {
+		raw       string
+		wantLabel string
+		wantUID   int64
+		wantGID   int64
+	}{
+		{"", "no user specified", -1, -1},
+		{"26", "26", 26, -1},
+		{"26:26", "26:26", 26, 26},
+		{"0:0", "0:0", 0, 0},
+		{"postgres", "postgres", -1, -1},
+		{"redis", "redis", -1, -1},
+		{"nobody", "nobody", -1, -1},
+	}
+	for _, tc := range cases {
+		label, uid, gid := resolveImageUser(tc.raw)
+		assert.Equal(t, tc.wantLabel, label, "raw=%q", tc.raw)
+		assert.Equal(t, tc.wantUID, uid, "raw=%q uid", tc.raw)
+		assert.Equal(t, tc.wantGID, gid, "raw=%q gid", tc.raw)
+	}
+}
+
+// TestGeneratePodYAMLTemplate_PostgresInspectValues: real-world sclorg postgres env.
 func TestGeneratePodYAMLTemplate_PostgresInspectValues(t *testing.T) {
 	envVars := []string{
 		"NAME=s2i-core",
@@ -184,9 +219,11 @@ func TestGeneratePodYAMLTemplate_PostgresInspectValues(t *testing.T) {
 		"/opt/app-root/src",
 	)
 
-	out, inputSHA, outputSHA, err := generatePodYAMLTemplate("quay.io/sclorg/postgresql-15-c9s:latest", cfg, "postgres")
+	out, imageUser, inputSHA, outputSHA, err := generatePodYAMLTemplate("quay.io/sclorg/postgresql-15-c9s:latest", cfg, "postgres")
 	require.NoError(t, err)
 
+	assert.Equal(t, "postgres", imageUser)
+	assert.Contains(t, out, "# image user: postgres")
 	for _, ev := range envVars {
 		parts := strings.SplitN(ev, "=", 2)
 		assert.Contains(t, out, fmt.Sprintf("name: %s", parts[0]))
@@ -200,8 +237,7 @@ func TestGeneratePodYAMLTemplate_PostgresInspectValues(t *testing.T) {
 	assert.NotEmpty(t, outputSHA)
 }
 
-// TestGeneratePodYAMLTemplate_UsesProvidedFakeImage verifies generatePodYAMLTemplate
-// with a manually-constructed Config (does not call a live registry).
+// TestGeneratePodYAMLTemplate_UsesProvidedFakeImage: numeric UID, no *USER* env key → UID as label.
 func TestGeneratePodYAMLTemplate_UsesProvidedFakeImage(t *testing.T) {
 	_ = fake.FakeImage{}
 
@@ -211,14 +247,54 @@ func TestGeneratePodYAMLTemplate_UsesProvidedFakeImage(t *testing.T) {
 		ExposedPorts: map[string]struct{}{"6379/tcp": {}},
 	}
 
-	out, _, _, err := generatePodYAMLTemplate("quay.io/ramachandra_ch/redis@sha256:8e845b2ad2eec813a04896d4e2e5588827e49d5394579c95f3651f0cb11c1cb0", cfg, "redis")
+	out, imageUser, _, _, err := generatePodYAMLTemplate("quay.io/ramachandra_ch/redis@sha256:8e845b2ad2eec813a04896d4e2e5588827e49d5394579c95f3651f0cb11c1cb0", cfg, "redis")
 	require.NoError(t, err)
+	assert.Equal(t, "999", imageUser)
+	assert.Contains(t, out, "# image user: 999")
 	assert.Contains(t, out, "runAsUser: 999")
 	assert.Contains(t, out, "REDIS_VERSION")
 	assert.Contains(t, out, "containerPort: 6379")
 }
 
-// TestDeriveContainerName verifies the image-name extraction logic.
+func TestInferUsernameFromEnv(t *testing.T) {
+	cases := []struct {
+		desc string
+		env  []string
+		want string
+	}{
+		{"pguser",            []string{"PGUSER=postgres", "HOME=/var/lib/pgsql"}, "postgres"},
+		{"mysql_user",        []string{"MYSQL_USER=root"}, "root"},
+		{"mariadb_user",      []string{"MARIADB_USER=myuser"}, "myuser"},
+		{"app_user",          []string{"APP_USER=appuser"}, "appuser"},
+		{"run_user",          []string{"RUN_USER=runner"}, "runner"},
+		{"mongodb_username",  []string{"MONGODB_USERNAME=mongodb"}, "mongodb"},
+		{"custom_svc_user",   []string{"MY_SVC_USER=myapp"}, "myapp"},
+		{"username_key",      []string{"USERNAME=admin"}, "admin"},
+		{"no_user_key",       []string{"REDIS_VERSION=7.0.0"}, ""},
+		{"empty_env",         []string{}, ""},
+		{"empty_value",       []string{"PGUSER="}, ""},
+		{"path_value",        []string{"APP_USER=/home/app"}, ""},
+		{"url_value",         []string{"APP_USER=http://x.com"}, ""},
+		{"integer_value",     []string{"APP_USER=1001"}, ""},
+		{"too_long",          []string{"APP_USER=averylongusernamethatexceedsthirtytwocharacters"}, ""},
+		{"first_wins",        []string{"APP_USER=first", "RUN_USER=second"}, "first"},
+	}
+	for _, tc := range cases {
+		assert.Equal(t, tc.want, inferUsernameFromEnv(tc.env), "case %q", tc.desc)
+	}
+}
+
+// TestGeneratePodYAMLTemplate_NumericUIDWithEnvHint: PGUSER present → username as label, UID in runAsUser.
+func TestGeneratePodYAMLTemplate_NumericUIDWithEnvHint(t *testing.T) {
+	cfg := makeConfig("26", []string{"PGUSER=postgres", "HOME=/var/lib/pgsql"}, nil, nil, nil, "")
+	out, imageUser, _, _, err := generatePodYAMLTemplate("quay.io/sclorg/postgresql-15-c9s:latest", cfg, "postgres")
+	require.NoError(t, err)
+	assert.Equal(t, "postgres", imageUser)
+	assert.Contains(t, out, "# image user: postgres")
+	assert.Contains(t, out, "runAsUser: 26")
+	assert.Contains(t, out, "allowPrivilegeEscalation: false")
+}
+
 func TestDeriveContainerName(t *testing.T) {
 	cases := []struct {
 		ref      string
