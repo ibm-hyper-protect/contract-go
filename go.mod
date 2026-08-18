@@ -20,7 +20,7 @@ go 1.26.4
 require (
 	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
-	github.com/stretchr/testify v1.11.1
+	github.com/stretchr/testify v1.12.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.36.3
 	sigs.k8s.io/yaml v1.6.0
