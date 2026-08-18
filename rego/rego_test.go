@@ -71,12 +71,33 @@ func TestGenerateRegoPolicy_MultiContainer(t *testing.T) {
 
 func TestGenerateRegoPolicy_EmptyYAML(t *testing.T) {
 	_, _, _, err := GenerateRegoPolicy("", "")
-	assert.Error(t, err)
+	assert.ErrorIs(t, err, errEmptyParameter)
 }
 
 func TestGenerateRegoPolicy_InvalidYAML(t *testing.T) {
 	_, _, _, err := GenerateRegoPolicy("invalid: yaml: content:", "")
 	assert.Error(t, err)
+}
+
+func TestGenerateRegoPolicy_NoValidContainers(t *testing.T) {
+	// Pod with containers that all have blank images — should return errNoContainers.
+	podYAML := `
+apiVersion: v1
+kind: Pod
+metadata:
+  name: no-image-pod
+spec:
+  containers:
+  - name: empty-image
+    image: ""
+`
+	_, _, _, err := GenerateRegoPolicy(podYAML, "")
+	assert.ErrorIs(t, err, errNoContainers)
+}
+
+func TestGenerateCommandRule_EmptyImage(t *testing.T) {
+	_, _, err := generateCommandRule("mycontainer", "", []string{"/bin/sh"}, []string{"-c", "echo hi"})
+	assert.ErrorIs(t, err, errEmptyImage)
 }
 
 // ─── escapeRegex ─────────────────────────────────────────────────────────────
@@ -178,7 +199,8 @@ func TestGenerateCommandRule(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, _ := generateCommandRule("test-container", tt.image, tt.command, tt.args)
+			result, _, err := generateCommandRule("test-container", tt.image, tt.command, tt.args)
+			require.NoError(t, err)
 			for _, w := range tt.want {
 				assert.Contains(t, result, w)
 			}
@@ -210,8 +232,9 @@ func TestScriptFuncName(t *testing.T) {
 
 func TestGenerateCommandRule_MultilineScript(t *testing.T) {
 	script := "set -e\necho hello\necho world\n"
-	rule, validators := generateCommandRule("busybox-init-masked", "quay.io/prometheus/busybox:latest",
+	rule, validators, err := generateCommandRule("busybox-init-masked", "quay.io/prometheus/busybox:latest",
 		[]string{"/bin/sh"}, []string{"-c", script})
+	require.NoError(t, err)
 
 	assert.Contains(t, rule, "validate_busybox_init_masked_script_2(args[2])")
 	assert.NotContains(t, rule, "set -e")
@@ -221,8 +244,9 @@ func TestGenerateCommandRule_MultilineScript(t *testing.T) {
 }
 
 func TestGenerateCommandRule_SimpleArgNoValidator(t *testing.T) {
-	rule, validators := generateCommandRule("app", "quay.io/prometheus/busybox:latest",
+	rule, validators, err := generateCommandRule("app", "quay.io/prometheus/busybox:latest",
 		[]string{"/bin/bash"}, []string{"-c", "sleep 90"})
+	require.NoError(t, err)
 
 	assert.Contains(t, rule, `args[2] == "sleep 90"`)
 	assert.Empty(t, validators)

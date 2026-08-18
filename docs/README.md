@@ -2226,7 +2226,7 @@ in the template. An OCP baseline rule for Kata pause/infra containers is include
 
 **Signature:**
 ```go
-func GenerateRegoPolicy(podYAML string, templatePath string) (policy, podYAMLBase64, policyBase64 string, err error)
+func GenerateRegoPolicy(podYAML, templatePath string) (policy, podYAMLBase64, policyBase64 string, err error)
 ```
 
 **Parameters:**

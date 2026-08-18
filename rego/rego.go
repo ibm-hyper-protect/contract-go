@@ -27,11 +27,27 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// errEmptyParameter is returned when a required string parameter is blank.
-var errEmptyParameter = errors.New("required parameter is empty")
+var (
+	// errEmptyParameter is returned when a required string parameter is blank.
+	errEmptyParameter = errors.New("required parameter is empty")
+	// errNoContainers is returned when the pod spec contains no containers with a non-empty image.
+	errNoContainers = errors.New("pod spec contains no containers with a valid image")
+	// errEmptyImage is returned when generateCommandRule is called with a blank image.
+	errEmptyImage = errors.New("container image must not be empty")
+)
+
+const marker = "# --- generator inserts CreateContainerRequest, allow_image, and allow_command rules here ---"
 
 //go:embed sample-policy.rego
 var defaultTemplate string
+
+// containerEntry holds pre-generated rules for one pod container.
+type containerEntry struct {
+	image            string
+	imageRule        string
+	commandRule      string
+	scriptValidators []string
+}
 
 // GenerateRegoPolicy generates an OPA v1 Rego policy from a Kubernetes pod YAML.
 // It extracts container images and commands from the pod spec and generates
@@ -59,6 +75,9 @@ func GenerateRegoPolicy(podYAML string, templatePath string) (policy, podYAMLBas
 	}
 
 	entries := extractContainerEntries(&pod)
+	if len(entries) == 0 {
+		return "", "", "", errNoContainers
+	}
 	policy = generatePolicy(
 		tmpl,
 		imageRulesFrom(entries),
@@ -81,14 +100,6 @@ func readTemplate(templatePath string) (string, error) {
 	return string(content), nil
 }
 
-// containerEntry holds pre-generated rules for one pod container.
-type containerEntry struct {
-	image            string
-	imageRule        string
-	commandRule      string
-	scriptValidators []string
-}
-
 // extractContainerEntries builds one containerEntry per container (init first, then main).
 // Containers with command/args get a strict allow_command; those without get a permissive
 // allow_command (image-only, no arg constraint) to admit ENTRYPOINT-only images.
@@ -104,7 +115,13 @@ func extractContainerEntries(pod *corev1.Pod) []containerEntry {
 			imageRule: generateImageRule(c.Image),
 		}
 		if len(c.Command) > 0 || len(c.Args) > 0 {
-			e.commandRule, e.scriptValidators = generateCommandRule(c.Name, c.Image, c.Command, c.Args)
+			rule, validators, err := generateCommandRule(c.Name, c.Image, c.Command, c.Args)
+			if err != nil {
+				// image was already validated non-empty above; this path is unreachable
+				// in normal flow but guards against direct internal calls.
+				continue
+			}
+			e.commandRule, e.scriptValidators = rule, validators
 		} else {
 			e.commandRule = generatePermissiveCommandRule(c.Image)
 		}
@@ -167,7 +184,11 @@ func generatePermissiveCommandRule(image string) string {
 //
 // CRI-O sets OCI.Process.Args = pod.command + pod.args, so both slices are concatenated.
 // Simple args are inlined; multiline args (containing \n) are extracted to named validators.
-func generateCommandRule(containerName string, image string, command []string, args []string) (string, []string) {
+// Returns an error if image is empty.
+func generateCommandRule(containerName string, image string, command []string, args []string) (string, []string, error) {
+	if image == "" {
+		return "", nil, errEmptyImage
+	}
 	escapedImage := escapeRegex(image)
 	fullCommand := make([]string, len(command)+len(args))
 	copy(fullCommand, command)
@@ -197,7 +218,7 @@ func generateCommandRule(containerName string, image string, command []string, a
 %s
 }`, escapedImage, len(fullCommand), strings.Join(argChecks, "\n"))
 
-	return rule, scriptValidators
+	return rule, scriptValidators, nil
 }
 
 // scriptFuncName derives a valid OPA identifier from a container name and arg index.
@@ -239,7 +260,6 @@ func escapeRegex(s string) string {
 //  5. Pod allow_command rules — strict or permissive per container
 //  6. Script validators — one per multiline script arg
 func generatePolicy(template string, imageRules, commandRules, scriptValidators []string) string {
-	const marker = "# --- generator inserts CreateContainerRequest, allow_image, and allow_command rules here ---"
 
 	markerIdx := strings.Index(template, marker)
 	if markerIdx == -1 {

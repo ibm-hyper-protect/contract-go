@@ -588,8 +588,7 @@ func main() {
         log.Fatal(err)
     }
 
-    fmt.Println("Generated Policy:")
-    fmt.Println(policy)
+    fmt.Println("Generated Policy:", policy)
     fmt.Println("Pod YAML (Base64):", podYAMLBase64)
     fmt.Println("Policy (Base64):", policyBase64)
 
