@@ -592,12 +592,6 @@ func main() {
     fmt.Println("Pod YAML (Base64):", podYAMLBase64)
     fmt.Println("Policy (Base64):", policyBase64)
 
-    // Optionally save the policy to a file
-    err = os.WriteFile("policy.rego", []byte(policy), 0644)
-    if err != nil {
-        log.Fatal(err)
-    }
-    fmt.Println("Policy saved to policy.rego")
 }
 ```
 

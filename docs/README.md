@@ -2286,9 +2286,8 @@ func main() {
         log.Fatalf("Failed to generate policy: %v", err)
     }
 
-    fmt.Println("=== Generated Policy ===")
-    fmt.Println(policy)
-    fmt.Println("Pod YAML (Base64):", podYAMLBase64)
+    fmt.Println("Generated Policy ", policy)
+    fmt.Println("Pod YAML (Base64): ", podYAMLBase64)
     fmt.Println("Policy (Base64):  ", policyBase64)
 }
 ```
@@ -2316,11 +2315,6 @@ func main() {
         log.Fatalf("Failed to generate policy: %v", err)
     }
 
-    if err := os.WriteFile("policy.rego", []byte(policy), 0644); err != nil {
-        log.Fatalf("Failed to write policy: %v", err)
-    }
-
-    log.Println("Policy written to policy.rego")
 }
 ```
 
