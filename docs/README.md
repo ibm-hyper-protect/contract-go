@@ -68,6 +68,7 @@ The encryption process:
 - [Attestation Functions](#attestation-functions)
 - [Certificate Functions](#certificate-functions)
 - [Contract Functions](#contract-functions)
+- [Rego Policy Functions](#rego-policy-functions)
 - [Sealed Secret Functions](#sealed-secret-functions)
 - [Image Functions](#image-functions)
 - [Network Functions](#network-functions)
@@ -2210,6 +2211,162 @@ func main() {
 - `"failed while creating initdata.toml"` - Failed while replacing encrypted contract in initdata.toml file
 - `"failed while gzipping initdata"` - Failed while compressing the content of initdata.toml file
 
+
+---
+
+## Rego Policy Functions
+
+### GenerateRegoPolicy
+
+Generates an OPA v1 Rego policy from a Kubernetes pod YAML. Extracts container images and commands
+from the pod spec and inserts `allow_image()` and `allow_command()` rules at the marker position
+in the template. An OCP baseline rule for Kata pause/infra containers is included automatically.
+
+**Package:** `github.com/ibm-hyper-protect/contract-go/v2/rego`
+
+**Signature:**
+```go
+func GenerateRegoPolicy(podYAML, templatePath string) (policy, podYAMLBase64, policyBase64 string, err error)
+```
+
+**Parameters:**
+
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `podYAML` | `string` | Required | Kubernetes pod spec in YAML format. Supports `Pod` kind directly. |
+| `templatePath` | `string` | Optional | Path to a custom Rego template file. Pass `""` to use the embedded default OPA v1 template. |
+
+**Returns:**
+
+| Return | Type | Description |
+|--------|------|-------------|
+| `policy` | `string` | The generated Rego policy as a plain string |
+| `podYAMLBase64` | `string` | Standard Base64 encoding of the input pod YAML |
+| `policyBase64` | `string` | Standard Base64 encoding of the generated policy |
+| `err` | `error` | Non-nil if `podYAML` is empty, unparseable, or the template cannot be read |
+
+**Rule Generation Logic:**
+
+| Container spec | `allow_image()` | `allow_command()` |
+|----------------|-----------------|-------------------|
+| No `command` / `args` | anchored regex for image | permissive (image-only, no arg constraint) |
+| Has `command` and/or `args` (single-line) | anchored regex for image | strict: `count(args) == N` + per-index `args[i] == "..."` |
+| Has `command` and/or `args` (multiline script) | anchored regex for image | strict: named validator function extracted for the script arg |
+
+**Insertion order in generated policy:**
+
+1. `CreateContainerRequest` wiring rule — links `allow_image` + `allow_command` to OCI input
+2. OCP baseline `allow_image` — admits Kata pause/infra containers (digest-pinned)
+3. Pod `allow_image` rules — one per unique image (deduplicated)
+4. OCP baseline `allow_command` — permissive for pause/infra containers
+5. Pod `allow_command` rules — strict or permissive per container
+6. Script validators — one named function per multiline script arg
+
+**Example 1: Generate a policy from a pod YAML file:**
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/rego"
+)
+
+func main() {
+    podYAML, err := os.ReadFile("pod.yaml")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    policy, podYAMLBase64, policyBase64, err := rego.GenerateRegoPolicy(string(podYAML), "")
+    if err != nil {
+        log.Fatalf("Failed to generate policy: %v", err)
+    }
+
+    fmt.Println("Generated Policy ", policy)
+    fmt.Println("Pod YAML (Base64): ", podYAMLBase64)
+    fmt.Println("Policy (Base64):  ", policyBase64)
+}
+```
+
+**Example 2: Save policy to a file:**
+
+```go
+package main
+
+import (
+    "log"
+    "os"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/rego"
+)
+
+func main() {
+    podYAML, err := os.ReadFile("pod.yaml")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    policy, _, _, err := rego.GenerateRegoPolicy(string(podYAML), "")
+    if err != nil {
+        log.Fatalf("Failed to generate policy: %v", err)
+    }
+
+}
+```
+
+**Example 3: Use a custom Rego template:**
+
+```go
+policy, _, _, err := rego.GenerateRegoPolicy(string(podYAML), "/path/to/custom-template.rego")
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+The custom template must contain the generator marker at the insertion point:
+```
+# --- generator inserts CreateContainerRequest, allow_image, and allow_command rules here ---
+```
+
+**Example 4: Use Base64 outputs for contract embedding:**
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/rego"
+)
+
+func main() {
+    podYAML, err := os.ReadFile("pod.yaml")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // All three return values are useful for contract workflows
+    policy, podYAMLBase64, policyBase64, err := rego.GenerateRegoPolicy(string(podYAML), "")
+    if err != nil {
+        log.Fatalf("Failed to generate policy: %v", err)
+    }
+
+    // policyBase64 can be embedded directly in a contract YAML
+    fmt.Println("Embed this in your contract:")
+    fmt.Printf("  regoPolicy: %s\n", policyBase64)
+
+    // podYAMLBase64 is the audit record of what input produced this policy
+    fmt.Println("Input audit record (pod YAML Base64):", podYAMLBase64)
+
+    _ = policy
+}
+```
 
 ---
 
