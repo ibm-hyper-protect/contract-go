@@ -1,3 +1,7 @@
+## <small>2.41.1 (2026-08-20)</small>
+
+* fix(deps): update module k8s.io/api to v0.36.4 (#303) ([8855018](https://github.com/ibm-hyper-protect/contract-go/commit/8855018)), closes [#303](https://github.com/ibm-hyper-protect/contract-go/issues/303)
+
 ## 2.41.0 (2026-08-19)
 
 * fix: Fixed Release Workflow (#302) ([2598424](https://github.com/ibm-hyper-protect/contract-go/commit/2598424)), closes [#302](https://github.com/ibm-hyper-protect/contract-go/issues/302)
