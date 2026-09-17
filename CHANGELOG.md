@@ -1,3 +1,8 @@
+## 2.44.0 (2026-09-17)
+
+* feat: Feature for openssl key and cert (#311) ([77d6ae0](https://github.com/ibm-hyper-protect/contract-go/commit/77d6ae0)), closes [#311](https://github.com/ibm-hyper-protect/contract-go/issues/311)
+* chore(deps): update docker.io/library/hello-world docker digest to 5e23090 (#312) ([fbd0c24](https://github.com/ibm-hyper-protect/contract-go/commit/fbd0c24)), closes [#312](https://github.com/ibm-hyper-protect/contract-go/issues/312)
+
 ## <small>2.43.1 (2026-09-04)</small>
 
 * fix(deps): update module github.com/google/go-containerregistry to v0.22.1 (#310) ([f64ac2d](https://github.com/ibm-hyper-protect/contract-go/commit/f64ac2d)), closes [#310](https://github.com/ibm-hyper-protect/contract-go/issues/310)
