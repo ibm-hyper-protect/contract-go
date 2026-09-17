@@ -135,6 +135,7 @@ Learn more:
 
 - **OpenSSL Key and Certificate Generation** *(new in `crypto` package)*
   - Generate RSA key pairs (2048 / 3072 / 4096-bit) via `openssl genrsa`
+  - **Key expiry support** — pass `validDays > 0` with `"key"` type to embed the public key in a self-signed X.509 certificate, giving the key a verifiable expiry date; pass `0` for a plain public key with no expiry
   - Generate a CA + client certificate bundle with full SAN support (DNS and IP auto-typed)
   - Optional AES-256 passphrase encryption for private keys — passphrase delivered via file descriptor, never on the command line
   - SHA-256 fingerprints returned for every generated artifact
@@ -657,6 +658,8 @@ func main() {
 
 ### Generate an RSA Key Pair
 
+**Without expiry (plain public key):**
+
 ```go
 package main
 
@@ -669,14 +672,14 @@ import (
 )
 
 func main() {
-    // Generate a 4096-bit RSA key pair, password-protected
+    // Generate a 4096-bit RSA key pair, password-protected, no expiry
     privPEM, pubPEM, _, _, _, privSha, pubSha, _, _, _, err := crypto.GenerateOpenSSLArtifacts(
-        "key",          // artifactType: "key" or "cert"
+        "key",           // artifactType: "key" or "cert"
         "my-passphrase", // AES-256 passphrase — pass "" for unencrypted
         "",              // commonName — not used for key type
         "",              // sans      — not used for key type
         4096,
-        0,               // validDays — not used for key type
+        0,               // validDays == 0 → plain RSA public key, no expiry
     )
     if err != nil {
         log.Fatalf("failed to generate key pair: %v", err)
@@ -687,6 +690,48 @@ func main() {
 
     os.WriteFile("private.pem", []byte(privPEM), 0600)
     os.WriteFile("public.pem",  []byte(pubPEM),  0644)
+}
+```
+
+**With expiry (self-signed certificate in public key slot):**
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/crypto"
+)
+
+func main() {
+    // Generate a 4096-bit RSA key pair valid for 365 days.
+    // When validDays > 0 the publicKeyPEM return value contains a self-signed
+    // X.509 certificate instead of a bare public key.
+    privPEM, certPEM, _, _, _, privSha, certSha, _, _, _, err := crypto.GenerateOpenSSLArtifacts(
+        "key",
+        "",    // no passphrase
+        "",    // commonName — not used for key type
+        "",    // sans      — not used for key type
+        4096,
+        365,   // validDays > 0 → self-signed cert in publicKeyPEM slot
+    )
+    if err != nil {
+        log.Fatalf("failed to generate key pair with expiry: %v", err)
+    }
+
+    fmt.Printf("Private Key SHA256:  %s\n", privSha)
+    fmt.Printf("Certificate SHA256:  %s\n", certSha)
+
+    os.WriteFile("private.pem", []byte(privPEM), 0600)
+    os.WriteFile("cert.pem",    []byte(certPEM), 0644)
+
+    // Verify the expiry on disk:
+    //   openssl x509 -in cert.pem -noout -dates
+    //   openssl x509 -in cert.pem -noout -enddate
+    //   openssl x509 -in cert.pem -noout -text
 }
 ```
 

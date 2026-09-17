@@ -26,7 +26,6 @@ import (
 
 // GenerateOpenSSLArtifacts generates RSA key or certificate artifacts using
 // the openssl binary. All defaulting and validation must be performed by the
-// caller (contract-cli) before invoking this function — no defaulting is
 // applied here.
 //
 // Parameters:
@@ -40,12 +39,17 @@ import (
 //     e.g. "example.com,www.example.com,192.168.1.1".
 //     Only used when artifactType == "cert". Must be pre-populated by caller.
 //   - keySize:      RSA modulus size in bits. Must be 2048, 3072, or 4096.
-//   - validDays:    Certificate validity period in days.
-//     Only used when artifactType == "cert". Must be pre-populated by caller.
+//   - validDays:    Validity period in days.
+//     For artifactType == "cert": certificate validity (must be > 0).
+//     For artifactType == "key": when > 0, a self-signed certificate embedding
+//     the public key is generated and returned in publicKeyPEM; the certificate
+//     is valid for validDays days with subject CN=key. When 0, a plain RSA
+//     public key PEM is returned instead.
 //
 // Returns — for artifactType == "key":
 //   - privateKeyPEM:    RSA private key in PEM format (write as <out>.pem, perm 0600)
-//   - publicKeyPEM:     RSA public key in PEM format  (write as <out>.pub.pem, perm 0644)
+//   - publicKeyPEM:     RSA public key PEM when validDays == 0; self-signed certificate
+//     PEM when validDays > 0 (write as <out>.pub.pem, perm 0644)
 //   - privateKeySha:    SHA-256 of privateKeyPEM
 //   - publicKeySha:     SHA-256 of publicKeyPEM
 //   - caCertPEM, clientCertPEM, clientKeyPEM, caCertSha, clientCertSha, clientKeySha: empty strings
@@ -77,7 +81,7 @@ func GenerateOpenSSLArtifacts(artifactType, password, commonName, sans string, k
 
 	switch artifactType {
 	case "key":
-		privateKeyPEM, publicKeyPEM, err = generateKeyPair(keySize, password)
+		privateKeyPEM, publicKeyPEM, err = generateKeyPair(keySize, password, validDays)
 		if err != nil {
 			return
 		}
@@ -96,17 +100,49 @@ func GenerateOpenSSLArtifacts(artifactType, password, commonName, sans string, k
 }
 
 // generateKeyPair produces an RSA private key and its public counterpart.
-func generateKeyPair(keySize int, password string) (privateKeyPEM, publicKeyPEM string, err error) {
-	privateKeyPEM, err = generatePrivateKey(keySize, password)
+// When validDays > 0 a self-signed certificate embedding the public key is
+// returned in publicKeyPEM instead of a bare RSA public key.
+func generateKeyPair(keySize int, password string, validDays int) (privateKeyPEM, publicKeyPEM string, err error) {
+	// Always start with a plain (unencrypted) key; we need it for the cert
+	// generation step when validDays > 0 regardless of the password setting.
+	plainKeyPEM, err := gen.ExecCommand(gen.GetOpenSSLPath(), "", "genrsa", fmt.Sprintf("%d", keySize))
 	if err != nil {
 		err = fmt.Errorf("failed to generate private key - %v", err)
 		return
 	}
 
-	publicKeyPEM, err = enc.GeneratePublicKey(privateKeyPEM, password)
-	if err != nil {
-		err = fmt.Errorf("failed to extract public key - %v", err)
-		return
+	if validDays > 0 {
+		// Produce a self-signed certificate so the key carries an expiry.
+		publicKeyPEM, err = generateSelfSignedCACert(plainKeyPEM, validDays)
+		if err != nil {
+			err = fmt.Errorf("failed to generate self-signed certificate for key - %v", err)
+			return
+		}
+	} else {
+		publicKeyPEM, err = enc.GeneratePublicKey(plainKeyPEM, "")
+		if err != nil {
+			err = fmt.Errorf("failed to extract public key - %v", err)
+			return
+		}
+	}
+
+	// Encrypt the private key with the caller's password if one was provided.
+	if password != "" {
+		tmpPath, tmpErr := gen.CreateTempFile(plainKeyPEM)
+		if tmpErr != nil {
+			err = fmt.Errorf("failed to create temp file for key encryption - %v", tmpErr)
+			return
+		}
+		defer gen.RemoveTempFile(tmpPath)
+
+		args := []string{"rsa", "-aes256", "-passout", fmt.Sprintf("fd:%d", 3), "-in", tmpPath}
+		privateKeyPEM, err = gen.ExecCommandWithPassword(gen.GetOpenSSLPath(), "", password, args...)
+		if err != nil {
+			err = fmt.Errorf("failed to encrypt private key - %v", err)
+			return
+		}
+	} else {
+		privateKeyPEM = plainKeyPEM
 	}
 	return
 }
