@@ -283,7 +283,7 @@ func CreateCert(csrPath, caCertPath, caKeyPath string, expiryDays int) (string, 
 	// Defer its removal — it is the only file CreateCert itself causes to be created.
 	defer gen.RemoveTempFile(caCertPath + ".srl")
 
-	signingCert, err := gen.ExecCommand(gen.GetOpenSSLPath(), "", "x509", "-req", "-in", csrPath, "-CA", caCertPath, "-CAkey", caKeyPath, "-CAcreateserial", "-days", fmt.Sprintf("%d", expiryDays))
+	signingCert, err := gen.ExecCommand(gen.GetOpenSSLPath(), "", "x509", "-req", "-in", csrPath, "-CA", caCertPath, "-CAkey", caKeyPath, "-CAcreateserial", "-copy_extensions", "copy", "-days", fmt.Sprintf("%d", expiryDays))
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
 	}

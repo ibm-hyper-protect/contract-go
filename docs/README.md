@@ -70,6 +70,7 @@ The encryption process:
 - [Contract Functions](#contract-functions)
 - [Rego Policy Functions](#rego-policy-functions)
 - [Sealed Secret Functions](#sealed-secret-functions)
+- [OpenSSL Key and Certificate Generation](#openssl-key-and-certificate-generation)
 - [Image Functions](#image-functions)
 - [Image Spec Functions](#image-spec-functions)
 - [Network Functions](#network-functions)
@@ -2631,6 +2632,250 @@ Where:
 - `"failed to encrypt secret"` - Encryption operation failed
 
 
+
+---
+
+## OpenSSL Key and Certificate Generation
+
+### GenerateOpenSSLArtifacts
+
+Generates an RSA key pair or a CA + client certificate bundle using the system OpenSSL binary.
+
+**Package:** `github.com/ibm-hyper-protect/contract-go/v2/crypto`
+
+**Signature:**
+```go
+func GenerateOpenSSLArtifacts(
+    artifactType, password, commonName, sans string,
+    keySize, validDays int,
+) (
+    privateKeyPEM, publicKeyPEM,
+    caCertPEM, clientCertPEM, clientKeyPEM,
+    privateKeySha, publicKeySha,
+    caCertSha, clientCertSha, clientKeySha string,
+    err error,
+)
+```
+
+**Parameters:**
+
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `artifactType` | `string` | Required | `"key"` to generate an RSA key pair; `"cert"` to generate a CA + client certificate bundle |
+| `password` | `string` | Optional | AES-256 passphrase to encrypt the private key(s). Delivered via file descriptor pipe — never appears on the command line. Pass `""` for an unencrypted key |
+| `commonName` | `string` | Required for `"cert"` | X.509 subject CN for the client certificate. If empty, defaults to the first SAN token (set by the caller before passing) |
+| `sans` | `string` | Required for `"cert"` | Comma-separated Subject Alternative Names, e.g. `"example.com,www.example.com,192.168.1.1"`. Each token is automatically typed as `DNS:` or `IP:` |
+| `keySize` | `int` | Required | RSA modulus size in bits: `2048`, `3072`, or `4096` |
+| `validDays` | `int` | Optional for `"key"`, Required for `"cert"` | Validity period in days. **For `"cert"`:** certificate validity period (must be `> 0`). **For `"key"`:** when `> 0`, a self-signed X.509 certificate embedding the public key is generated and returned in `publicKeyPEM` instead of a bare RSA public key — this gives the key an expiry. Pass `0` to get a plain public key PEM with no expiry. |
+
+**Returns (`artifactType == "key"`, `validDays == 0`):**
+
+| Return | Type | Description |
+|--------|------|-------------|
+| `privateKeyPEM` | `string` | RSA private key in PEM format (PKCS#8 on OpenSSL 3.x) |
+| `publicKeyPEM` | `string` | RSA public key in PEM format |
+| `privateKeySha` | `string` | SHA-256 of `privateKeyPEM` |
+| `publicKeySha` | `string` | SHA-256 of `publicKeyPEM` |
+| `caCertPEM`, `clientCertPEM`, `clientKeyPEM` | `string` | Empty strings — not applicable for key type |
+| `caCertSha`, `clientCertSha`, `clientKeySha` | `string` | Empty strings — not applicable for key type |
+| `err` | `error` | Error if OpenSSL is not found, inputs are invalid, or any step fails |
+
+**Returns (`artifactType == "key"`, `validDays > 0`):**
+
+| Return | Type | Description |
+|--------|------|-------------|
+| `privateKeyPEM` | `string` | RSA private key in PEM format (PKCS#8 on OpenSSL 3.x) |
+| `publicKeyPEM` | `string` | Self-signed X.509 certificate embedding the public key, valid for `validDays` days. Subject CN is `CA`. Use `openssl x509 -in <file> -noout -dates` to inspect the expiry. |
+| `privateKeySha` | `string` | SHA-256 of `privateKeyPEM` |
+| `publicKeySha` | `string` | SHA-256 of `publicKeyPEM` (the certificate PEM) |
+| `caCertPEM`, `clientCertPEM`, `clientKeyPEM` | `string` | Empty strings — not applicable for key type |
+| `caCertSha`, `clientCertSha`, `clientKeySha` | `string` | Empty strings — not applicable for key type |
+| `err` | `error` | Error if OpenSSL is not found, inputs are invalid, or any step fails |
+
+**Returns (`artifactType == "cert"`):**
+
+| Return | Type | Description |
+|--------|------|-------------|
+| `caCertPEM` | `string` | Self-signed CA certificate in PEM format |
+| `clientCertPEM` | `string` | Client certificate signed by the CA in PEM format |
+| `clientKeyPEM` | `string` | Client private key in PEM format |
+| `caCertSha` | `string` | SHA-256 of `caCertPEM` |
+| `clientCertSha` | `string` | SHA-256 of `clientCertPEM` |
+| `clientKeySha` | `string` | SHA-256 of `clientKeyPEM` |
+| `privateKeyPEM`, `publicKeyPEM` | `string` | Empty strings — not applicable for cert type |
+| `privateKeySha`, `publicKeySha` | `string` | Empty strings — not applicable for cert type |
+| `err` | `error` | Error if OpenSSL is not found, inputs are invalid, or any step fails |
+
+**Example 1: Generate an RSA Key Pair (plain public key, no expiry):**
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/crypto"
+)
+
+func main() {
+    // Generate a 4096-bit RSA key pair, password-protected, no expiry
+    privPEM, pubPEM, _, _, _, privSha, pubSha, _, _, _, err := crypto.GenerateOpenSSLArtifacts(
+        "key",
+        "my-passphrase",
+        "",   // commonName — not used for key type
+        "",   // sans — not used for key type
+        4096,
+        0,    // validDays == 0 → plain RSA public key, no expiry
+    )
+    if err != nil {
+        log.Fatalf("Failed to generate key pair: %v", err)
+    }
+
+    fmt.Printf("Private Key SHA256: %s\n", privSha)
+    fmt.Printf("Public Key SHA256:  %s\n", pubSha)
+
+    // Save private key (read-only for owner)
+    if err = os.WriteFile("mykey_private.pem", []byte(privPEM), 0600); err != nil {
+        log.Fatal(err)
+    }
+    // Save public key
+    if err = os.WriteFile("mykey_public.pem", []byte(pubPEM), 0644); err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Println("Key pair saved successfully!")
+}
+```
+
+**Example 2: Generate an RSA Key Pair with expiry (self-signed certificate):**
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/crypto"
+)
+
+func main() {
+    // Generate a 4096-bit RSA key pair valid for 365 days.
+    // publicKeyPEM will contain a self-signed X.509 certificate instead of a
+    // bare public key — giving the key an expiry that can be verified with openssl.
+    privPEM, certPEM, _, _, _, privSha, certSha, _, _, _, err := crypto.GenerateOpenSSLArtifacts(
+        "key",
+        "",   // no passphrase
+        "",   // commonName — not used for key type
+        "",   // sans — not used for key type
+        4096,
+        365,  // validDays > 0 → self-signed certificate in publicKeyPEM slot
+    )
+    if err != nil {
+        log.Fatalf("Failed to generate key pair with expiry: %v", err)
+    }
+
+    fmt.Printf("Private Key SHA256:  %s\n", privSha)
+    fmt.Printf("Certificate SHA256:  %s\n", certSha)
+
+    if err = os.WriteFile("mykey_private.pem", []byte(privPEM), 0600); err != nil {
+        log.Fatal(err)
+    }
+    // The "public" slot now holds a certificate — name it accordingly
+    if err = os.WriteFile("mykey_cert.pem", []byte(certPEM), 0644); err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Println("Key pair with expiry saved successfully!")
+    fmt.Println("Verify expiry: openssl x509 -in mykey_cert.pem -noout -dates")
+}
+```
+
+> **Verifying the expiry on disk:**
+>
+> ```bash
+> # Show notBefore and notAfter
+> openssl x509 -in mykey_cert.pem -noout -dates
+>
+> # Show only the expiry date
+> openssl x509 -in mykey_cert.pem -noout -enddate
+>
+> # Full certificate text (subject, issuer, key, validity)
+> openssl x509 -in mykey_cert.pem -noout -text
+>
+> # Confirm private key and certificate are a matched pair
+> openssl x509 -in mykey_cert.pem  -pubkey -noout | openssl md5
+> openssl rsa   -in mykey_private.pem -pubout       | openssl md5
+> # Both MD5 hashes must match
+> ```
+
+**Example 3: Generate a CA + Client Certificate Bundle:**
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/crypto"
+)
+
+func main() {
+    // Generate a 2048-bit cert bundle valid for 365 days
+    _, _, caCertPEM, clientCertPEM, clientKeyPEM, _, _, caSha, clientCertSha, clientKeySha, err :=
+        crypto.GenerateOpenSSLArtifacts(
+            "cert",
+            "",                              // no password on client key
+            "my-service",                    // commonName
+            "example.com,192.168.1.10",      // SANs
+            2048,
+            365,
+        )
+    if err != nil {
+        log.Fatalf("Failed to generate certificate bundle: %v", err)
+    }
+
+    fmt.Printf("CA Cert SHA256:     %s\n", caSha)
+    fmt.Printf("Client Cert SHA256: %s\n", clientCertSha)
+    fmt.Printf("Client Key SHA256:  %s\n", clientKeySha)
+
+    if err = os.WriteFile("ca.crt", []byte(caCertPEM), 0644); err != nil {
+        log.Fatal(err)
+    }
+    if err = os.WriteFile("client.crt", []byte(clientCertPEM), 0644); err != nil {
+        log.Fatal(err)
+    }
+    if err = os.WriteFile("client_private.pem", []byte(clientKeyPEM), 0600); err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Println("Certificate bundle saved successfully!")
+}
+```
+
+**OpenSSL 3.x Compatibility Note:**
+
+On OpenSSL 3.x, `genrsa` emits PKCS#8 format (`-----BEGIN PRIVATE KEY-----`) instead of the legacy PKCS#1 format (`-----BEGIN RSA PRIVATE KEY-----`). When a password is supplied, keys are first generated unencrypted and then re-encrypted with `openssl rsa -aes256 -passout fd:3` to keep the passphrase off the process argument list.
+
+**Common Errors:**
+
+- `"openssl not found - <err>"` — OpenSSL binary is not installed or not in `PATH`; set `OPENSSL_BIN` to override
+- `"invalid type: must be 'key' or 'cert'"` — `artifactType` was neither `"key"` nor `"cert"`
+- `"invalid key size: must be 2048, 3072, or 4096"` — unsupported `keySize` value
+- `"failed to generate private key - <err>"` — `openssl genrsa` step failed
+- `"failed to extract public key - <err>"` — `openssl rsa -pubout` step failed (key type, `validDays == 0`)
+- `"failed to generate self-signed certificate for key - <err>"` — `openssl req -x509` step failed (key type, `validDays > 0`)
+- `"failed to encrypt private key - <err>"` — `openssl rsa -aes256` re-encryption step failed
+- `"failed to generate CA key - <err>"` — CA `genrsa` step failed
+- `"failed to generate CA certificate - <err>"` — self-sign step failed
+- `"failed to generate client key - <err>"` — client `genrsa` step failed
+- `"failed to generate client CSR - <err>"` — CSR generation step failed
+- `"failed to sign client certificate - <err>"` — `x509` signing step failed
 
 ---
 

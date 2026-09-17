@@ -38,6 +38,7 @@ A Go library for generating, signing, and encrypting deployment contracts for IB
 - [Contributing](#contributing)
 - [License](#license)
 - [Support](#support)
+- [OpenSSL Key and Certificate Generation](#generate-an-rsa-key-pair)
 
 ## Overview
 
@@ -131,6 +132,14 @@ Learn more:
   - Designed for use with `registryMapping` in confidential-containers workload contracts
   - Auto-derives container name from image reference when not specified
   - Returns SHA256 checksums of input and output for auditability
+
+- **OpenSSL Key and Certificate Generation** *(new in `crypto` package)*
+  - Generate RSA key pairs (2048 / 3072 / 4096-bit) via `openssl genrsa`
+  - **Key expiry support** — pass `validDays > 0` with `"key"` type to embed the public key in a self-signed X.509 certificate, giving the key a verifiable expiry date; pass `0` for a plain public key with no expiry
+  - Generate a CA + client certificate bundle with full SAN support (DNS and IP auto-typed)
+  - Optional AES-256 passphrase encryption for private keys — passphrase delivered via file descriptor, never on the command line
+  - SHA-256 fingerprints returned for every generated artifact
+  - Compatible with OpenSSL 3.x (PKCS#8 output) and OpenSSL 1.x (PKCS#1 output)
 
 ## Installation
 
@@ -647,6 +656,128 @@ func main() {
 }
 ```
 
+### Generate an RSA Key Pair
+
+**Without expiry (plain public key):**
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/crypto"
+)
+
+func main() {
+    // Generate a 4096-bit RSA key pair, password-protected, no expiry
+    privPEM, pubPEM, _, _, _, privSha, pubSha, _, _, _, err := crypto.GenerateOpenSSLArtifacts(
+        "key",           // artifactType: "key" or "cert"
+        "my-passphrase", // AES-256 passphrase — pass "" for unencrypted
+        "",              // commonName — not used for key type
+        "",              // sans      — not used for key type
+        4096,
+        0,               // validDays == 0 → plain RSA public key, no expiry
+    )
+    if err != nil {
+        log.Fatalf("failed to generate key pair: %v", err)
+    }
+
+    fmt.Printf("Private Key SHA256: %s\n", privSha)
+    fmt.Printf("Public  Key SHA256: %s\n", pubSha)
+
+    os.WriteFile("private.pem", []byte(privPEM), 0600)
+    os.WriteFile("public.pem",  []byte(pubPEM),  0644)
+}
+```
+
+**With expiry (self-signed certificate in public key slot):**
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/crypto"
+)
+
+func main() {
+    // Generate a 4096-bit RSA key pair valid for 365 days.
+    // When validDays > 0 the publicKeyPEM return value contains a self-signed
+    // X.509 certificate instead of a bare public key.
+    privPEM, certPEM, _, _, _, privSha, certSha, _, _, _, err := crypto.GenerateOpenSSLArtifacts(
+        "key",
+        "",    // no passphrase
+        "",    // commonName — not used for key type
+        "",    // sans      — not used for key type
+        4096,
+        365,   // validDays > 0 → self-signed cert in publicKeyPEM slot
+    )
+    if err != nil {
+        log.Fatalf("failed to generate key pair with expiry: %v", err)
+    }
+
+    fmt.Printf("Private Key SHA256:  %s\n", privSha)
+    fmt.Printf("Certificate SHA256:  %s\n", certSha)
+
+    os.WriteFile("private.pem", []byte(privPEM), 0600)
+    os.WriteFile("cert.pem",    []byte(certPEM), 0644)
+
+    // Verify the expiry on disk:
+    //   openssl x509 -in cert.pem -noout -dates
+    //   openssl x509 -in cert.pem -noout -enddate
+    //   openssl x509 -in cert.pem -noout -text
+}
+```
+
+### Generate a CA + Client Certificate Bundle
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/crypto"
+)
+
+func main() {
+    // Generate a 2048-bit cert bundle valid for 365 days
+    // SANs are auto-typed: IP addresses → IP:<addr>, everything else → DNS:<name>
+    _, _, caCertPEM, clientCertPEM, clientKeyPEM,
+        _, _, caSha, clientCertSha, clientKeySha, err :=
+        crypto.GenerateOpenSSLArtifacts(
+            "cert",
+            "",                         // no passphrase on client key
+            "my-service",               // X.509 subject CN
+            "example.com,192.168.1.10", // comma-separated SANs
+            2048,
+            365,
+        )
+    if err != nil {
+        log.Fatalf("failed to generate cert bundle: %v", err)
+    }
+
+    fmt.Printf("CA   Cert SHA256: %s\n", caSha)
+    fmt.Printf("Client Cert SHA256: %s\n", clientCertSha)
+    fmt.Printf("Client Key  SHA256: %s\n", clientKeySha)
+
+    os.WriteFile("ca.crt",         []byte(caCertPEM),   0644)
+    os.WriteFile("client.crt",     []byte(clientCertPEM), 0644)
+    os.WriteFile("client.key.pem", []byte(clientKeyPEM), 0600)
+}
+```
+
+> For the full parameter reference, return-value tables, and error list see
+> [docs/README.md — OpenSSL Key and Certificate Generation](docs/README.md#openssl-key-and-certificate-generation).
+
 ## Documentation
 
 Comprehensive documentation is available at:
@@ -675,6 +806,7 @@ The [`samples/`](samples/) directory contains example configurations:
 - [CCCO Signed & Encrypted Contract](samples/ccco/signed-encrypt-ccco.yaml)
 - [Docker Compose](samples/tgz/docker-compose.yaml)
 - [Certificate Chain Validation](samples/certificate-chain/)
+- [OpenSSL Key & Cert Generation API](docs/README.md#openssl-key-and-certificate-generation) — full API reference with examples
 
 ## Related Projects
 
