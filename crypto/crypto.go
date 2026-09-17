@@ -83,6 +83,9 @@ func GenerateOpenSSLArtifacts(artifactType, password, commonName, sans string, k
 	case "key":
 		privateKeyPEM, publicKeyPEM, err = generateKeyPair(keySize, password, validDays)
 		if err != nil {
+			privateKeyPEM = ""
+			publicKeyPEM = ""
+			err = fmt.Errorf("key generation failed - %w", err)
 			return
 		}
 		privateKeySha = gen.GenerateSha256(privateKeyPEM)
@@ -90,6 +93,10 @@ func GenerateOpenSSLArtifacts(artifactType, password, commonName, sans string, k
 	case "cert":
 		caCertPEM, clientCertPEM, clientKeyPEM, err = generateCertBundle(keySize, password, commonName, sans, validDays)
 		if err != nil {
+			caCertPEM = ""
+			clientCertPEM = ""
+			clientKeyPEM = ""
+			err = fmt.Errorf("certificate generation failed - %w", err)
 			return
 		}
 		caCertSha = gen.GenerateSha256(caCertPEM)
