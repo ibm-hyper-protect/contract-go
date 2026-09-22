@@ -182,6 +182,15 @@ func TestGenerateOpenSSLArtifacts_InvalidType(t *testing.T) {
 	assert.Contains(t, err.Error(), "invalid type")
 }
 
+// TestGenerateOpenSSLArtifacts_KeyWithDaysRejected verifies that passing
+// validDays > 0 with --type key returns an error, since key pairs do not
+// carry an expiry.
+func TestGenerateOpenSSLArtifacts_KeyWithDaysRejected(t *testing.T) {
+	_, _, _, _, _, _, _, _, _, _, err := GenerateOpenSSLArtifacts("key", "", "", "", 2048, 90)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "--days is not supported for --type key")
+}
+
 // TestGenerateOpenSSLArtifacts_InvalidSize verifies error on bad key size.
 func TestGenerateOpenSSLArtifacts_InvalidSize(t *testing.T) {
 	_, _, _, _, _, _, _, _, _, _, err := GenerateOpenSSLArtifacts("key", "", "", "", 1024, 0)
