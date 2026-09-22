@@ -41,15 +41,11 @@ import (
 //   - keySize:      RSA modulus size in bits. Must be 2048, 3072, or 4096.
 //   - validDays:    Validity period in days.
 //     For artifactType == "cert": certificate validity (must be > 0).
-//     For artifactType == "key": when > 0, a self-signed certificate embedding
-//     the public key is generated and returned in publicKeyPEM; the certificate
-//     is valid for validDays days with subject CN=key. When 0, a plain RSA
-//     public key PEM is returned instead.
+//     For artifactType == "key": must be 0; --days is not supported for key generation.
 //
 // Returns — for artifactType == "key":
 //   - privateKeyPEM:    RSA private key in PEM format (write as <out>.pem, perm 0600)
-//   - publicKeyPEM:     RSA public key PEM when validDays == 0; self-signed certificate
-//     PEM when validDays > 0 (write as <out>.pub.pem, perm 0644)
+//   - publicKeyPEM:     RSA public key PEM (write as <out>.pub.pem, perm 0644)
 //   - privateKeySha:    SHA-256 of privateKeyPEM
 //   - publicKeySha:     SHA-256 of publicKeyPEM
 //   - caCertPEM, clientCertPEM, clientKeyPEM, caCertSha, clientCertSha, clientKeySha: empty strings
@@ -74,6 +70,10 @@ func GenerateOpenSSLArtifacts(artifactType, password, commonName, sans string, k
 		err = fmt.Errorf("invalid type: must be 'key' or 'cert'")
 		return
 	}
+	if artifactType == "key" && validDays > 0 {
+		err = fmt.Errorf("--days is not supported for --type key: key pairs do not carry an expiry; use --type cert to generate a certificate with a validity period")
+		return
+	}
 	if keySize != 2048 && keySize != 3072 && keySize != 4096 {
 		err = fmt.Errorf("invalid key size: must be 2048, 3072, or 4096")
 		return
@@ -81,7 +81,7 @@ func GenerateOpenSSLArtifacts(artifactType, password, commonName, sans string, k
 
 	switch artifactType {
 	case "key":
-		privateKeyPEM, publicKeyPEM, err = generateKeyPair(keySize, password, validDays)
+		privateKeyPEM, publicKeyPEM, err = generateKeyPair(keySize, password)
 		if err != nil {
 			privateKeyPEM = ""
 			publicKeyPEM = ""
@@ -107,30 +107,18 @@ func GenerateOpenSSLArtifacts(artifactType, password, commonName, sans string, k
 }
 
 // generateKeyPair produces an RSA private key and its public counterpart.
-// When validDays > 0 a self-signed certificate embedding the public key is
-// returned in publicKeyPEM instead of a bare RSA public key.
-func generateKeyPair(keySize int, password string, validDays int) (privateKeyPEM, publicKeyPEM string, err error) {
-	// Always start with a plain (unencrypted) key; we need it for the cert
-	// generation step when validDays > 0 regardless of the password setting.
+// Always returns a plain RSA public key PEM alongside the private key.
+func generateKeyPair(keySize int, password string) (privateKeyPEM, publicKeyPEM string, err error) {
 	plainKeyPEM, err := gen.ExecCommand(gen.GetOpenSSLPath(), "", "genrsa", fmt.Sprintf("%d", keySize))
 	if err != nil {
 		err = fmt.Errorf("failed to generate private key - %v", err)
 		return
 	}
 
-	if validDays > 0 {
-		// Produce a self-signed certificate so the key carries an expiry.
-		publicKeyPEM, err = generateSelfSignedCACert(plainKeyPEM, validDays)
-		if err != nil {
-			err = fmt.Errorf("failed to generate self-signed certificate for key - %v", err)
-			return
-		}
-	} else {
-		publicKeyPEM, err = enc.GeneratePublicKey(plainKeyPEM, "")
-		if err != nil {
-			err = fmt.Errorf("failed to extract public key - %v", err)
-			return
-		}
+	publicKeyPEM, err = enc.GeneratePublicKey(plainKeyPEM, "")
+	if err != nil {
+		err = fmt.Errorf("failed to extract public key - %v", err)
+		return
 	}
 
 	// Encrypt the private key with the caller's password if one was provided.
