@@ -1,3 +1,7 @@
+## 2.45.0 (2026-09-22)
+
+* feat: remove --days support for --type key (#313) ([5758fea](https://github.com/ibm-hyper-protect/contract-go/commit/5758fea)), closes [#313](https://github.com/ibm-hyper-protect/contract-go/issues/313)
+
 ## 2.44.0 (2026-09-17)
 
 * feat: Feature for openssl key and cert (#311) ([77d6ae0](https://github.com/ibm-hyper-protect/contract-go/commit/77d6ae0)), closes [#311](https://github.com/ibm-hyper-protect/contract-go/issues/311)
