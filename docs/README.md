@@ -68,6 +68,7 @@ The encryption process:
 - [Attestation Functions](#attestation-functions)
 - [Certificate Functions](#certificate-functions)
 - [Contract Functions](#contract-functions)
+  - [EncryptEnv](#encryptenv)
 - [Rego Policy Functions](#rego-policy-functions)
 - [Sealed Secret Functions](#sealed-secret-functions)
 - [OpenSSL Key and Certificate Generation](#openssl-key-and-certificate-generation)
@@ -75,6 +76,7 @@ The encryption process:
 - [Image Spec Functions](#image-spec-functions)
 - [Network Functions](#network-functions)
 - [Common Patterns](#common-patterns)
+  - [Pattern 5: Encrypt a CCCO Env Section with Sealed-Secret Keys](#pattern-5-encrypt-a-ccco-env-section-with-sealed-secret-keys)
 - [Error Handling](#error-handling)
 
 ## Configuration
@@ -2216,6 +2218,275 @@ func main() {
 
 ---
 
+## EncryptEnv
+
+Assembles and encrypts the `env` section of a CCCO contract from a plain-text `env.yaml` together
+with optional signing key, Host Key Documents (HKDs), and sealed-secret keys, in a single
+atomic **inject → validate → encrypt** pipeline.
+
+This is the primary API for the **Automated Env Workload** feature and is the only supported
+way to encrypt a CCCO `env` section that carries `host-attestation` or `confidential-containers`
+fields alongside plain logging configuration.
+
+**Package:** `github.com/ibm-hyper-protect/contract-go/v2/contract`
+
+**Signature:**
+```go
+func EncryptEnv(input EncryptEnvInput) (encrypted, inputSHA, outputSHA string, err error)
+```
+
+**Input type — `EncryptEnvInput`:**
+
+| Field | Type | Required/Optional | Description |
+|-------|------|-------------------|-------------|
+| `EnvYAML` | `string` | **Required** | Base env YAML string. Must begin with `type: env` at the root. |
+| `SigningKeyPub` | `[]byte` | Optional | Raw bytes of the RSA public key file (`.pub` / `.pem`). Base64-encoded and injected as `envMap["signingKey"]`. Omit or leave nil to skip. |
+| `HKDs` | `[]HKDEntry` | Optional | Ordered list of Hardware Key Document entries (0–10). Each entry is injected into `host-attestation`. Leave nil/empty to skip. |
+| `SealedSecrets` | `*SealedSecretKeys` | Optional | Pointer to `SealedSecretKeys` holding raw PEM strings for sealed-secret injection. Both `VerificationKey` and `DecryptionKey` must be provided together or not at all. Leave nil to skip. |
+| `ConfidentialComputingOs` | `string` | Optional | Target platform. Defaults to `"ccco"` when empty. |
+| `CertVersion` | `string` | Optional | Specific IBM encryption certificate version (e.g. `"26.7.1"`). Uses the latest embedded CCCO certificate when empty. |
+| `EncryptionCertificate` | `string` | Optional | Custom IBM encryption certificate PEM string. Uses the latest embedded CCCO certificate when empty. |
+
+**Supporting types:**
+
+```go
+// HKDEntry describes one Hardware Key Document to inject into host-attestation.
+type HKDEntry struct {
+    Stem        string // Map key in YAML output (e.g. "HKD-1234-XXXXXX").  Derived from filename when using BuildHKDEntries.
+    Content     []byte // Raw bytes of the HKD certificate file.
+    Description string // Overrides the YAML description field. Falls back to Stem when empty.
+}
+
+// SealedSecretKeys holds the raw PEM strings for sealed-secret injection.
+// Both fields must be non-empty if sealed-secret injection is requested.
+type SealedSecretKeys struct {
+    VerificationKey string // Raw PEM content of the sealed-secret verification key.
+    DecryptionKey   string // Raw PEM content of the sealed-secret decryption key.
+}
+```
+
+**Returns:**
+
+| Return | Type | Description |
+|--------|------|-------------|
+| `encrypted` | `string` | Encrypted env string in `hyper-protect-basic.<enc-key>.<enc-data>` format. |
+| `inputSHA` | `string` | SHA256 of the fully-assembled plain-text env YAML (before encryption). |
+| `outputSHA` | `string` | SHA256 of the encrypted output string. |
+| `err` | `error` | First failing step with enough context to pinpoint the problem, or `nil`. |
+
+**Pipeline steps (in order):**
+
+| Step | What happens | Fails when |
+|------|-------------|-----------|
+| 1 | Pre-flight input validation | `EnvYAML` is empty, HKD count > 10, HKD entry has empty stem/content, sealed-secret keys provided as a half-pair |
+| 2 | Unmarshal `EnvYAML` into a mutable Go map | YAML is malformed |
+| 3 | Verify `type: env` at root | Field is absent or has a different value |
+| 4 | Inject `signingKey` (if `SigningKeyPub` non-nil) | — |
+| 5 | Inject `host-attestation` (if `HKDs` non-empty) | — |
+| 6 | Merge `confidential-containers.secret` (if `SealedSecrets` non-nil) | — |
+| 7 | Marshal assembled map → YAML string | Internal serialisation error |
+| 8 | Schema-validate against embedded CCCO JSON schema | Assembled YAML violates `envConfidentialContainers` definition |
+| 9 | Encrypt using IBM CCCO encryption certificate | OpenSSL not available, certificate invalid |
+
+> **Merge behaviour for `confidential-containers`:** If the input `env.yaml` already contains a
+> `confidential-containers` section, Step 6 **preserves all existing keys** (e.g. `regoValidator`,
+> `config`) and only replaces the `secret` sub-key with the new PEM values. The whole section is
+> never silently overwritten.
+
+**Example 1 — minimal encryption (no injections):**
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+)
+
+func main() {
+    envYAML, err := os.ReadFile("env.yaml")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    encrypted, inputSHA, outputSHA, err := contract.EncryptEnv(contract.EncryptEnvInput{
+        EnvYAML:                 string(envYAML),
+        ConfidentialComputingOs: "ccco",
+    })
+    if err != nil {
+        log.Fatalf("EncryptEnv failed: %v", err)
+    }
+
+    fmt.Printf("Encrypted env: %s\n", encrypted)
+    fmt.Printf("Input  SHA256: %s\n", inputSHA)
+    fmt.Printf("Output SHA256: %s\n", outputSHA)
+}
+```
+
+**Example 2 — full injection: signing key + HKDs + sealed-secret keys:**
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+)
+
+func main() {
+    envYAML, _ := os.ReadFile("env.yaml")
+
+    // Read signing public key
+    signingKeyPub, _ := os.ReadFile("signing-key.pub")
+
+    // Build HKD entries from certificate files on disk
+    hkds, err := contract.BuildHKDEntries([]string{
+        "HKD-1234-XXXXXX.cert",
+        "HKD-5678-YYYYYY.cert",
+    })
+    if err != nil {
+        log.Fatalf("failed to build HKD entries: %v", err)
+    }
+
+    // Read sealed-secret PEM files
+    verifyKeyPEM, _ := os.ReadFile("ss-verification.pem")
+    decryptKeyPEM, _ := os.ReadFile("ss-decryption.pem")
+
+    encrypted, inputSHA, outputSHA, err := contract.EncryptEnv(contract.EncryptEnvInput{
+        EnvYAML:       string(envYAML),
+        SigningKeyPub: signingKeyPub,
+        HKDs:          hkds,
+        SealedSecrets: &contract.SealedSecretKeys{
+            VerificationKey: string(verifyKeyPEM),
+            DecryptionKey:   string(decryptKeyPEM),
+        },
+        ConfidentialComputingOs: "ccco",
+    })
+    if err != nil {
+        log.Fatalf("EncryptEnv failed: %v", err)
+    }
+
+    fmt.Printf("Encrypted env: %s\n", encrypted)
+    fmt.Printf("Input  SHA256: %s\n", inputSHA)
+    fmt.Printf("Output SHA256: %s\n", outputSHA)
+}
+```
+
+**Example 3 — env.yaml already has a `confidential-containers` section:**
+
+If your env.yaml already carries a `confidential-containers` block (e.g. with `regoValidator`), the
+library **merges** rather than overwrites:
+
+```yaml
+# env.yaml — existing section
+type: env
+logging:
+  logRouter:
+    hostname: 5c2d6b69-c7f0-41bd-b69b-240695369d6e.ingress.us-south.logs.cloud.ibm.com
+    iamApiKey: ab00e3c09p1d4ff7fff9f04c12183413
+confidential-containers:
+  regoValidator:
+    policy: "existing-rego-policy"
+```
+
+Calling `EncryptEnv` with `SealedSecrets` set will **add/replace only `confidential-containers.secret`**:
+
+```yaml
+# assembled YAML after injection
+type: env
+logging:
+  logRouter:
+    hostname: 5c2d6b69-c7f0-41bd-b69b-240695369d6e.ingress.us-south.logs.cloud.ibm.com
+    iamApiKey: ab00e3c09p1d4ff7fff9f04c12183413
+confidential-containers:
+  regoValidator:
+    policy: "existing-rego-policy"   # ← preserved
+  secret:
+    verificationKey: "-----BEGIN PUBLIC KEY-----\n..."
+    decryptionKey:   "-----BEGIN PRIVATE KEY-----\n..."
+```
+
+**Sealed-secret PEM normalisation:**
+
+PEM files delivered via CLI flags or read from disk may contain literal `\n` two-character
+sequences instead of real newline bytes. `EncryptEnv` normalises these automatically before
+marshalling, so the output YAML always carries a properly double-quoted PEM scalar:
+
+```yaml
+decryptionKey: "-----BEGIN PRIVATE KEY-----\nMIIJ...\n-----END PRIVATE KEY-----\n"
+```
+
+**`BuildHKDEntries` helper:**
+
+```go
+func BuildHKDEntries(hkdPaths []string) ([]HKDEntry, error)
+```
+
+Reads each file at the given path, strips the `.cert` extension to produce the map key (`Stem`),
+and returns a populated `[]HKDEntry` slice. Accepts 0–10 paths. Returns an error if any file
+cannot be read or if more than 10 paths are supplied.
+
+```go
+hkds, err := contract.BuildHKDEntries([]string{
+    "/certs/HKD-1234-XXXXXX.cert",
+    "/certs/HKD-5678-YYYYYY.cert",
+})
+// hkds[0].Stem    == "HKD-1234-XXXXXX"
+// hkds[0].Content == <raw certificate bytes>
+```
+
+**`EncryptEnvWithPlain` debug variant:**
+
+```go
+func EncryptEnvWithPlain(input EncryptEnvInput) (assembledYAML, encrypted, inputSHA, outputSHA string, err error)
+```
+
+Identical to `EncryptEnv` but additionally returns the fully-assembled plain-text env YAML before
+encryption. Intended for debugging and testing workflows only. Do not use in production pipelines.
+
+**Input `env.yaml` requirements:**
+
+- Must be valid YAML.
+- Must have `type: env` at the root (not nested).
+- Must include a `logging` block that satisfies the CCCO schema — either `logRouter` (with `hostname` and `iamApiKey`) or `syslog` (with `server` and `hostname`).
+- All other fields are optional and will be preserved as-is through the inject → validate → encrypt pipeline.
+
+**Schema validation:**
+
+Before encryption, the assembled YAML is validated against the embedded CCCO JSON schema
+(`hpse-contract-schema-coco-1.0.93-rhel.json`) using the `envConfidentialContainers` definition.
+The schema enforces:
+- `confidential-containers.secret.verificationKey` — must be a string (when `secret` is present).
+- `confidential-containers.secret.decryptionKey` — must be a string (when `secret` is present).
+- `secret` itself is optional; `confidential-containers` is optional entirely.
+
+**HKD count limit:**
+
+A maximum of **10** HKD entries is accepted per invocation. This is a soft application-level guard;
+the CCCO JSON schema does not enforce a `maxProperties` constraint on `host-attestation`. If your
+deployment requires more than 10 HKDs, adjust `maxHKDCount` in [`encryptenv.go`](../contract/encryptenv.go).
+
+**Common errors:**
+
+| Error message | Cause | Resolution |
+|---------------|-------|-----------|
+| `"EnvYAML must not be empty"` | `EnvYAML` field is an empty string | Provide a valid `env.yaml` content |
+| `"env YAML must have \"type\": \"env\" at the root"` | `type: env` field is missing or has wrong value | Add `type: env` as the first line of your env YAML |
+| `"too many HKD entries: N provided, maximum is 10"` | More than 10 HKD entries passed | Reduce HKD slice to ≤ 10 entries |
+| `"HKD entry at index N has an empty Stem"` | An `HKDEntry` has a blank `Stem` field | Ensure every HKD entry has a non-empty `Stem` |
+| `"HKD entry \"X\" has empty content"` | An `HKDEntry.Content` is nil or zero-length | Ensure the HKD certificate file was read correctly |
+| `"--ss-verification-key and --ss-decryption-key must be provided together or not at all"` | Only one of the two sealed-secret keys was provided | Supply both keys or neither |
+| `"env YAML schema validation failed: …"` | Assembled env YAML does not pass CCCO schema validation | Fix the YAML structure — check the nested error for the exact field |
+| `"failed to encrypt env YAML: …"` | OpenSSL encryption step failed | Verify OpenSSL is installed; check `OPENSSL_BIN`; verify the encryption certificate |
+
+---
+
 ## Rego Policy Functions
 
 ### GenerateRegoPolicy
@@ -3241,6 +3512,75 @@ func main() {
 
 ---
 
+### Pattern 5: Encrypt a CCCO Env Section with Sealed-Secret Keys
+
+End-to-end example that reads real files from disk, builds the HKD list, and produces an
+encrypted CCCO env string ready to drop into a contract YAML:
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+)
+
+func main() {
+    // 1. Read the base env YAML
+    envYAML, err := os.ReadFile("env.yaml")
+    if err != nil {
+        log.Fatalf("cannot read env.yaml: %v", err)
+    }
+
+    // 2. Read the signing public key (optional — omit if not needed)
+    signingKeyPub, err := os.ReadFile("signing-key.pub")
+    if err != nil {
+        log.Fatalf("cannot read signing key: %v", err)
+    }
+
+    // 3. Build HKD entries from certificate files
+    hkds, err := contract.BuildHKDEntries([]string{
+        "HKD-1234-XXXXXX.cert",
+        "HKD-5678-YYYYYY.cert",
+    })
+    if err != nil {
+        log.Fatalf("cannot build HKD entries: %v", err)
+    }
+
+    // 4. Read sealed-secret PEM files (optional — omit SealedSecrets if not needed)
+    verifyKeyPEM, _ := os.ReadFile("ss-verification.pem")
+    decryptKeyPEM, _ := os.ReadFile("ss-decryption.pem")
+
+    // 5. Encrypt — schema validation happens automatically before encryption
+    encrypted, inputSHA, outputSHA, err := contract.EncryptEnv(contract.EncryptEnvInput{
+        EnvYAML:       string(envYAML),
+        SigningKeyPub: signingKeyPub,
+        HKDs:          hkds,
+        SealedSecrets: &contract.SealedSecretKeys{
+            VerificationKey: string(verifyKeyPEM),
+            DecryptionKey:   string(decryptKeyPEM),
+        },
+        ConfidentialComputingOs: "ccco",
+    })
+    if err != nil {
+        log.Fatalf("EncryptEnv failed: %v", err)
+    }
+
+    fmt.Printf("Encrypted env:\n%s\n\n", encrypted)
+    fmt.Printf("Input  SHA256: %s\n", inputSHA)
+    fmt.Printf("Output SHA256: %s\n", outputSHA)
+
+    // 6. Write the encrypted value into the contract YAML
+    contractYAML := fmt.Sprintf("env: |\n  %s\n", encrypted)
+    os.WriteFile("contract-env-encrypted.yaml", []byte(contractYAML), 0600)
+}
+```
+
+---
+
 ## Error Handling
 
 ### Common Error Messages
@@ -3257,6 +3597,8 @@ func main() {
 | `"failed to encrypt key"` | Encryption operation failed | Check certificate validity |
 | `"folder doesn't exists"` | Path not found | Verify folder path exists |
 | `"no Hyper Protect image matching version found"` | No images match version constraint | Adjust version constraint or check available images |
+| `"EnvYAML must not be empty"` | `EncryptEnv` called with empty `EnvYAML` | Provide a valid env YAML string |
+| `"env YAML schema validation failed"` | Assembled env YAML fails CCCO schema | Check nested error for exact field violation |
 
 ### Best Practices for Error Handling
 
