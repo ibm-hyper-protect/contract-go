@@ -865,7 +865,7 @@ func HpcrListAvailableEncCertVersions(osType, formatType string) (string, error)
 JSON format (all platforms):
 ```json
 {
-  "ccrt": ["26.2.0", "25.11.0", "25.8.1"],
+  "ccrt": ["26.5.0", "26.7.2", "26.9.1"],
   "ccrv": ["26.5.0", "26.7.1", "26.9.0"],
   "ccco": ["26.7.1", "26.4.0", "25.12.0",]
 }
