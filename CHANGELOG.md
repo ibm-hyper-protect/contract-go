@@ -1,3 +1,7 @@
+## 2.46.0 (2026-09-23)
+
+* feat: Add latest CCRT 2.2.4.2 encryption cert (#318) ([54b891f](https://github.com/ibm-hyper-protect/contract-go/commit/54b891f)), closes [#318](https://github.com/ibm-hyper-protect/contract-go/issues/318)
+
 ## 2.45.0 (2026-09-22)
 
 * feat: remove --days support for --type key (#313) ([5758fea](https://github.com/ibm-hyper-protect/contract-go/commit/5758fea)), closes [#313](https://github.com/ibm-hyper-protect/contract-go/issues/313)
