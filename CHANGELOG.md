@@ -1,3 +1,7 @@
+## 2.47.0 (2026-09-25)
+
+* feat: Added Rev30 encryption cert (#320) ([1a3dac5](https://github.com/ibm-hyper-protect/contract-go/commit/1a3dac5)), closes [#320](https://github.com/ibm-hyper-protect/contract-go/issues/320)
+
 ## <small>2.46.1 (2026-09-25)</small>
 
 * fix(deps): update module k8s.io/api to v0.37.1 (#319) ([e709370](https://github.com/ibm-hyper-protect/contract-go/commit/e709370)), closes [#319](https://github.com/ibm-hyper-protect/contract-go/issues/319)
