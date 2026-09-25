@@ -1,3 +1,7 @@
+## <small>2.46.1 (2026-09-25)</small>
+
+* fix(deps): update module k8s.io/api to v0.37.1 (#319) ([e709370](https://github.com/ibm-hyper-protect/contract-go/commit/e709370)), closes [#319](https://github.com/ibm-hyper-protect/contract-go/issues/319)
+
 ## 2.46.0 (2026-09-23)
 
 * feat: Add latest CCRT 2.2.4.2 encryption cert (#318) ([54b891f](https://github.com/ibm-hyper-protect/contract-go/commit/54b891f)), closes [#318](https://github.com/ibm-hyper-protect/contract-go/issues/318)
