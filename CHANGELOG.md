@@ -1,3 +1,8 @@
+## 2.48.0 (2026-09-29)
+
+* feat: Enabled contract-basic string for CCCO (#321) ([e2bd6f9](https://github.com/ibm-hyper-protect/contract-go/commit/e2bd6f9)), closes [#321](https://github.com/ibm-hyper-protect/contract-go/issues/321)
+* chore: add Anjana A R K as maintainer (#317) ([6d37120](https://github.com/ibm-hyper-protect/contract-go/commit/6d37120)), closes [#317](https://github.com/ibm-hyper-protect/contract-go/issues/317)
+
 ## 2.47.0 (2026-09-25)
 
 * feat: Added Rev30 encryption cert (#320) ([1a3dac5](https://github.com/ibm-hyper-protect/contract-go/commit/1a3dac5)), closes [#320](https://github.com/ibm-hyper-protect/contract-go/issues/320)
