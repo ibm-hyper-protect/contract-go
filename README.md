@@ -96,6 +96,16 @@ Learn more:
   - Password-protected private key support for decrypting attestation records and generate signed contracts
   - **Specify certificate version** for encryption operations (optional certVersion parameter)
 
+- **Automated Env Encryption for CCCO (`EncryptEnv`)** *(new feature)*
+  - Assemble and encrypt a CCCO `env` section in a single atomic **inject → validate → encrypt** pipeline
+  - Inject a **signing key** (base64-encoded RSA public key) into the env map
+  - Inject up to **10 Hardware Key Documents (HKDs)** into the `host-attestation` block with automatic stem derivation from certificate filenames
+  - Inject **sealed-secret keys** (`verificationKey` + `decryptionKey` PEM pair) into `confidential-containers.secret`
+  - **Merge-safe**: if `confidential-containers` already exists in the input env YAML, only the `secret` sub-key is replaced — all other existing fields (e.g. `regoValidator`, `config`) are preserved
+  - Automatic PEM normalisation — literal `\n` escape sequences in PEM files are converted to real newlines before marshalling
+  - Built-in **schema validation** against the embedded CCCO JSON schema before encryption — guarantees the assembled env is always valid before it reaches OpenSSL
+  - Returns SHA256 checksums of both the assembled plain-text env and the encrypted output for auditability
+
 - **Archive Management**
   - Generate Base64 tar archives of `docker-compose.yaml` or `pods.yaml`
   - Support encrypted base64 tar generation
@@ -778,6 +788,62 @@ func main() {
 > For the full parameter reference, return-value tables, and error list see
 > [docs/README.md — OpenSSL Key and Certificate Generation](docs/README.md#openssl-key-and-certificate-generation).
 
+### Encrypt a CCCO Env Section (`EncryptEnv`)
+
+`EncryptEnv` is the single-call API for the **Automated Env Workload** feature. It takes a plain
+env YAML plus optional signing key, HKD certificates, and sealed-secret PEM keys, then:
+validates inputs → injects all fields → schema-validates → encrypts.
+
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+)
+
+func main() {
+    envYAML, _ := os.ReadFile("env.yaml")
+    signingKeyPub, _ := os.ReadFile("signing-key.pub")
+
+    // Build HKD entries from .cert files (stem derived automatically from filename)
+    hkds, err := contract.BuildHKDEntries([]string{
+        "HKD-1234-XXXXXX.cert",
+        "HKD-5678-YYYYYY.cert",
+    })
+    if err != nil {
+        log.Fatalf("BuildHKDEntries: %v", err)
+    }
+
+    verifyKeyPEM, _ := os.ReadFile("ss-verification.pem")
+    decryptKeyPEM, _ := os.ReadFile("ss-decryption.pem")
+
+    encrypted, inputSHA, outputSHA, err := contract.EncryptEnv(contract.EncryptEnvInput{
+        EnvYAML:       string(envYAML),
+        SigningKeyPub: signingKeyPub,
+        HKDs:          hkds,
+        SealedSecrets: &contract.SealedSecretKeys{
+            VerificationKey: string(verifyKeyPEM),
+            DecryptionKey:   string(decryptKeyPEM),
+        },
+        ConfidentialComputingOs: "ccco",
+    })
+    if err != nil {
+        log.Fatalf("EncryptEnv: %v", err)
+    }
+
+    fmt.Printf("Encrypted env: %s\n", encrypted)
+    fmt.Printf("Input  SHA256: %s\n", inputSHA)
+    fmt.Printf("Output SHA256: %s\n", outputSHA)
+}
+```
+
+> For the full parameter reference, pipeline diagram, merge-behaviour notes, and complete error
+> table see [docs/README.md — EncryptEnv](docs/README.md#encryptenv).
+
 ## Documentation
 
 Comprehensive documentation is available at:
@@ -804,9 +870,12 @@ The [`samples/`](samples/) directory contains example configurations:
 - [Contract with Attestation Public Key](samples/attest_pub_key_contract.yaml)
 - [Encrypted Contract](samples/sign/contract.enc.yaml)
 - [CCCO Signed & Encrypted Contract](samples/ccco/signed-encrypt-ccco.yaml)
+- [CCCO Encrypt-Env base env](samples/ccco/encrypt-env/base-env.yaml) — minimal env YAML for `EncryptEnv`
+- [CCCO Encrypt-Env base env with volumes](samples/ccco/encrypt-env/base-env-with-volumes.yaml) — env YAML with volumes for `EncryptEnv`
 - [Docker Compose](samples/tgz/docker-compose.yaml)
 - [Certificate Chain Validation](samples/certificate-chain/)
 - [OpenSSL Key & Cert Generation API](docs/README.md#openssl-key-and-certificate-generation) — full API reference with examples
+- [EncryptEnv API Reference](docs/README.md#encryptenv) — full parameter reference, pipeline steps, merge behaviour, and error table
 
 ## Related Projects
 
