@@ -159,7 +159,7 @@ func TestEncryptString(t *testing.T) {
 	assert.NotEmpty(t, result, "Encrypted workload did not get generated")
 }
 
-// Testcase to check if EncryptFinalStr() is able to generate hyper-protect-basic.<password>.<workload> for empty OS (default)
+// Testcase to check if EncryptFinalStr() is able to generate contract-basic.<password>.<workload> for empty OS (default)
 func TestEncryptFinalStr(t *testing.T) {
 	var contractMap map[string]interface{}
 
@@ -196,7 +196,7 @@ func TestEncryptFinalStr(t *testing.T) {
 	finalWorkload := EncryptFinalStr(encryptedRandomPassword, encryptedWorkload, "")
 
 	assert.NotEmpty(t, finalWorkload, "Final workload did not get generated")
-	assert.Contains(t, finalWorkload, "hyper-protect-basic.")
+	assert.Contains(t, finalWorkload, "contract-basic.")
 }
 
 // Testcase to check if CreateSigningCert() is able to create signing certificate with CSR parameters
