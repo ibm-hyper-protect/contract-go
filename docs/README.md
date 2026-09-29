@@ -58,7 +58,7 @@ The encryption process:
 |---------------------|---------------|-------------------|
 | `ccrt` | IBM Confidential Computing Container Runtime (CCRT) | `contract-basic` |
 | `ccrv` | IBM Confidential Computing Container Runtime for Red Hat Virtualization Solutions (CCRV) | `contract-basic` |
-| `ccco` | IBM Confidential Computing Containers for Red Hat OpenShift Container Platform (CCCO) | `hyper-protect-basic` |
+| `ccco` | IBM Confidential Computing Containers for Red Hat OpenShift Container Platform (CCCO) | `contract-basic` |
 | `hpvs` | IBM Hyper Protect Virtual Servers (HPVS) | `hyper-protect-basic` |
 
 ## Table of Contents

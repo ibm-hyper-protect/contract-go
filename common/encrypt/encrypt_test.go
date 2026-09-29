@@ -478,7 +478,7 @@ func TestEncryptFinalStrSuccessCcco(t *testing.T) {
 
 	result := EncryptFinalStr(encryptedPassword, encryptedContract, "ccco")
 	assert.NotEmpty(t, result)
-	assert.Contains(t, result, "hyper-protect-basic")
+	assert.Contains(t, result, "contract-basic")
 	assert.Contains(t, result, encryptedPassword)
 	assert.Contains(t, result, encryptedContract)
 }

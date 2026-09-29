@@ -185,10 +185,10 @@ func EncryptString(password, section string) (string, error) {
 //   - confidentialComputingOs: Target platform — "hpvs", "ccrt", "ccrv", or "ccco" (default: hyper-protect-basic)
 //
 // Returns:
-//   - Formatted string in "contract-basic.<password>.<contract>" format for CCRT and CCRV platforms
-//   - Formatted string in "hyper-protect-basic.<password>.<contract>" format for HPVS, CCCO, and empty/default
+//   - Formatted string in "contract-basic.<password>.<contract>" format for CCRT, CCRV, and CCCO platforms
+//   - Formatted string in "hyper-protect-basic.<password>.<contract>" format for HPVS and empty/default
 func EncryptFinalStr(encryptedPassword, encryptedContract, confidentialComputingOs string) string {
-	if confidentialComputingOs == "ccrt" || confidentialComputingOs == "ccrv" {
+	if confidentialComputingOs == "ccrt" || confidentialComputingOs == "ccrv" || confidentialComputingOs == "ccco" {
 		return fmt.Sprintf("contract-basic.%s.%s", encryptedPassword, encryptedContract)
 	}
 	return fmt.Sprintf("hyper-protect-basic.%s.%s", encryptedPassword, encryptedContract)
