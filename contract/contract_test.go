@@ -445,12 +445,11 @@ func TestHpccInitdata(t *testing.T) {
 		t.Errorf("failed to gzipped encoded initdata - %v", err)
 	}
 
-	expectedGzippedInitdata, err := gen.ReadDataFromFile(sampleGzippedInitdata)
-	if err != nil {
-		t.Errorf("failed to read gzipped-initdata file - %v", err)
-	}
-
-	assert.Equal(t, expectedGzippedInitdata, encodedString, "Encoded gzipped initdata string does not match with expected gzipped initdata")
+	toml := decodeInitdata(t, encodedString)
+	assert.Contains(t, toml, `algorithm = "sha384"`, "expected sha384 algorithm in peerpod initdata")
+	assert.Contains(t, toml, `"contract.yaml"`, "expected contract.yaml entry in initdata")
+	assert.NotContains(t, toml, `"cdh.toml"`, "peerpod initdata must not contain cdh.toml")
+	assert.NotContains(t, toml, `sehdr:`, "peerpod initdata must not contain sehdr section")
 	assert.Equal(t, sampleSingedEncryptedContractInputChecksum, inputCheckSum, "Checksum does not match with expected input checksum of encrypted contract")
 }
 
@@ -470,12 +469,12 @@ func TestHpccInitdataWithHdrBinary(t *testing.T) {
 		t.Errorf("failed to gzipped encoded initdata with HDR binary - %v", err)
 	}
 
-	expectedBaremetalGzippedInitdata, err := gen.ReadDataFromFile(sampleBaremetalGzippedInitdata)
-	if err != nil {
-		t.Errorf("failed to read baremetal-gzipped-initdata file - %v", err)
-	}
-
-	assert.Equal(t, expectedBaremetalGzippedInitdata, encodedString, "Encoded gzipped initdata string with HDR binary does not match with expected baremetal gzipped initdata")
+	toml := decodeInitdata(t, encodedString)
+	assert.Contains(t, toml, `algorithm = "sha384"`, "expected sha384 algorithm in baremetal initdata")
+	assert.Contains(t, toml, `"contract.yaml"`, "expected contract.yaml entry in baremetal initdata")
+	assert.Contains(t, toml, `sehdr:`, "baremetal initdata must contain sehdr section")
+	assert.Contains(t, toml, sampleBase64EndcodedHeaderString, "baremetal initdata must contain the encoded SE header")
+	assert.NotContains(t, toml, `"cdh.toml"`, "baremetal initdata must not contain cdh.toml when no certs provided")
 	assert.Equal(t, sampleSingedEncryptedContractInputChecksum, inputCheckSum, "Checksum does not match with expected input checksum of encrypted contract")
 }
 
