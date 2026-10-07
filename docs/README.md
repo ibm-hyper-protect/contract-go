@@ -2115,29 +2115,31 @@ func main() {
 
 ### HpccInitdata
 
-Generates gzipped and encoded initdata string. Supports for both peerpod and baremetal solution
+Generates gzipped and encoded initdata string. Supports both peerpod and baremetal solutions, and optionally embeds extra root certificates into the `cdh.toml` section.
+
 **Package:** `github.com/ibm-hyper-protect/contract-go/v2/contract`
 
 **Signature:**
 ```go
-func HpccInitdata(contract, encodedHdrBin string) (string, string, string, error)
+func HpccInitdata(contract, encodedHdrBin string, extraRootCerts []string) (string, string, string, error)
 ```
 
 **Parameters:**
 
 | Parameter | Type | Required/Optional | Description |
 |-----------|------|-------------------|-------------|
-| `contract`| `string`| `Required`| Signed and encrypted YAML contract |
-| `encodedHdrBin`| `string`| `Optional`| Base64-encoded SE header for baremetal solution. Pass empty string `""` for peerpod solution |
+| `contract` | `string` | Required | Signed and encrypted YAML contract |
+| `encodedHdrBin` | `string` | Optional | Base64-encoded SE header for baremetal solution. Pass empty string `""` for peerpod solution |
+| `extraRootCerts` | `[]string` | Optional | PEM-encoded root certificate strings to embed in the `cdh.toml` `extra_root_certificates` array. Pass `nil` or an empty slice when not needed |
 
 **Returns:**
 
 | Return | Type | Description |
 |--------|------|-------------|
-| Gzipped & Encoded String  | `string` | Initdata String gzipped and encoded |
-| Input Checksum | `string` | SHA256 of original contract |
-| Output Checksum | `string` | SHA256 of gzipped & encoded initdata string |
-| Error | `error` | Error if validation, zipping or encoding fails |
+| Gzipped & Encoded String | `string` | Initdata string gzipped and base64-encoded |
+| Input Checksum | `string` | SHA256 of the original contract |
+| Output Checksum | `string` | SHA256 of the gzipped & encoded initdata string |
+| Error | `error` | Error if validation, compression, or encoding fails |
 
 **Example 1: Peerpod Solution (Without SE Header)**
 ```go
@@ -2153,10 +2155,11 @@ import (
 func main() {
     contractYAML := `...your signed and encrypted contract...`
 
-    // Pass empty string for encodedHdrBin for standard deployments
+    // Pass empty string for encodedHdrBin and nil for extraRootCerts
     encodedString, inputHash, outputHash, err := contract.HpccInitdata(
         contractYAML,
-        "", // No SE header for standard deployment
+        "", // No SE header for peerpod deployment
+        nil, // No extra root certificates
     )
     if err != nil {
         log.Fatal(err)
@@ -2181,13 +2184,14 @@ import (
 
 func main() {
     contractYAML := `...your signed and encrypted contract...`
-    
+
     // Base64-encoded SE header for baremetal deployment
     encodedHdrBin := "VGVzdCBiYXNlNjQgaGVkZXIgb2YgaW1hZ2UgZ2V0dGluZyB1c2VkCg=="
 
     encodedString, inputHash, outputHash, err := contract.HpccInitdata(
         contractYAML,
         encodedHdrBin, // Provide base64-encoded SE header for baremetal deployment
+        nil,           // No extra root certificates
     )
     if err != nil {
         log.Fatal(err)
@@ -2199,19 +2203,67 @@ func main() {
 }
 ```
 
+**Example 3: With Extra Root Certificates**
+```go
+package main
+
+import (
+    "fmt"
+    "log"
+    "os"
+
+    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+)
+
+func main() {
+    contractYAML := `...your signed and encrypted contract...`
+
+    // Read PEM certificate files
+    cert1, err := os.ReadFile("/path/to/root-ca1.pem")
+    if err != nil {
+        log.Fatal(err)
+    }
+    cert2, err := os.ReadFile("/path/to/root-ca2.pem")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    encodedString, inputHash, outputHash, err := contract.HpccInitdata(
+        contractYAML,
+        "",   // No SE header (peerpod)
+        []string{string(cert1), string(cert2)},
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Printf("Initdata with extra root certificates generated!\n")
+    fmt.Printf("Input SHA256: %s\n", inputHash)
+    fmt.Printf("Output SHA256: %s\n", outputHash)
+    _ = encodedString
+}
+```
+
 **Supported Platforms:**
 - CCCO (IBM Confidential Computing Containers for Red Hat OpenShift Container Platform).
-- Supports for both Peerpod and Baremetal Solutions.
+- Supports both Peerpod and Baremetal Solutions.
 
 **Template Selection:**
-- When `encodedHdrBin` is empty: Uses standard TOML template without sehdr bin 
-- When `encodedHdrBin` is provided: Uses standard TOML template with `boot: | sehdr:` section containing the base64-encoded SE header
+
+| `encodedHdrBin` | `extraRootCerts` | Template used |
+|-----------------|------------------|---------------|
+| empty | nil / empty | Standard TOML (no sehdr, no cdh.toml) |
+| provided | nil / empty | TOML with `boot: \| sehdr:` section |
+| empty | provided | TOML with `cdh.toml` and `aa.toml` containing `extra_root_certificates` array |
+| provided | provided | TOML with both `boot: \| sehdr:` and `cdh.toml`/`aa.toml` sections |
+
+When `extraRootCerts` is provided the generated `initdata.toml` uses `algorithm = "sha384"` and includes a `cdh.toml` entry inside `[data]` with the certificates formatted as a TOML array of multi-line strings, plus an empty `aa.toml` entry.
 
 **Common Errors:**
 - `"required parameter is empty"` - Contract parameter is empty
-- `"failed while parsing the template toml"` - Error while parsing the template initdata toml file
-- `"failed while creating initdata.toml"` - Failed while replacing encrypted contract in initdata.toml file
-- `"failed while gzipping initdata"` - Failed while compressing the content of initdata.toml file
+- `"failed while parsing the template toml"` - Error while parsing the initdata TOML template
+- `"failed while creating initdata.toml"` - Failed while rendering the encrypted contract into the template
+- `"failed while gzipping initdata"` - Failed while compressing the initdata.toml content
 
 
 ---

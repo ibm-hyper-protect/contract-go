@@ -69,10 +69,63 @@ boot: |
     sehdr: {{ .HdrBin }}'''
 `
 
+// HPCC initdata.toml file template without sehdr bin but with extra root certificates.
+const tomlTemplateWithCerts = `
+algorithm = "sha384"
+version = "0.1.0"
+
+[data]
+"contract.yaml" = '''{{ .Contract }}'''
+"cdh.toml" = '''
+socket = "unix:///run/confidential-containers/cdh.sock"
+
+[kbc]
+name = "offline_fs_kbc"
+url = "http://example.io:8080"
+
+[image]
+authenticated_registry_credentials_uri = "file:///etc/auth.json"
+extra_root_certificates = [{{ range .ExtraRootCertificates }}"""
+{{ . }}
+"""{{ end }}
+]
+'''
+"aa.toml" = '''
+'''
+`
+
+// HPCC initdata.toml file template with sehdr bin and extra root certificates.
+const tomlTemplateWithHdrAndCerts = `
+algorithm = "sha384"
+version = "0.1.0"
+
+[data]
+"contract.yaml" = '''{{ .Contract }}
+boot: |
+    sehdr: {{ .HdrBin }}'''
+"cdh.toml" = '''
+socket = "unix:///run/confidential-containers/cdh.sock"
+
+[kbc]
+name = "offline_fs_kbc"
+url = "http://example.io:8080"
+
+[image]
+authenticated_registry_credentials_uri = "file:///etc/auth.json"
+extra_root_certificates = [{{ range .ExtraRootCertificates }}"""
+{{ . }}
+"""{{ end }}
+]
+'''
+"aa.toml" = '''
+'''
+`
+
 // tomlTemplateData holds the data for TOML template execution.
 type tomlTemplateData struct {
-	Contract string
-	HdrBin   string
+	Contract              string
+	HdrBin                string
+	ExtraRootCertificates []string
 }
 
 // HpcrText encodes plain text to Base64 with integrity checksums.
@@ -601,17 +654,23 @@ func resolveEnvTemplateFile(os string) string {
 // for efficient transmission. The output is passed as the initdata parameter when creating
 // a peer pod VM.
 //
+// When extraRootCerts is non-empty, the generated initdata.toml includes a "cdh.toml" section
+// with the provided certificates listed under [image].extra_root_certificates, and an empty
+// "aa.toml" section. The algorithm field is set to "sha384" in all cases.
+//
 // Parameters:
 //   - contract: Signed and encrypted contract string (output from [HpcrContractSignedEncrypted]
 //     or [HpcrContractSignedEncryptedContractExpiry]). Must contain workload and env sections.
 //   - encodedHdrBin: Optional Base64-encoded HDR binary string.
+//   - extraRootCerts: Optional list of PEM-encoded certificate strings to embed as
+//     extra_root_certificates in the cdh.toml section. Pass nil or an empty slice to omit.
 //
 // Returns:
 //   - Gzipped and Base64-encoded initdata string
 //   - SHA256 hash of the original contract (input checksum)
 //   - SHA256 hash of the encoded initdata string (output checksum)
 //   - Error if the contract is empty, template parsing fails, or gzip/encoding fails
-func HpccInitdata(contract, encodedHdrBin string) (string, string, string, error) {
+func HpccInitdata(contract, encodedHdrBin string, extraRootCerts []string) (string, string, string, error) {
 
 	var buf bytes.Buffer
 
@@ -621,14 +680,20 @@ func HpccInitdata(contract, encodedHdrBin string) (string, string, string, error
 
 	// Prepare template data
 	templateData := tomlTemplateData{
-		Contract: contract,
-		HdrBin:   encodedHdrBin,
+		Contract:              contract,
+		HdrBin:                encodedHdrBin,
+		ExtraRootCertificates: extraRootCerts,
 	}
 
-	// Select appropriate template based on whether HDR binary is provided
+	// Select appropriate template based on whether HDR binary and/or certs are provided
 	var selectedTemplate string
-	if encodedHdrBin != "" {
+	hasCerts := len(extraRootCerts) > 0
+	if encodedHdrBin != "" && hasCerts {
+		selectedTemplate = tomlTemplateWithHdrAndCerts
+	} else if encodedHdrBin != "" {
 		selectedTemplate = tomlTemplateWithHdr
+	} else if hasCerts {
+		selectedTemplate = tomlTemplateWithCerts
 	} else {
 		selectedTemplate = tomlTemplate
 	}
