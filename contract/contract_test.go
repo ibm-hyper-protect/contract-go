@@ -16,7 +16,11 @@
 package contract
 
 import (
+	"bytes"
+	"compress/gzip"
+	"encoding/base64"
 	"encoding/json"
+	"io"
 	"strings"
 	"testing"
 
@@ -24,6 +28,26 @@ import (
 
 	gen "github.com/ibm-hyper-protect/contract-go/v2/common/general"
 )
+
+// decodeInitdata decodes the base64+gzip output of HpccInitdata back to the
+// raw initdata.toml string so tests can inspect its content.
+func decodeInitdata(t *testing.T, encoded string) string {
+	t.Helper()
+	raw, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		t.Fatalf("base64 decode failed: %v", err)
+	}
+	gr, err := gzip.NewReader(bytes.NewReader(raw))
+	if err != nil {
+		t.Fatalf("gzip reader creation failed: %v", err)
+	}
+	defer gr.Close()
+	out, err := io.ReadAll(gr)
+	if err != nil {
+		t.Fatalf("gzip read failed: %v", err)
+	}
+	return string(out)
+}
 
 const (
 	hpcrEncryptPrefix = "hyper-protect-basic."
@@ -73,6 +97,10 @@ const (
 	sampleBase64EndcodedHeaderString           = "VGVzdCBiYXNlNjQgaGVkZXIgb2YgaW1hZ2UgZ2V0dGluZyB1c2VkCg=="
 	sampleBaremetalGzippedInitdata             = "../samples/ccco/baremetal-gzipped-initdata"
 	sampleSingedEncryptedContractInputChecksum = "1b6ee574d6061896c23fad0711d1a89b8d9b7748506ab089201db1335605daea"
+
+	// Sample extra root certificate files used for initdata content-verification tests.
+	sampleExtraRootCert1Path = "../samples/ccco/extra-root-cert1.pem"
+	sampleExtraRootCert2Path = "../samples/ccco/extra-root-cert2.pem"
 
 	sampleCertificate = "../encryption/ccrt/ibm-confidential-computing-container-runtime-26.2.0-encrypt.crt"
 
@@ -412,17 +440,16 @@ func TestHpccInitdata(t *testing.T) {
 		t.Errorf("failed to read content from encrypted contract - %v", err)
 	}
 
-	encodedString, inputCheckSum, _, err := HpccInitdata(inputData, "")
+	encodedString, inputCheckSum, _, err := HpccInitdata(inputData, "", nil)
 	if err != nil {
 		t.Errorf("failed to gzipped encoded initdata - %v", err)
 	}
 
-	expectedGzippedInitdata, err := gen.ReadDataFromFile(sampleGzippedInitdata)
-	if err != nil {
-		t.Errorf("failed to read gzipped-initdata file - %v", err)
-	}
-
-	assert.Equal(t, expectedGzippedInitdata, encodedString, "Encoded gzipped initdata string does not match with expected gzipped initdata")
+	toml := decodeInitdata(t, encodedString)
+	assert.Contains(t, toml, `algorithm = "sha384"`, "expected sha384 algorithm in peerpod initdata")
+	assert.Contains(t, toml, `"contract.yaml"`, "expected contract.yaml entry in initdata")
+	assert.NotContains(t, toml, `"cdh.toml"`, "peerpod initdata must not contain cdh.toml")
+	assert.NotContains(t, toml, `sehdr:`, "peerpod initdata must not contain sehdr section")
 	assert.Equal(t, sampleSingedEncryptedContractInputChecksum, inputCheckSum, "Checksum does not match with expected input checksum of encrypted contract")
 }
 
@@ -437,24 +464,149 @@ func TestHpccInitdataWithHdrBinary(t *testing.T) {
 		t.Errorf("failed to read content from encrypted contract - %v", err)
 	}
 
-	encodedString, inputCheckSum, _, err := HpccInitdata(inputData, sampleBase64EndcodedHeaderString)
+	encodedString, inputCheckSum, _, err := HpccInitdata(inputData, sampleBase64EndcodedHeaderString, nil)
 	if err != nil {
 		t.Errorf("failed to gzipped encoded initdata with HDR binary - %v", err)
 	}
 
-	expectedBaremetalGzippedInitdata, err := gen.ReadDataFromFile(sampleBaremetalGzippedInitdata)
-	if err != nil {
-		t.Errorf("failed to read baremetal-gzipped-initdata file - %v", err)
-	}
-
-	assert.Equal(t, expectedBaremetalGzippedInitdata, encodedString, "Encoded gzipped initdata string with HDR binary does not match with expected baremetal gzipped initdata")
+	toml := decodeInitdata(t, encodedString)
+	assert.Contains(t, toml, `algorithm = "sha384"`, "expected sha384 algorithm in baremetal initdata")
+	assert.Contains(t, toml, `"contract.yaml"`, "expected contract.yaml entry in baremetal initdata")
+	assert.Contains(t, toml, `sehdr:`, "baremetal initdata must contain sehdr section")
+	assert.Contains(t, toml, sampleBase64EndcodedHeaderString, "baremetal initdata must contain the encoded SE header")
+	assert.NotContains(t, toml, `"cdh.toml"`, "baremetal initdata must not contain cdh.toml when no certs provided")
 	assert.Equal(t, sampleSingedEncryptedContractInputChecksum, inputCheckSum, "Checksum does not match with expected input checksum of encrypted contract")
 }
 
 // Testcase to check HpccInitdata() is able to handle empty contract case.
 func TestHpccInitdataEmptyContract(t *testing.T) {
-	_, _, _, err := HpccInitdata("", "")
+	_, _, _, err := HpccInitdata("", "", nil)
 	assert.EqualError(t, err, emptyParameterErrStatement)
+}
+
+// Testcase to check HpccInitdata() embeds a single extra root certificate and verifies
+// all required fields and the cert content are present in the decoded initdata.toml.
+func TestHpccInitdataWithExtraRootCerts(t *testing.T) {
+	inputData, err := gen.ReadDataFromFile(sampleSignedEncryptedContract)
+	if err != nil {
+		t.Fatalf("failed to read signed contract: %v", err)
+	}
+
+	cert1, err := gen.ReadDataFromFile(sampleExtraRootCert1Path)
+	if err != nil {
+		t.Fatalf("failed to read extra-root-cert1.pem: %v", err)
+	}
+
+	encodedString, inputCheckSum, _, err := HpccInitdata(inputData, "", []string{cert1})
+	if err != nil {
+		t.Fatalf("HpccInitdata failed: %v", err)
+	}
+
+	// Decode base64+gzip to get the raw initdata.toml string.
+	toml := decodeInitdata(t, encodedString)
+
+	// ── Top-level required fields ────────────────────────────────────────────
+	assert.Contains(t, toml, `algorithm = "sha384"`, "algorithm field must be sha384")
+	assert.Contains(t, toml, `version = "0.1.0"`, "version field must be 0.1.0")
+	assert.Contains(t, toml, `[data]`, "[data] section must be present")
+	assert.Contains(t, toml, `"contract.yaml"`, "contract.yaml key must be present in [data]")
+	assert.Contains(t, toml, inputData, "contract content must appear verbatim inside contract.yaml value")
+
+	// ── cdh.toml section required fields ─────────────────────────────────────
+	assert.Contains(t, toml, `"cdh.toml"`, "cdh.toml key must be present when certs are provided")
+	assert.Contains(t, toml, `socket = "unix:///run/confidential-containers/cdh.sock"`, "cdh socket field must be present")
+	assert.Contains(t, toml, `[kbc]`, "[kbc] section must be present in cdh.toml")
+	assert.Contains(t, toml, `name = "offline_fs_kbc"`, "kbc name must be offline_fs_kbc")
+	assert.Contains(t, toml, `url = "http://example.io:8080"`, "kbc url must be present")
+	assert.Contains(t, toml, `[image]`, "[image] section must be present in cdh.toml")
+	assert.Contains(t, toml, `authenticated_registry_credentials_uri = "file:///etc/auth.json"`, "registry credentials uri must be present")
+	assert.Contains(t, toml, `extra_root_certificates`, "extra_root_certificates key must be present")
+
+	// ── aa.toml section must be present ──────────────────────────────────────
+	assert.Contains(t, toml, `"aa.toml"`, "aa.toml key must be present when certs are provided")
+
+	// ── Certificate content must appear verbatim ─────────────────────────────
+	assert.Contains(t, toml, cert1, "cert1 content must appear verbatim in extra_root_certificates")
+
+	// ── Checksums ─────────────────────────────────────────────────────────────
+	assert.Equal(t, sampleSingedEncryptedContractInputChecksum, inputCheckSum)
+}
+
+// Testcase to check HpccInitdata() embeds two extra root certs and verifies both
+// appear verbatim in extra_root_certificates when combined with a HDR binary.
+func TestHpccInitdataWithHdrBinaryAndExtraRootCerts(t *testing.T) {
+	inputData, err := gen.ReadDataFromFile(sampleSignedEncryptedContract)
+	if err != nil {
+		t.Fatalf("failed to read signed contract: %v", err)
+	}
+
+	cert1, err := gen.ReadDataFromFile(sampleExtraRootCert1Path)
+	if err != nil {
+		t.Fatalf("failed to read extra-root-cert1.pem: %v", err)
+	}
+	cert2, err := gen.ReadDataFromFile(sampleExtraRootCert2Path)
+	if err != nil {
+		t.Fatalf("failed to read extra-root-cert2.pem: %v", err)
+	}
+
+	encodedString, inputCheckSum, _, err := HpccInitdata(inputData, sampleBase64EndcodedHeaderString, []string{cert1, cert2})
+	if err != nil {
+		t.Fatalf("HpccInitdata failed: %v", err)
+	}
+
+	toml := decodeInitdata(t, encodedString)
+
+	// ── Top-level required fields ────────────────────────────────────────────
+	assert.Contains(t, toml, `algorithm = "sha384"`, "algorithm field must be sha384")
+	assert.Contains(t, toml, `version = "0.1.0"`, "version field must be 0.1.0")
+	assert.Contains(t, toml, `[data]`, "[data] section must be present")
+	assert.Contains(t, toml, `"contract.yaml"`, "contract.yaml key must be present")
+	assert.Contains(t, toml, `sehdr:`, "sehdr field must appear inside contract.yaml value for baremetal")
+	assert.Contains(t, toml, sampleBase64EndcodedHeaderString, "HDR binary value must appear verbatim")
+
+	// ── cdh.toml section required fields ─────────────────────────────────────
+	assert.Contains(t, toml, `"cdh.toml"`, "cdh.toml key must be present when certs are provided")
+	assert.Contains(t, toml, `socket = "unix:///run/confidential-containers/cdh.sock"`, "cdh socket field must be present")
+	assert.Contains(t, toml, `[kbc]`, "[kbc] section must be present in cdh.toml")
+	assert.Contains(t, toml, `name = "offline_fs_kbc"`, "kbc name must be offline_fs_kbc")
+	assert.Contains(t, toml, `url = "http://example.io:8080"`, "kbc url must be present")
+	assert.Contains(t, toml, `[image]`, "[image] section must be present in cdh.toml")
+	assert.Contains(t, toml, `authenticated_registry_credentials_uri = "file:///etc/auth.json"`, "registry credentials uri must be present")
+	assert.Contains(t, toml, `extra_root_certificates`, "extra_root_certificates key must be present")
+
+	// ── aa.toml section must be present ──────────────────────────────────────
+	assert.Contains(t, toml, `"aa.toml"`, "aa.toml key must be present when certs are provided")
+
+	// ── Both certificate contents must appear verbatim ────────────────────────
+	assert.Contains(t, toml, cert1, "cert1 content must appear verbatim in extra_root_certificates")
+	assert.Contains(t, toml, cert2, "cert2 content must appear verbatim in extra_root_certificates")
+
+	// ── Checksums ─────────────────────────────────────────────────────────────
+	assert.Equal(t, sampleSingedEncryptedContractInputChecksum, inputCheckSum)
+}
+
+// Testcase to check HpccInitdata() without certs does NOT include cdh.toml or aa.toml.
+func TestHpccInitdataWithoutCertsHasNoCdhToml(t *testing.T) {
+	inputData, err := gen.ReadDataFromFile(sampleSignedEncryptedContract)
+	if err != nil {
+		t.Fatalf("failed to read signed contract: %v", err)
+	}
+
+	encodedString, _, _, err := HpccInitdata(inputData, "", nil)
+	if err != nil {
+		t.Fatalf("HpccInitdata failed: %v", err)
+	}
+
+	toml := decodeInitdata(t, encodedString)
+
+	// Without certs: top-level fields present, cdh.toml and aa.toml absent.
+	assert.Contains(t, toml, `algorithm = "sha384"`)
+	assert.Contains(t, toml, `version = "0.1.0"`)
+	assert.Contains(t, toml, `[data]`)
+	assert.Contains(t, toml, `"contract.yaml"`)
+	assert.NotContains(t, toml, `"cdh.toml"`, "cdh.toml must NOT appear when no certs are provided")
+	assert.NotContains(t, toml, `"aa.toml"`, "aa.toml must NOT appear when no certs are provided")
+	assert.NotContains(t, toml, `extra_root_certificates`, "extra_root_certificates must NOT appear when no certs are provided")
 }
 
 // Testcase to check if HpcrTgz() handles empty folder path

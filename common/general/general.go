@@ -1232,9 +1232,15 @@ func CheckEncryptionCertValidityForContractEncryption(encryptionCert string) (st
 // - Error if validation or gzipping fails
 func GzipInitData(tomlString string) ([]byte, error) {
 	var buf bytes.Buffer
-	gzipWriter := gzip.NewWriter(&buf)
+	gzipWriter, err := gzip.NewWriterLevel(&buf, gzip.DefaultCompression)
+	if err != nil {
+		return nil, err
+	}
+	// Zero the modification timestamp so the compressed output is identical
+	// across Go versions, OS builds, and CI environments.
+	gzipWriter.Header.ModTime = time.Time{}
 
-	_, err := gzipWriter.Write([]byte(tomlString))
+	_, err = gzipWriter.Write([]byte(tomlString))
 	if err != nil {
 		return nil, err
 	}
