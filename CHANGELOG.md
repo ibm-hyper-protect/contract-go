@@ -1,3 +1,7 @@
+## 2.49.0 (2026-10-09)
+
+* feat: Added Support for Private Registry (#323) ([4c83e54](https://github.com/ibm-hyper-protect/contract-go/commit/4c83e54)), closes [#323](https://github.com/ibm-hyper-protect/contract-go/issues/323)
+
 ## 2.48.0 (2026-09-29)
 
 * feat: Enabled contract-basic string for CCCO (#321) ([e2bd6f9](https://github.com/ibm-hyper-protect/contract-go/commit/e2bd6f9)), closes [#321](https://github.com/ibm-hyper-protect/contract-go/issues/321)
