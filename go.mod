@@ -15,7 +15,7 @@
 
 module github.com/ibm-hyper-protect/contract-go/v2
 
-go 1.26.4
+go 1.27.1
 
 require (
 	github.com/Masterminds/semver/v3 v3.5.0
