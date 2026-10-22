@@ -34,7 +34,6 @@ const (
 	OsTypeHpvs = "hpvs"
 )
 
-// releaseMapFile declares the CCCO mod releases and their fixpacks.
 const releaseMapFile = "ccco/release-map.yaml"
 
 // CccoReleaseEntry is a CCCO mod release (x.x.x) with its fixpacks (x.x.x.x).
@@ -61,8 +60,7 @@ var certFS embed.FS
 
 // CertificateMap holds the mapping of OS type and version to certificate content.
 // This map is automatically populated from embedded certificate files.
-// For CCCO, fixpack versions (x.x.x.x) are also keyed here pointing to their
-// parent mod release cert content — no duplicate files stored on disk.
+// CCCO fixpack versions are keyed here too and share their parent mod certificate.
 var CertificateMap map[string]map[string]string
 
 // Latest encryption certificate variables - populated automatically with latest versions
@@ -92,7 +90,6 @@ func init() {
 		loadCertificatesFromDir(OsTypeCcco)
 		loadCertificatesFromDir(OsTypeHpvs)
 
-		// Load CCCO release map and register fixpack version aliases
 		loadCccoReleaseMap()
 
 		// Set latest certificate variables
@@ -165,10 +162,6 @@ func loadCccoReleaseMap() {
 //   - ibm-hyper-protect-container-runtime-26.2.0-encrypt.crt -> 26.2.0
 //   - ibm-confidential-computing-container-runtime-rhvs-26.4.1-encrypt.crt -> 26.4.1
 //   - ibm-hyper-protect-container-runtime-1-0-s390x-28-encrypt.crt -> 1.0.28
-//
-// Note: CCCO uses product bundle version format (x.x.x for mod release, x.x.x.x for fixpack).
-// Fixpack versions have no cert file; they are declared in ccco/release-map.yaml.
-// All other platforms (ccrt, ccrv, hpvs) retain their existing date-based formats.
 func extractVersionFromFilename(filename string) string {
 	// Pattern to match semantic version (X.Y.Z or X.Y.Z.W)
 	re := regexp.MustCompile(`(\d+\.\d+\.\d+(?:\.\d+)?)-encrypt\.crt$`)

@@ -331,7 +331,7 @@ func HpcrListAvailableEncCertVersions(osType, formatType string) (string, error)
 	return marshalVersions(result, formatType)
 }
 
-// marshalVersions serializes v as JSON or YAML according to formatType (already validated).
+// marshalVersions serializes v as JSON or YAML.
 func marshalVersions(v any, formatType string) (string, error) {
 	switch formatType {
 	case formatJson:

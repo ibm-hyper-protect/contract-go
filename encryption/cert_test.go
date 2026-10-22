@@ -92,7 +92,7 @@ func TestCccoReleaseMapOrderedOldestFirst(t *testing.T) {
 	}
 }
 
-// Testcase to check that mod releases carry distinct certificates, except for placeholders
+// Testcase to check that the newest mod release does not reuse the certificate of the previous one
 func TestCccoModCertsAreDistinctFromNewest(t *testing.T) {
 	newest := newestCccoMod()
 	previous := CccoReleases[len(CccoReleases)-2]
