@@ -867,9 +867,14 @@ JSON format (all platforms):
 {
   "ccrt": ["26.5.0", "26.7.2", "26.9.1"],
   "ccrv": ["26.5.0", "26.7.1", "26.9.0"],
-  "ccco": ["26.7.1", "26.4.0", "25.12.0",]
+  "ccco": ["1.2.2.1", "1.2.2", "1.2.1"]
 }
 ```
+
+> **Note:** CCCO versions are product bundle versions (`x.x.x` for mod release, `x.x.x.x` for fixpack).
+> Three mod releases are maintained; fixpacks share their parent mod's cert. Only versions declared in `encryption/ccco/release-map.yaml` are accepted.
+> Use `HpcrListCccoEncCertVersions` for the grouped mod/fixpack view.
+> ccrt, ccrv, and hpvs continue to use their existing date-based cert versions.
 
 YAML format (specific platform):
 ```yaml
@@ -973,6 +978,42 @@ func main() {
 
 **Related Functions:**
 - [`HpcrContractSignedEncrypted`](#hpcrcontractsignedencrypted) - Use specific version with `certVersion` parameter
+- [`HpcrListCccoEncCertVersions`](#hpcrlistcccoenccertversions) - List CCCO versions grouped by mod release
+
+### HpcrListCccoEncCertVersions
+
+Lists the CCCO encryption certificate versions grouped by mod release (latest first), each with its fixpacks. Only mod releases declared in `encryption/ccco/release-map.yaml` with an embedded certificate are listed.
+
+**Package:** `github.com/ibm-hyper-protect/contract-go/v2/certificate`
+
+**Signature:**
+```go
+func HpcrListCccoEncCertVersions(formatType string) (string, error)
+```
+
+**Parameters:**
+
+| Parameter | Type | Required/Optional | Description |
+|-----------|------|-------------------|-------------|
+| `formatType` | `string` | Optional | Output format: `"json"` or `"yaml"` (defaults to `"json"` if empty) |
+
+**Returns:**
+
+| Return | Type | Description |
+|--------|------|-------------|
+| Versions | `string` | JSON or YAML string with a `ccco` key holding the mod releases and their fixpacks |
+| Error | `error` | Error if marshaling fails or the format is invalid |
+
+**Example:**
+
+```go
+versions, err := certificate.HpcrListCccoEncCertVersions("json")
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println(versions)
+// {"ccco":[{"mod":"1.2.2","fixpacks":["1.2.2.1"]},{"mod":"1.2.1","fixpacks":[]}]}
+```
 
 ---
 

@@ -16,10 +16,13 @@
 package certificate
 
 import (
+	"encoding/json"
 	"testing"
 
 	gen "github.com/ibm-hyper-protect/contract-go/v2/common/general"
+	cert "github.com/ibm-hyper-protect/contract-go/v2/encryption"
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v3"
 )
 
 var (
@@ -260,4 +263,43 @@ func TestHpcrListAvailableEncCertVersions_InvalidFormat(t *testing.T) {
 	assert.Error(t, err)
 	assert.Empty(t, result)
 	assert.Contains(t, err.Error(), "invalid output format")
+}
+
+// Testcase to check that HpcrListCccoEncCertVersions lists the release map, latest mod first, with fixpacks
+func TestHpcrListCccoEncCertVersions_Json(t *testing.T) {
+	result, err := HpcrListCccoEncCertVersions("json")
+	assert.NoError(t, err)
+
+	var listed map[string][]cert.CccoReleaseEntry
+	assert.NoError(t, json.Unmarshal([]byte(result), &listed))
+
+	expected := make([]cert.CccoReleaseEntry, 0, len(cert.CccoReleases))
+	for i := len(cert.CccoReleases) - 1; i >= 0; i-- {
+		expected = append(expected, cert.CccoReleases[i])
+	}
+	assert.Equal(t, expected, listed[cert.OsTypeCcco])
+}
+
+// Testcase to check that HpcrListCccoEncCertVersions supports yaml
+func TestHpcrListCccoEncCertVersions_Yaml(t *testing.T) {
+	result, err := HpcrListCccoEncCertVersions("yaml")
+	assert.NoError(t, err)
+
+	var listed map[string][]cert.CccoReleaseEntry
+	assert.NoError(t, yaml.Unmarshal([]byte(result), &listed))
+	assert.Len(t, listed[cert.OsTypeCcco], len(cert.CccoReleases))
+}
+
+// Testcase to check that fixpack-less mod releases are listed with an empty fixpack list, not null
+func TestHpcrListCccoEncCertVersions_EmptyFixpacksNotNull(t *testing.T) {
+	result, err := HpcrListCccoEncCertVersions("json")
+	assert.NoError(t, err)
+	assert.NotContains(t, result, `"fixpacks":null`)
+}
+
+// Testcase to check that HpcrListCccoEncCertVersions rejects invalid format
+func TestHpcrListCccoEncCertVersions_InvalidFormat(t *testing.T) {
+	result, err := HpcrListCccoEncCertVersions("xml")
+	assert.Error(t, err)
+	assert.Empty(t, result)
 }
