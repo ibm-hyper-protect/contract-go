@@ -161,9 +161,7 @@ func loadCccoReleaseMap() {
 
 // extractVersionFromFilename extracts the version number from a certificate filename.
 // Supports patterns like:
-//   - ibm-confidential-computing-container-ccco-1.2.0-encrypt.crt   -> 1.2.0   (CCCO mod release, n-2)
-//   - ibm-confidential-computing-container-ccco-1.2.1-encrypt.crt   -> 1.2.1   (CCCO mod release, n-1)
-//   - ibm-confidential-computing-container-ccco-1.2.2-encrypt.crt   -> 1.2.2   (CCCO mod release, n)
+//   - ibm-confidential-computing-container-ccco-1.2.1-encrypt.crt -> 1.2.1 (CCCO mod release)
 //   - ibm-hyper-protect-container-runtime-26.2.0-encrypt.crt -> 26.2.0
 //   - ibm-confidential-computing-container-runtime-rhvs-26.4.1-encrypt.crt -> 26.4.1
 //   - ibm-hyper-protect-container-runtime-1-0-s390x-28-encrypt.crt -> 1.0.28

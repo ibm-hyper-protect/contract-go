@@ -22,33 +22,51 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Testcase to check that CCCO keeps exactly three mod release certs (n, n-1, n-2)
+// cccoSupportedModReleases is the number of mod releases kept at any time (n, n-1, n-2).
+const cccoSupportedModReleases = 3
+
+// newestCccoMod returns the newest mod release in the release map (entries are listed oldest first).
+func newestCccoMod() CccoReleaseEntry {
+	return CccoReleases[len(CccoReleases)-1]
+}
+
+// Testcase to check that exactly n, n-1, n-2 mod releases are kept and each has a certificate
 func TestCccoModReleaseWindow(t *testing.T) {
-	assert.Len(t, CccoReleases, 3)
+	assert.Len(t, CccoReleases, cccoSupportedModReleases)
 	for _, r := range CccoReleases {
 		assert.NotEmpty(t, CertificateMap[OsTypeCcco][r.Mod], "missing cert for mod %s", r.Mod)
 	}
 }
 
-// Testcase to check that fixpack versions share the parent mod cert
+// Testcase to check that every fixpack resolves to the certificate of its parent mod release
 func TestCccoFixpackSharesParentCert(t *testing.T) {
-	parent := CertificateMap[OsTypeCcco]["1.2.2"]
-	assert.NotEmpty(t, parent)
-	assert.Equal(t, parent, CertificateMap[OsTypeCcco]["1.2.2.1"])
-	assert.Equal(t, parent, CertificateMap[OsTypeCcco]["1.2.2.2"])
+	fixpacks := 0
+	for _, r := range CccoReleases {
+		for _, fp := range r.Fixpacks {
+			fixpacks++
+			assert.Equal(t, CertificateMap[OsTypeCcco][r.Mod], CertificateMap[OsTypeCcco][fp], "fixpack %s must use the cert of %s", fp, r.Mod)
+		}
+	}
+	assert.NotZero(t, fixpacks, "release map should declare at least one fixpack")
 }
 
 // Testcase to check that undeclared and legacy date-based versions are rejected
 func TestCccoUndeclaredVersionsRejected(t *testing.T) {
-	for _, v := range []string{"1.2.2.3", "1.2.3", "26.7.1", "26.4.0", "25.12.0"} {
+	newest := newestCccoMod()
+	undeclared := []string{
+		newest.Mod + ".99",            // fixpack that is not declared
+		"99.99.99",                    // mod release that is not declared
+		"26.7.1", "26.4.0", "25.12.0", // legacy date-based versions
+	}
+	for _, v := range undeclared {
 		_, ok := CertificateMap[OsTypeCcco][v]
 		assert.False(t, ok, "version %s should not be accepted", v)
 	}
 }
 
-// Testcase to check that the latest CCCO cert is the newest mod release cert
+// Testcase to check that the default CCCO certificate is the newest mod release certificate
 func TestCccoLatestCertIsNewestMod(t *testing.T) {
-	assert.Equal(t, CertificateMap[OsTypeCcco]["1.2.2"], LatestEncryptionCertificateCcco)
+	assert.Equal(t, CertificateMap[OsTypeCcco][newestCccoMod().Mod], LatestEncryptionCertificateCcco)
 }
 
 // Testcase to check that release-map entries are well formed: fixpacks (x.x.x.x) belong to their parent mod (x.x.x)
@@ -67,7 +85,16 @@ func TestCccoReleaseMapWellFormed(t *testing.T) {
 	}
 }
 
-// Testcase to check that mod releases carry distinct certificates
-func TestCccoModCertsAreDistinct(t *testing.T) {
-	assert.NotEqual(t, CertificateMap[OsTypeCcco]["1.2.1"], CertificateMap[OsTypeCcco]["1.2.2"])
+// Testcase to check that the release map is ordered oldest first, as the listing relies on it
+func TestCccoReleaseMapOrderedOldestFirst(t *testing.T) {
+	for i := 1; i < len(CccoReleases); i++ {
+		assert.Equal(t, 1, CompareVersions(CccoReleases[i].Mod, CccoReleases[i-1].Mod), "%s must be newer than %s", CccoReleases[i].Mod, CccoReleases[i-1].Mod)
+	}
+}
+
+// Testcase to check that mod releases carry distinct certificates, except for placeholders
+func TestCccoModCertsAreDistinctFromNewest(t *testing.T) {
+	newest := newestCccoMod()
+	previous := CccoReleases[len(CccoReleases)-2]
+	assert.NotEqual(t, CertificateMap[OsTypeCcco][previous.Mod], CertificateMap[OsTypeCcco][newest.Mod])
 }
