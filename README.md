@@ -84,6 +84,7 @@ Learn more:
   - **Download CRLs** from certificate distribution points
   - **List all available encryption certificate versions** for all the platforms
   - **Get the list of available encryption certificate versions** for specific platform (ccrt, ccrv, ccco)
+  - **Get the CCCO bundle versions grouped by mod release** with their fixpacks
 
 - **Contract Generation**
   - Generate Base64-encoded data from text, JSON, initdata annotation and docker compose / podman play archives

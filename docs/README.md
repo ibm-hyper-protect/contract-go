@@ -871,9 +871,11 @@ JSON format (all platforms):
 }
 ```
 
-> **Note:** CCCO versions are product bundle versions (`x.x.x` for mod release, `x.x.x.x` for fixpack).
-> Three mod releases are maintained; fixpacks share their parent mod's cert. Only versions declared in `encryption/ccco/release-map.yaml` are accepted.
-> Use `HpcrListCccoEncCertVersions` for the grouped mod/fixpack view.
+> **Note:** CCCO versions are product bundle versions (`x.x.x` for a mod release, `x.x.x.x` for a fixpack).
+> Three mod releases are maintained, and a fixpack uses the certificate of its parent mod release. Only versions
+> declared in `encryption/ccco/release-map.yaml` are accepted as `certVersion`.
+> This function returns a flat list; use [`HpcrListCccoEncCertVersions`](#hpcrlistcccoenccertversions) to see
+> fixpacks grouped under their mod release.
 > ccrt, ccrv, and hpvs continue to use their existing date-based cert versions.
 
 YAML format (specific platform):
@@ -982,7 +984,7 @@ func main() {
 
 ### HpcrListCccoEncCertVersions
 
-Lists the CCCO encryption certificate versions grouped by mod release (latest first), each with its fixpacks. Only mod releases declared in `encryption/ccco/release-map.yaml` with an embedded certificate are listed.
+Lists the CCCO encryption certificate versions grouped by mod release (latest first), each with its fixpacks. Only mod releases declared in `encryption/ccco/release-map.yaml` with an embedded certificate are listed. A fixpack has no certificate of its own: passing a fixpack version as `certVersion` uses the certificate of its parent mod release.
 
 **Package:** `github.com/ibm-hyper-protect/contract-go/v2/certificate`
 
@@ -1014,6 +1016,20 @@ if err != nil {
 fmt.Println(versions)
 // {"ccco":[{"mod":"1.2.2","fixpacks":["1.2.2.1"]},{"mod":"1.2.1","fixpacks":[]}]}
 ```
+
+YAML (`"yaml"`):
+```yaml
+ccco:
+    - mod: 1.2.2
+      fixpacks:
+        - 1.2.2.1
+    - mod: 1.2.1
+      fixpacks: []
+```
+
+**Maintaining the supported versions:**
+- New mod release: add its certificate file (`ibm-confidential-computing-container-ccco-<version>-encrypt.crt`) and an entry in `release-map.yaml`, then delete the oldest entry and its certificate file so that three mod releases remain.
+- New fixpack: add its version to the `fixpacks` list of its parent mod release in `release-map.yaml`. No certificate file is needed.
 
 ---
 
