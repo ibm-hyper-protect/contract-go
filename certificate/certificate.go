@@ -286,7 +286,7 @@ func HpcrValidateCertificateRevocationList(certificateDocument, ibmIntermediateC
 //
 //	// Get all OS types in JSON format
 //	allCerts, err := certificate.HpcrListAvailableEncCertVersions("", "json")
-//	// Returns: {"ccrt":["26.2.0","25.11.0"],"ccrv":["26.4.1","25.11.0"],"ccco":["1.2.2.1","1.2.2","1.2.1"],"hpvs":["26.5.0","26.2.0"]}
+//	// Returns: {"ccrt":["26.2.0","25.11.0"],"ccrv":["26.4.1","25.11.0"],"ccco":["1.2.2.2","1.2.2.1","1.2.2","1.2.1","1.2.0"],"hpvs":["26.5.0","26.2.0"]}
 //
 //	// Get specific OS type in YAML format
 //	hpvsCerts, err := certificate.HpcrListAvailableEncCertVersions("hpvs", "yaml")
@@ -365,7 +365,7 @@ func marshalVersions(v any, formatType string) (string, error) {
 // Example:
 //
 //	result, err := certificate.HpcrListCccoEncCertVersions("json")
-//	// {"ccco":[{"mod":"1.2.2","fixpacks":["1.2.2.1"]},{"mod":"1.2.1","fixpacks":[]}]}
+//	// {"ccco":[{"mod":"1.2.2","fixpacks":["1.2.2.1","1.2.2.2"]},{"mod":"1.2.1","fixpacks":[]},{"mod":"1.2.0","fixpacks":[]}]}
 func HpcrListCccoEncCertVersions(formatType string) (string, error) {
 	if formatType == "" {
 		formatType = defaultFormat

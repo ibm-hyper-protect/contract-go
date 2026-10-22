@@ -867,7 +867,7 @@ JSON format (all platforms):
 {
   "ccrt": ["26.5.0", "26.7.2", "26.9.1"],
   "ccrv": ["26.5.0", "26.7.1", "26.9.0"],
-  "ccco": ["1.2.2.1", "1.2.2", "1.2.1"]
+  "ccco": ["1.2.2.2", "1.2.2.1", "1.2.2", "1.2.1", "1.2.0"]
 }
 ```
 
@@ -1014,7 +1014,7 @@ if err != nil {
     log.Fatal(err)
 }
 fmt.Println(versions)
-// {"ccco":[{"mod":"1.2.2","fixpacks":["1.2.2.1"]},{"mod":"1.2.1","fixpacks":[]}]}
+// {"ccco":[{"mod":"1.2.2","fixpacks":["1.2.2.1","1.2.2.2"]},{"mod":"1.2.1","fixpacks":[]},{"mod":"1.2.0","fixpacks":[]}]}
 ```
 
 YAML (`"yaml"`):
@@ -1023,7 +1023,10 @@ ccco:
     - mod: 1.2.2
       fixpacks:
         - 1.2.2.1
+        - 1.2.2.2
     - mod: 1.2.1
+      fixpacks: []
+    - mod: 1.2.0
       fixpacks: []
 ```
 
