@@ -261,3 +261,27 @@ func TestHpcrListAvailableEncCertVersions_InvalidFormat(t *testing.T) {
 	assert.Empty(t, result)
 	assert.Contains(t, err.Error(), "invalid output format")
 }
+
+// Testcase to check that HpcrListCccoEncCertVersions returns exactly n, n-1, n-2 mod releases grouped with fixpacks
+func TestHpcrListCccoEncCertVersions_Json(t *testing.T) {
+	result, err := HpcrListCccoEncCertVersions("json")
+	assert.NoError(t, err)
+
+	expected := `{"ccco":[{"mod":"1.2.2","fixpacks":["1.2.2.1","1.2.2.2"]},{"mod":"1.2.1","fixpacks":[]},{"mod":"1.2.0","fixpacks":[]}]}`
+	assert.JSONEq(t, expected, result)
+}
+
+// Testcase to check that HpcrListCccoEncCertVersions supports yaml
+func TestHpcrListCccoEncCertVersions_Yaml(t *testing.T) {
+	result, err := HpcrListCccoEncCertVersions("yaml")
+	assert.NoError(t, err)
+	assert.Contains(t, result, "ccco:")
+	assert.Contains(t, result, "mod: 1.2.2")
+}
+
+// Testcase to check that HpcrListCccoEncCertVersions rejects invalid format
+func TestHpcrListCccoEncCertVersions_InvalidFormat(t *testing.T) {
+	result, err := HpcrListCccoEncCertVersions("xml")
+	assert.Error(t, err)
+	assert.Empty(t, result)
+}

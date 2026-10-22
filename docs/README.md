@@ -867,9 +867,14 @@ JSON format (all platforms):
 {
   "ccrt": ["26.5.0", "26.7.2", "26.9.1"],
   "ccrv": ["26.5.0", "26.7.1", "26.9.0"],
-  "ccco": ["26.7.1", "26.4.0", "25.12.0",]
+  "ccco": ["1.2.2.2", "1.2.2.1", "1.2.2", "1.2.1", "1.2.0"]
 }
 ```
+
+> **Note:** CCCO versions are product bundle versions (`x.x.x` for mod release, `x.x.x.x` for fixpack).
+> Three mod releases are maintained (1.2.2, 1.2.1, 1.2.0); fixpacks share their parent mod's cert. Only versions declared in `encryption/ccco/release-map.yaml` are accepted.
+> Use `HpcrListCccoEncCertVersions` for the grouped mod/fixpack view.
+> ccrt, ccrv, and hpvs continue to use their existing date-based cert versions.
 
 YAML format (specific platform):
 ```yaml
