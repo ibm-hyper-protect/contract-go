@@ -49,14 +49,18 @@ type cccoReleaseMap struct {
 // CccoReleases holds the entries of release-map.yaml, oldest first. Treat as read-only.
 var CccoReleases []CccoReleaseEntry
 
-// Embed all certificate directories
+// certFS embeds all certificate (.crt) files for every OS type.
 //
 //go:embed ccrt/*.crt
 //go:embed ccrv/*.crt
 //go:embed ccco/*.crt
-//go:embed ccco/release-map.yaml
 //go:embed hpvs/*.crt
 var certFS embed.FS
+
+// releaseMapFS embeds the CCCO release-map.yaml used for fixpack-to-mod matching.
+//
+//go:embed ccco/release-map.yaml
+var releaseMapFS embed.FS
 
 // CertificateMap holds the mapping of OS type and version to certificate content.
 // This map is automatically populated from embedded certificate files.
@@ -133,7 +137,7 @@ func loadCertificatesFromDir(osType string) {
 
 // loadCccoReleaseMap loads release-map.yaml and maps each fixpack to its parent mod certificate.
 func loadCccoReleaseMap() {
-	data, err := certFS.ReadFile(releaseMapFile)
+	data, err := releaseMapFS.ReadFile(releaseMapFile)
 	if err != nil {
 		return
 	}
