@@ -1,0 +1,19 @@
+# CCCO release map: product bundle versions and their encryption certificates.
+#
+# Each mod release (x.x.x) has a certificate file in this directory. Fixpacks (x.x.x.x)
+# share the certificate of their parent mod release and need no file of their own.
+# Only versions declared here are accepted.
+#
+# Exactly three mod releases (n, n-1, n-2) are kept, listed oldest first.
+# New mod release: add its cert file and entry, then delete the oldest entry and its cert file.
+# New fixpack: add it to the fixpacks of its parent mod.
+
+releases:
+  - mod: "1.2.0" # n-2 (placeholder certificate)
+    fixpacks: []
+  - mod: "1.2.1" # n-1
+    fixpacks: []
+  - mod: "1.2.2" # n
+    fixpacks:
+      - "1.2.2.1"
+      - "1.2.2.2"

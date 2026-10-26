@@ -22,6 +22,8 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+
+	"gopkg.in/yaml.v3"
 )
 
 // OS type constants for certificate management
@@ -32,7 +34,22 @@ const (
 	OsTypeHpvs = "hpvs"
 )
 
-// Embed all certificate directories
+const releaseMapFile = "ccco/release-map.yaml"
+
+// CccoReleaseEntry is a CCCO mod release (x.x.x) with its fixpacks (x.x.x.x).
+type CccoReleaseEntry struct {
+	Mod      string   `json:"mod"      yaml:"mod"`
+	Fixpacks []string `json:"fixpacks" yaml:"fixpacks"`
+}
+
+type cccoReleaseMap struct {
+	Releases []CccoReleaseEntry `yaml:"releases"`
+}
+
+// CccoReleases holds the entries of release-map.yaml, oldest first. Treat as read-only.
+var CccoReleases []CccoReleaseEntry
+
+// certFS embeds all certificate (.crt) files for every OS type.
 //
 //go:embed ccrt/*.crt
 //go:embed ccrv/*.crt
@@ -40,8 +57,14 @@ const (
 //go:embed hpvs/*.crt
 var certFS embed.FS
 
+// releaseMapFS embeds the CCCO release-map.yaml used for fixpack-to-mod matching.
+//
+//go:embed ccco/release-map.yaml
+var releaseMapFS embed.FS
+
 // CertificateMap holds the mapping of OS type and version to certificate content.
 // This map is automatically populated from embedded certificate files.
+// CCCO fixpack versions are keyed here too and share their parent mod certificate.
 var CertificateMap map[string]map[string]string
 
 // Latest encryption certificate variables - populated automatically with latest versions
@@ -70,6 +93,8 @@ func init() {
 		loadCertificatesFromDir(OsTypeCcrv)
 		loadCertificatesFromDir(OsTypeCcco)
 		loadCertificatesFromDir(OsTypeHpvs)
+
+		loadCccoReleaseMap()
 
 		// Set latest certificate variables
 		LatestEncryptionCertificateCcrt = getLatestCertificate(OsTypeCcrt)
@@ -110,11 +135,36 @@ func loadCertificatesFromDir(osType string) {
 	}
 }
 
+// loadCccoReleaseMap loads release-map.yaml and maps each fixpack to its parent mod certificate.
+func loadCccoReleaseMap() {
+	data, err := releaseMapFS.ReadFile(releaseMapFile)
+	if err != nil {
+		return
+	}
+
+	var rm cccoReleaseMap
+	if err := yaml.Unmarshal(data, &rm); err != nil {
+		return
+	}
+
+	CccoReleases = rm.Releases
+
+	for _, entry := range rm.Releases {
+		modCert, exists := CertificateMap[OsTypeCcco][entry.Mod]
+		if !exists {
+			continue
+		}
+		for _, fp := range entry.Fixpacks {
+			CertificateMap[OsTypeCcco][fp] = modCert
+		}
+	}
+}
+
 // extractVersionFromFilename extracts the version number from a certificate filename.
 // Supports patterns like:
+//   - ibm-confidential-computing-container-ccco-1.2.1-encrypt.crt -> 1.2.1 (CCCO mod release)
 //   - ibm-hyper-protect-container-runtime-26.2.0-encrypt.crt -> 26.2.0
 //   - ibm-confidential-computing-container-runtime-rhvs-26.4.1-encrypt.crt -> 26.4.1
-//   - ibm-hyper-protect-confidential-container-25.12.0-encrypt.crt -> 25.12.0
 //   - ibm-hyper-protect-container-runtime-1-0-s390x-28-encrypt.crt -> 1.0.28
 func extractVersionFromFilename(filename string) string {
 	// Pattern to match semantic version (X.Y.Z or X.Y.Z.W)

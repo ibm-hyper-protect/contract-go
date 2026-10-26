@@ -857,7 +857,7 @@ func HpcrListAvailableEncCertVersions(osType, formatType string) (string, error)
 
 | Return | Type | Description |
 |--------|------|-------------|
-| Certificates | `string` | JSON or YAML string containing map of platform to version arrays |
+| Certificates | `string` | JSON or YAML string containing map of platform to version arrays (`ccco` maps to `{mod, fixpacks}` objects) |
 | Error | `error` | Error if marshaling fails, invalid format, or invalid OS type specified |
 
 **Output Formats:**
@@ -867,9 +867,19 @@ JSON format (all platforms):
 {
   "ccrt": ["26.5.0", "26.7.2", "26.9.1"],
   "ccrv": ["26.5.0", "26.7.1", "26.9.0"],
-  "ccco": ["26.7.1", "26.4.0", "25.12.0",]
+  "ccco": [
+    {"mod": "1.2.2", "fixpacks": ["1.2.2.1", "1.2.2.2"]},
+    {"mod": "1.2.1", "fixpacks": []},
+    {"mod": "1.2.0", "fixpacks": []}
+  ]
 }
 ```
+
+> **Note:** CCCO versions are product bundle versions (`x.x.x` for a mod release, `x.x.x.x` for a fixpack).
+> For `ccco`, the value is a list of `{mod, fixpacks}` objects (latest mod release first) instead of a flat version list.
+> Three mod releases are maintained, and a fixpack uses the certificate of its parent mod release. Only versions
+> declared in `encryption/ccco/release-map.yaml` are accepted as `certVersion`.
+> ccrt, ccrv, and hpvs continue to use their existing date-based cert versions.
 
 YAML format (specific platform):
 ```yaml
@@ -900,16 +910,27 @@ func main() {
         log.Fatalf("Failed to list certificates: %v", err)
     }
 
-    var allCerts map[string][]string
+    // "ccco" maps to {mod, fixpacks} objects, so decode each platform lazily
+    var allCerts map[string]json.RawMessage
     if err := json.Unmarshal([]byte(allCertsJSON), &allCerts); err != nil {
         log.Fatal(err)
     }
 
-    for platform, versions := range allCerts {
-        fmt.Printf("Platform %s has %d versions:\n", platform, len(versions))
-        for _, version := range versions {
-            fmt.Printf("  - %s\n", version)
-        }
+    var ccrtVersions []string
+    if err := json.Unmarshal(allCerts["ccrt"], &ccrtVersions); err != nil {
+        log.Fatal(err)
+    }
+    fmt.Printf("CCRT has %d versions\n", len(ccrtVersions))
+
+    var cccoReleases []struct {
+        Mod      string   `json:"mod"`
+        Fixpacks []string `json:"fixpacks"`
+    }
+    if err := json.Unmarshal(allCerts["ccco"], &cccoReleases); err != nil {
+        log.Fatal(err)
+    }
+    for _, r := range cccoReleases {
+        fmt.Printf("CCCO %s fixpacks: %v\n", r.Mod, r.Fixpacks)
     }
 
     // Example 2: Get specific platform in JSON format
@@ -973,6 +994,10 @@ func main() {
 
 **Related Functions:**
 - [`HpcrContractSignedEncrypted`](#hpcrcontractsignedencrypted) - Use specific version with `certVersion` parameter
+
+**Maintaining the supported versions:**
+- New mod release: add its certificate file (`ibm-confidential-computing-container-ccco-<version>-encrypt.crt`) and an entry in `release-map.yaml`, then delete the oldest entry and its certificate file so that three mod releases remain.
+- New fixpack: add its version to the `fixpacks` list of its parent mod release in `release-map.yaml`. No certificate file is needed.
 
 ---
 
