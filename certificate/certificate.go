@@ -268,6 +268,10 @@ func HpcrValidateCertificateRevocationList(certificateDocument, ibmIntermediateC
 // in JSON or YAML format. If osType is provided, returns versions for that specific OS type only.
 // If osType is empty, returns versions for all OS types.
 //
+// For "ccco", versions are grouped by mod release (latest first), each with its fixpacks, and only
+// mod releases declared in the release map with an embedded certificate are listed. A fixpack has no
+// certificate of its own and uses the certificate of its parent mod release.
+//
 // Use this function to discover which encryption certificate versions are available without downloading
 // from IBM Cloud. This is useful for:
 //   - Displaying available versions to users
@@ -279,14 +283,15 @@ func HpcrValidateCertificateRevocationList(certificateDocument, ibmIntermediateC
 //   - formatType: Output format — "json" or "yaml" (defaults to "json" if empty)
 //
 // Returns:
-//   - JSON or YAML string with OS types as keys and sorted version arrays as values (descending order, latest first)
+//   - JSON or YAML string with OS types as keys and sorted version arrays as values (descending order, latest first);
+//     the "ccco" value is an array of {mod, fixpacks} objects instead
 //   - Error if marshaling fails, invalid format specified, or if specified osType doesn't exist
 //
 // Examples:
 //
 //	// Get all OS types in JSON format
 //	allCerts, err := certificate.HpcrListAvailableEncCertVersions("", "json")
-//	// Returns: {"ccrt":["26.2.0","25.11.0"],"ccrv":["26.4.1","25.11.0"],"ccco":["1.2.2.2","1.2.2.1","1.2.2","1.2.1","1.2.0"],"hpvs":["26.5.0","26.2.0"]}
+//	// Returns: {"ccrt":["26.2.0","25.11.0"],"ccrv":["26.4.1","25.11.0"],"ccco":[{"mod":"1.2.2","fixpacks":["1.2.2.1","1.2.2.2"]},{"mod":"1.2.1","fixpacks":[]},{"mod":"1.2.0","fixpacks":[]}],"hpvs":["26.5.0","26.2.0"]}
 //
 //	// Get specific OS type in YAML format
 //	hpvsCerts, err := certificate.HpcrListAvailableEncCertVersions("hpvs", "yaml")
@@ -294,6 +299,10 @@ func HpcrValidateCertificateRevocationList(certificateDocument, ibmIntermediateC
 //	// hpvs:
 //	//   - 26.5.0
 //	//   - 26.2.0
+//
+//	// Get CCCO mod releases with their fixpacks
+//	cccoCerts, err := certificate.HpcrListAvailableEncCertVersions("ccco", "json")
+//	// Returns: {"ccco":[{"mod":"1.2.2","fixpacks":["1.2.2.1","1.2.2.2"]},{"mod":"1.2.1","fixpacks":[]},{"mod":"1.2.0","fixpacks":[]}]}
 //
 //	// Default to JSON if format not specified
 //	certs, err := certificate.HpcrListAvailableEncCertVersions("", "")
@@ -308,7 +317,7 @@ func HpcrListAvailableEncCertVersions(osType, formatType string) (string, error)
 		return "", fmt.Errorf("invalid output format: %s. Valid formats are: json, yaml", formatType)
 	}
 
-	result := make(map[string][]string)
+	result := make(map[string]any)
 
 	// Normalize OS type to lowercase if provided
 	if osType != "" {
@@ -320,15 +329,37 @@ func HpcrListAvailableEncCertVersions(osType, formatType string) (string, error)
 			return "", fmt.Errorf("invalid OS type: %s. Valid types are: ccrt, ccrv, ccco, hpvs", osType)
 		}
 
-		result[osType] = gen.CollectAndSortVersions(osMap)
+		result[osType] = listVersions(osType, osMap)
 	} else {
 		// Get all OS types from the certificate map
 		for osType, osMap := range cert.CertificateMap {
-			result[osType] = gen.CollectAndSortVersions(osMap)
+			result[osType] = listVersions(osType, osMap)
 		}
 	}
 
 	return marshalVersions(result, formatType)
+}
+
+// listVersions returns the versions of an OS type: mod releases with fixpacks for CCCO,
+// a sorted version list for every other OS type.
+func listVersions(osType string, osMap map[string]string) any {
+	if osType != cert.OsTypeCcco {
+		return gen.CollectAndSortVersions(osMap)
+	}
+
+	// The release map lists oldest first; iterate in reverse to return the latest mod first.
+	entries := make([]cert.CccoReleaseEntry, 0, len(cert.CccoReleases))
+	for i := len(cert.CccoReleases) - 1; i >= 0; i-- {
+		r := cert.CccoReleases[i]
+		if _, exists := osMap[r.Mod]; !exists {
+			continue
+		}
+		if r.Fixpacks == nil {
+			r.Fixpacks = []string{}
+		}
+		entries = append(entries, r)
+	}
+	return entries
 }
 
 // marshalVersions serializes v as JSON or YAML.
@@ -349,44 +380,4 @@ func marshalVersions(v any, formatType string) (string, error) {
 	default:
 		return "", fmt.Errorf("invalid output format")
 	}
-}
-
-// HpcrListCccoEncCertVersions returns the CCCO encryption certificate versions grouped by
-// mod release (latest first), each with its fixpacks. Unlike [HpcrListAvailableEncCertVersions],
-// it only lists mod releases that are declared in the release map and have an embedded certificate.
-//
-// Parameters:
-//   - formatType: Output format - "json" or "yaml" (defaults to "json" if empty)
-//
-// Returns:
-//   - JSON or YAML string with key "ccco" and an array of mod and fixpacks objects
-//   - Error if marshaling fails or an invalid format is specified
-//
-// Example:
-//
-//	result, err := certificate.HpcrListCccoEncCertVersions("json")
-//	// {"ccco":[{"mod":"1.2.2","fixpacks":["1.2.2.1","1.2.2.2"]},{"mod":"1.2.1","fixpacks":[]},{"mod":"1.2.0","fixpacks":[]}]}
-func HpcrListCccoEncCertVersions(formatType string) (string, error) {
-	if formatType == "" {
-		formatType = defaultFormat
-	}
-
-	if formatType != formatJson && formatType != formatYaml {
-		return "", fmt.Errorf("invalid output format: %s. Valid formats are: json, yaml", formatType)
-	}
-
-	// The release map lists oldest first; iterate in reverse to return the latest mod first.
-	entries := make([]cert.CccoReleaseEntry, 0, len(cert.CccoReleases))
-	for i := len(cert.CccoReleases) - 1; i >= 0; i-- {
-		r := cert.CccoReleases[i]
-		if _, exists := cert.CertificateMap[cert.OsTypeCcco][r.Mod]; !exists {
-			continue
-		}
-		if r.Fixpacks == nil {
-			r.Fixpacks = []string{}
-		}
-		entries = append(entries, r)
-	}
-
-	return marshalVersions(map[string][]cert.CccoReleaseEntry{cert.OsTypeCcco: entries}, formatType)
 }

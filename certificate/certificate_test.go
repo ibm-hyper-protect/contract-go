@@ -265,9 +265,9 @@ func TestHpcrListAvailableEncCertVersions_InvalidFormat(t *testing.T) {
 	assert.Contains(t, err.Error(), "invalid output format")
 }
 
-// Testcase to check that HpcrListCccoEncCertVersions lists the release map, latest mod first, with fixpacks
-func TestHpcrListCccoEncCertVersions_Json(t *testing.T) {
-	result, err := HpcrListCccoEncCertVersions("json")
+// Testcase to check that HpcrListAvailableEncCertVersions lists the CCCO release map, latest mod first, with fixpacks
+func TestHpcrListAvailableEncCertVersions_CccoJson(t *testing.T) {
+	result, err := HpcrListAvailableEncCertVersions("ccco", "json")
 	assert.NoError(t, err)
 
 	var listed map[string][]cert.CccoReleaseEntry
@@ -280,9 +280,9 @@ func TestHpcrListCccoEncCertVersions_Json(t *testing.T) {
 	assert.Equal(t, expected, listed[cert.OsTypeCcco])
 }
 
-// Testcase to check that HpcrListCccoEncCertVersions supports yaml
-func TestHpcrListCccoEncCertVersions_Yaml(t *testing.T) {
-	result, err := HpcrListCccoEncCertVersions("yaml")
+// Testcase to check that HpcrListAvailableEncCertVersions supports yaml for ccco
+func TestHpcrListAvailableEncCertVersions_CccoYaml(t *testing.T) {
+	result, err := HpcrListAvailableEncCertVersions("ccco", "yaml")
 	assert.NoError(t, err)
 
 	var listed map[string][]cert.CccoReleaseEntry
@@ -291,15 +291,24 @@ func TestHpcrListCccoEncCertVersions_Yaml(t *testing.T) {
 }
 
 // Testcase to check that fixpack-less mod releases are listed with an empty fixpack list, not null
-func TestHpcrListCccoEncCertVersions_EmptyFixpacksNotNull(t *testing.T) {
-	result, err := HpcrListCccoEncCertVersions("json")
+func TestHpcrListAvailableEncCertVersions_CccoEmptyFixpacksNotNull(t *testing.T) {
+	result, err := HpcrListAvailableEncCertVersions("ccco", "json")
 	assert.NoError(t, err)
 	assert.NotContains(t, result, `"fixpacks":null`)
 }
 
-// Testcase to check that HpcrListCccoEncCertVersions rejects invalid format
-func TestHpcrListCccoEncCertVersions_InvalidFormat(t *testing.T) {
-	result, err := HpcrListCccoEncCertVersions("xml")
-	assert.Error(t, err)
-	assert.Empty(t, result)
+// Testcase to check that the ccco entry is grouped when listing all OS types
+func TestHpcrListAvailableEncCertVersions_AllOsTypesCccoGrouped(t *testing.T) {
+	result, err := HpcrListAvailableEncCertVersions("", "json")
+	assert.NoError(t, err)
+
+	var listed map[string]json.RawMessage
+	assert.NoError(t, json.Unmarshal([]byte(result), &listed))
+
+	var ccco []cert.CccoReleaseEntry
+	assert.NoError(t, json.Unmarshal(listed[cert.OsTypeCcco], &ccco))
+	assert.Len(t, ccco, len(cert.CccoReleases))
+
+	var ccrt []string
+	assert.NoError(t, json.Unmarshal(listed["ccrt"], &ccrt))
 }
