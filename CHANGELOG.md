@@ -1,3 +1,8 @@
+## 2.51.0 (2026-10-26)
+
+* feat: use product bundle versions for CCCO encryption certificates (#328) ([49d5b6c](https://github.com/ibm-hyper-protect/contract-go/commit/49d5b6c)), closes [#328](https://github.com/ibm-hyper-protect/contract-go/issues/328)
+* chore(deps): update docker.io/library/hello-world docker digest to 11a3eb1 (#326) ([2c53cd2](https://github.com/ibm-hyper-protect/contract-go/commit/2c53cd2)), closes [#326](https://github.com/ibm-hyper-protect/contract-go/issues/326)
+
 ## 2.50.0 (2026-10-09)
 
 * feat: update Go Version to 1.27.1& add IBM Bob AGENT files (#324) ([c3bd733](https://github.com/ibm-hyper-protect/contract-go/commit/c3bd733)), closes [#324](https://github.com/ibm-hyper-protect/contract-go/issues/324)
