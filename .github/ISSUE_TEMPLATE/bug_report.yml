@@ -18,7 +18,13 @@ description: Report a bug or unexpected behavior in contract-go
 title: "[Bug]: "
 labels: ["bug", "triage"]
 assignees:
+  - dherrend
   - Sashwat-K
+  - Lokesh-Puthalapattu
+  - ANJANA-A-R-K
+  - Rohit-Singh43-1
+  - vikas-sharma24
+  - Aman-Dhasmana01
 
 body:
   - type: markdown
