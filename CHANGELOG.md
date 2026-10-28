@@ -1,3 +1,7 @@
+## <small>2.51.1 (2026-10-28)</small>
+
+* fix(deps): update module k8s.io/api to v0.37.2 (#331) ([d475ee7](https://github.com/ibm-hyper-protect/contract-go/commit/d475ee7)), closes [#331](https://github.com/ibm-hyper-protect/contract-go/issues/331)
+
 ## 2.51.0 (2026-10-26)
 
 * feat: use product bundle versions for CCCO encryption certificates (#328) ([49d5b6c](https://github.com/ibm-hyper-protect/contract-go/commit/49d5b6c)), closes [#328](https://github.com/ibm-hyper-protect/contract-go/issues/328)
