@@ -1,3 +1,7 @@
+## 2.52.0 (2026-10-29)
+
+* feat: Add Aman Dhasmana as Security Maintainer (#330) ([ecf723a](https://github.com/ibm-hyper-protect/contract-go/commit/ecf723a)), closes [#330](https://github.com/ibm-hyper-protect/contract-go/issues/330)
+
 ## <small>2.51.1 (2026-10-28)</small>
 
 * fix(deps): update module k8s.io/api to v0.37.2 (#331) ([d475ee7](https://github.com/ibm-hyper-protect/contract-go/commit/d475ee7)), closes [#331](https://github.com/ibm-hyper-protect/contract-go/issues/331)
