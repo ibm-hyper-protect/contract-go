@@ -18,7 +18,13 @@ description: Suggest a new feature or enhancement for contract-go
 title: "[Feature]: "
 labels: ["enhancement", "triage"]
 assignees:
+  - dherrend
   - Sashwat-K
+  - Lokesh-Puthalapattu
+  - ANJANA-A-R-K
+  - Rohit-Singh43-1
+  - vikas-sharma24
+  - Aman-Dhasmana01
 
 body:
   - type: markdown

@@ -18,7 +18,13 @@ description: Ask a question or request help using contract-go
 title: "[Question]: "
 labels: ["question", "help wanted"]
 assignees:
+  - dherrend
   - Sashwat-K
+  - Lokesh-Puthalapattu
+  - ANJANA-A-R-K
+  - Rohit-Singh43-1
+  - vikas-sharma24
+  - Aman-Dhasmana01
 
 body:
   - type: markdown
