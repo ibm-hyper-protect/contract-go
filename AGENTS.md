@@ -38,4 +38,4 @@ go test ./contract/... -v -run TestFunctionName      # single test (any package 
 
 ## Module
 
-`github.com/ibm-hyper-protect/contract-go/v2`, Go 1.27.1 (go.mod and CI agree).
+`github.com/ibm-hyper-protect/contract-go/v3`, Go 1.27.1 (go.mod and CI agree).
