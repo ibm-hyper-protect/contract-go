@@ -29,7 +29,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 
-	cert "github.com/ibm-hyper-protect/contract-go/v2/encryption"
+	cert "github.com/ibm-hyper-protect/contract-go/v3/encryption"
 )
 
 const (

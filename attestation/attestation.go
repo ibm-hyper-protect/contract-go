@@ -18,9 +18,9 @@ package attestation
 import (
 	"fmt"
 
-	decrypt "github.com/ibm-hyper-protect/contract-go/v2/common/decrypt"
-	enc "github.com/ibm-hyper-protect/contract-go/v2/common/encrypt"
-	gen "github.com/ibm-hyper-protect/contract-go/v2/common/general"
+	decrypt "github.com/ibm-hyper-protect/contract-go/v3/common/decrypt"
+	enc "github.com/ibm-hyper-protect/contract-go/v3/common/encrypt"
+	gen "github.com/ibm-hyper-protect/contract-go/v3/common/general"
 )
 
 const (

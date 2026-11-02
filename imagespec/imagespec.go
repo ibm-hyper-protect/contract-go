@@ -26,7 +26,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
-	gen "github.com/ibm-hyper-protect/contract-go/v2/common/general"
+	gen "github.com/ibm-hyper-protect/contract-go/v3/common/general"
 	"gopkg.in/yaml.v3"
 )
 
