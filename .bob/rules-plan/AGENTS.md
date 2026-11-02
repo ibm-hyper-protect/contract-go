@@ -2,13 +2,11 @@
 
 This file provides guidance to agents when working with code in this repository.
 
-## Architectural Constraints
+## Architectural Constraints (Non-Obvious Only)
 
-- **`contract/` depends on `common/`; `common/general/` depends on `encryption/` and `schema/`**: the dependency graph is acyclic — `encryption/` and `schema/` are leaf packages with no internal imports.
-- **No interfaces**: the library has no interfaces or mocks; all code is concrete. OpenSSL is invoked as a subprocess, not via a Go crypto abstraction — replacing it requires changing `common/general` and `common/encrypt/decrypt`.
-- **All encryption requires external OpenSSL binary**: the library shells out to `openssl` for key operations. Pure-Go TLS/crypto is used only for certificate parsing (`crypto/x509`). Tests will silently fail if OpenSSL is absent.
-- **Embedded assets are versioned by file name**: adding a new encryption cert requires adding `ccrt/vX.Y.Z.crt` (etc.) and the `init()` in `encryption/cert.go` auto-populates `CertificateMap` by scanning filenames. Cert version strings come from file names.
-- **Schema is frozen at compile time**: contract JSON schemas are embedded — there's no runtime schema loading path. Schema updates require adding new files and embed directives.
-- **`encryptWrapper` is the single integration point** for sign+encrypt: both `HpcrContractSignedEncrypted` and `HpcrContractSignedEncryptedContractExpiry` delegate to it, differing only in whether a time-limited signing cert is generated.
-- **Template indentation is a hard requirement**: `indentTemplateContent` adds two-space indent to all template lines so the embedded contract appears as a valid YAML block scalar. Remove or change indentation and YAML parsing will break.
-- **`passFd = 3`** is hardcoded: the anonymous pipe for passphrase delivery to OpenSSL always uses fd 3. Any refactor that adds new file descriptors before fd 3 will break passphrase passing.
+- **Layering**: public packages → `common/*` → `common/general` → `encryption/` + `schema/*` (leaf packages, no internal imports). Keep it acyclic; `gen` must not import public packages.
+- **No interfaces/mocks**: all concrete. Crypto is done by shelling out to the `openssl` binary (`gen.ExecCommand*`); Go `crypto/x509` is only used for certificate parsing. Swapping this out means changing `common/general`, `common/encrypt`, `common/decrypt`.
+- **Passphrase delivery uses `passFd = 3`** (`common/general/general.go`) via `cmd.ExtraFiles[0]`. Adding extra files/fds ahead of it breaks passphrase passing.
+- **Compile-time assets**: certs and schemas are embedded; there is no runtime loading. Cert versions are derived from filenames in `init()`; schema files are version-pinned in their names.
+- **Templates** are located relative to the source file (`runtime.Caller`), so the library only works from a source checkout/module cache layout that keeps `contract/template/` beside `contract.go`.
+- **`encryptWrapper`** is the single sign+encrypt integration point; expiry variant only adds time-limited signing-cert generation.

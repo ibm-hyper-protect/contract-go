@@ -2,12 +2,11 @@
 
 This file provides guidance to agents when working with code in this repository.
 
-## Documentation Context
+## Documentation Context (Non-Obvious Only)
 
-- **`common/general/general.go`** is a large (~1300 line) catch-all utility package — most utility functions (exec, checksum, base64, YAML↔JSON, schema validation, cert fetch, tgz) live there, not in dedicated small files.
-- **`contract/contract.go`** is the single public API surface for the entire library — all `Hpcr*` functions that callers use are in this one file.
-- **`encryption/`** does NOT contain logic — only embedded `.crt` files and the `CertificateMap`/`LatestEncryptionCertificate*` vars populated by `init()`.
-- **`samples/`** contains the canonical test fixtures (private keys, contracts, TGZ folder, certs) that test files reference with relative paths like `../../samples/`.
-- **Supported platforms**: `ccrt` (IBM CCRT), `ccrv` (CCRT for Red Hat Virtualization), `ccco` (Containers for OpenShift), `hpvs` (legacy HyperProtect). The `ccco` platform has two sub-variants `ccco-peerpod` and `ccco-bmtl` (only used for template selection).
-- **`HpccInitdata`** is specific to CCCO peer pods (Kata Containers/OpenShift) — not general-purpose; generates TOML initdata, gzipped+base64.
-- API docs are in `docs/README.md`; samples are in `samples/` with subdirectories per feature.
+- `common/general/general.go` (~1300 lines) holds most utilities (exec, checksum, base64, YAML↔JSON, schema validation, cert fetch, tgz) — there are no small dedicated util files.
+- `contract/contract.go` is the API surface for contract functions only; certificate/image/attestation/network/secrets APIs live in their own top-level packages.
+- `encryption/` has no logic beyond cert map init — it's embedded `.crt` files + `ccco/release-map.yaml`.
+- `samples/` (subdir per feature) is the canonical fixture set used by tests via relative paths; API docs are in `docs/README.md`.
+- Platforms: `ccrt`, `ccrv` (RHEL virtualization), `ccco` (OpenShift containers; template variants `ccco-peerpod`, `ccco-bmtl`), `hpvs` (legacy HyperProtect). Empty/unknown version resolves to `ccrt`/`hpvs` defaults in `common/general`.
+- `HpccInitdata` is CCCO peer-pod specific (TOML initdata, gzipped + base64), not general purpose.
