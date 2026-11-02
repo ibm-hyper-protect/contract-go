@@ -18,8 +18,8 @@ package secrets
 import (
 	"fmt"
 
-	"github.com/ibm-hyper-protect/contract-go/v2/common/general"
-	csecrets "github.com/ibm-hyper-protect/contract-go/v2/common/secrets"
+	"github.com/ibm-hyper-protect/contract-go/v3/common/general"
+	csecrets "github.com/ibm-hyper-protect/contract-go/v3/common/secrets"
 )
 
 // HpccSealedSecret encrypts a secret using AES-256-GCM with RSA key wrapping and RSA-SHA512 signing.

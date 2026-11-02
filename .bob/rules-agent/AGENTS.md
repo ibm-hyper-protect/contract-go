@@ -2,15 +2,13 @@
 
 This file provides guidance to agents when working with code in this repository.
 
-## Critical Coding Rules
+## Critical Coding Rules (Non-Obvious Only)
 
-- **Import aliases are mandatory**: `gen` for `common/general`, `enc` for `common/encrypt`, `dec` for `common/decrypt`, `cert` for `encryption`. Deviation breaks readability conventions.
-- **Public Hpcr* function signature**: always return `(string, string, string, error)` — (result, inputChecksum, outputChecksum, error). Don't change this pattern.
-- **Empty validation**: use `gen.CheckIfEmpty(...)` not raw `== ""`. It accepts variadic `interface{}`.
-- **OpenSSL subprocess calls**: passwords MUST go through `gen.ExecCommandWithPassword` + `gen.AppendPasswordFdArgs` (passes via fd 3, not command line). Never inline passwords in args slice.
-- **Temp file lifecycle**: `defer gen.RemoveTempFile(path)` must immediately follow `gen.CreateTempFile(...)` — temp files have the `ccrt-` prefix (`TempFolderNamePrefix`).
-- **Schema/cert data is embedded**: `schema/contract/schema.go` and `encryption/cert.go` use `//go:embed` — adding new `.crt` or `.json` files requires matching embed directives, not code changes.
-- **Template path resolution**: `readHpcrTemplateFile` uses `runtime.Caller(0)` to locate `contract/template/` relative to the source file — templates are tied to source location, not CWD.
-- **Error message format**: `fmt.Errorf("description - %v", err)` (dash separator). Keep consistent.
-- **Platform constants**: use `gen.ConfidentialComputingOsCcrt/Ccrv/Ccco` and `gen.HyperProtectOsHpvs`; don't use raw strings.
-- **Commit signing required**: all commits must be GPG/SSH signed or CI will reject the PR.
+- **OpenSSL passwords**: always `gen.ExecCommandWithPassword` + `gen.AppendPasswordFdArgs` (delivered via fd 3 pipe, `-passin fd:3`). Never put a password in the args slice.
+- **Temp files**: `defer gen.RemoveTempFile(path)` immediately after `gen.CreateTempFile(...)` (files are prefixed `ccrt-`, `gen.TempFolderNamePrefix`).
+- **Adding embedded assets**:
+  - New `.crt`: just drop it in `encryption/{ccrt,ccrv,ccco,hpvs}/` — embed is a glob and `init()` in `encryption/cert.go` picks up the version from the filename. No code change.
+  - New schema `.json`: needs a new `//go:embed` + var in `schema/contract/schema.go` (names are version-pinned) and wiring in `gen` schema selection.
+  - New CCCO release mapping: `encryption/ccco/release-map.yaml`.
+- **Template indentation**: `indentTemplateContent` prefixes two spaces so templates embed as YAML block scalars; changing it breaks generated contracts.
+- **Sign+encrypt flows** (`HpcrContractSignedEncrypted`, `...ContractExpiry`) both go through `encryptWrapper` in `contract/contract.go` — change shared behaviour there.

@@ -40,9 +40,9 @@ import (
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"gopkg.in/yaml.v3"
 
-	cert "github.com/ibm-hyper-protect/contract-go/v2/encryption"
-	sch "github.com/ibm-hyper-protect/contract-go/v2/schema/contract"
-	schn "github.com/ibm-hyper-protect/contract-go/v2/schema/network"
+	cert "github.com/ibm-hyper-protect/contract-go/v3/encryption"
+	sch "github.com/ibm-hyper-protect/contract-go/v3/schema/contract"
+	schn "github.com/ibm-hyper-protect/contract-go/v3/schema/network"
 )
 
 const (

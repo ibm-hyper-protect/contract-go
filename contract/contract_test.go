@@ -26,7 +26,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	gen "github.com/ibm-hyper-protect/contract-go/v2/common/general"
+	gen "github.com/ibm-hyper-protect/contract-go/v3/common/general"
 )
 
 // decodeInitdata decodes the base64+gzip output of HpccInitdata back to the

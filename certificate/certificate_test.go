@@ -19,8 +19,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	gen "github.com/ibm-hyper-protect/contract-go/v2/common/general"
-	cert "github.com/ibm-hyper-protect/contract-go/v2/encryption"
+	gen "github.com/ibm-hyper-protect/contract-go/v3/common/general"
+	cert "github.com/ibm-hyper-protect/contract-go/v3/encryption"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 )

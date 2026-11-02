@@ -137,7 +137,7 @@ body:
       placeholder: |
         package main
 
-        import "github.com/ibm-hyper-protect/contract-go/v2/..."
+        import "github.com/ibm-hyper-protect/contract-go/v3/..."
 
         func main() {
             // Example of how the new feature would be used

@@ -24,9 +24,9 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	crt "github.com/ibm-hyper-protect/contract-go/v2/common/cert"
-	gen "github.com/ibm-hyper-protect/contract-go/v2/common/general"
-	cert "github.com/ibm-hyper-protect/contract-go/v2/encryption"
+	crt "github.com/ibm-hyper-protect/contract-go/v3/common/cert"
+	gen "github.com/ibm-hyper-protect/contract-go/v3/common/general"
+	cert "github.com/ibm-hyper-protect/contract-go/v3/encryption"
 )
 
 const (

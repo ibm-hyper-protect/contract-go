@@ -20,8 +20,8 @@ import (
 	"net"
 	"strings"
 
-	enc "github.com/ibm-hyper-protect/contract-go/v2/common/encrypt"
-	gen "github.com/ibm-hyper-protect/contract-go/v2/common/general"
+	enc "github.com/ibm-hyper-protect/contract-go/v3/common/encrypt"
+	gen "github.com/ibm-hyper-protect/contract-go/v3/common/general"
 )
 
 // GenerateOpenSSLArtifacts generates RSA key or certificate artifacts using

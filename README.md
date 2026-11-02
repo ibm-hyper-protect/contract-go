@@ -19,7 +19,7 @@ limitations under the License.
 
 [![contract-go CI](https://github.com/ibm-hyper-protect/contract-go/actions/workflows/build.yml/badge.svg)](https://github.com/ibm-hyper-protect/contract-go/actions/workflows/build.yml)
 [![Latest Release](https://img.shields.io/github/v/release/ibm-hyper-protect/contract-go?include_prereleases)](https://github.com/ibm-hyper-protect/contract-go/releases/latest)
-[![Go Reference](https://pkg.go.dev/badge/github.com/ibm-hyper-protect/contract-go.svg)](https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go/v2)
+[![Go Reference](https://pkg.go.dev/badge/github.com/ibm-hyper-protect/contract-go.svg)](https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go/v3)
 [![User Documentation](https://img.shields.io/badge/User%20Documentation-GitHub%20Pages-blue.svg)](https://ibm-hyper-protect.github.io/contract-go)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
@@ -146,7 +146,7 @@ Learn more:
 ## Installation
 
 ```bash
-go get github.com/ibm-hyper-protect/contract-go/v2
+go get github.com/ibm-hyper-protect/contract-go/v3
 ```
 
 ### Prerequisites
@@ -180,7 +180,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+    "github.com/ibm-hyper-protect/contract-go/v3/contract"
 )
 
 func main() {
@@ -206,7 +206,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+    "github.com/ibm-hyper-protect/contract-go/v3/contract"
 )
 
 func main() {
@@ -286,7 +286,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+    "github.com/ibm-hyper-protect/contract-go/v3/contract"
 )
 
 func main() {
@@ -321,7 +321,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+    "github.com/ibm-hyper-protect/contract-go/v3/contract"
 )
 
 func main() {
@@ -373,7 +373,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/ibm-hyper-protect/contract-go/v2/contract"
+    "github.com/ibm-hyper-protect/contract-go/v3/contract"
 )
 
 func main() {
@@ -417,7 +417,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/ibm-hyper-protect/contract-go/v2/image"
+    "github.com/ibm-hyper-protect/contract-go/v3/image"
 )
 
 func main() {
@@ -449,7 +449,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/ibm-hyper-protect/contract-go/v2/certificate"
+    "github.com/ibm-hyper-protect/contract-go/v3/certificate"
 )
 
 func main() {
@@ -536,7 +536,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/ibm-hyper-protect/contract-go/v2/secrets"
+    "github.com/ibm-hyper-protect/contract-go/v3/secrets"
 )
 
 func main() {
@@ -590,7 +590,7 @@ import (
     "log"
     "os"
 
-    "github.com/ibm-hyper-protect/contract-go/v2/rego"
+    "github.com/ibm-hyper-protect/contract-go/v3/rego"
 )
 
 func main() {
@@ -625,7 +625,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/ibm-hyper-protect/contract-go/v2/imagespec"
+    "github.com/ibm-hyper-protect/contract-go/v3/imagespec"
 )
 
 func main() {
@@ -670,7 +670,7 @@ import (
     "log"
     "os"
 
-    "github.com/ibm-hyper-protect/contract-go/v2/crypto"
+    "github.com/ibm-hyper-protect/contract-go/v3/crypto"
 )
 
 func main() {
@@ -705,7 +705,7 @@ import (
     "log"
     "os"
 
-    "github.com/ibm-hyper-protect/contract-go/v2/crypto"
+    "github.com/ibm-hyper-protect/contract-go/v3/crypto"
 )
 
 func main() {
@@ -747,7 +747,7 @@ import (
     "log"
     "os"
 
-    "github.com/ibm-hyper-protect/contract-go/v2/crypto"
+    "github.com/ibm-hyper-protect/contract-go/v3/crypto"
 )
 
 func main() {
@@ -785,7 +785,7 @@ func main() {
 Comprehensive documentation is available at:
 
 - **[User Documentation](https://ibm-hyper-protect.github.io/contract-go)** — Detailed API reference and usage examples
-- **[Go Package Documentation](https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go/v2)** — Generated Go docs
+- **[Go Package Documentation](https://pkg.go.dev/github.com/ibm-hyper-protect/contract-go/v3)** — Generated Go docs
 - **[Examples](samples/)** — Sample contracts and configurations
 
 ## Supported Platforms

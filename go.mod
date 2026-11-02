@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-module github.com/ibm-hyper-protect/contract-go/v2
+module github.com/ibm-hyper-protect/contract-go/v3
 
 go 1.27.1
 
