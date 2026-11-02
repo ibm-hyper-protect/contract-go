@@ -34,9 +34,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestHpccSealedSecretWorkload tests sealing a workload secret.
-func TestHpccSealedSecretWorkload(t *testing.T) {
-	sealedSecret, decryptionKey, verificationKey, inputSha, encryptedSha, err := HpccSealedSecret("test-secret", "workload", "", "")
+// TestCccoSealedSecretWorkload tests sealing a workload secret.
+func TestCccoSealedSecretWorkload(t *testing.T) {
+	sealedSecret, decryptionKey, verificationKey, inputSha, encryptedSha, err := CccoSealedSecret("test-secret", "workload", "", "")
 	assert.NoError(t, err, "Failed to seal secret")
 
 	// Verify sealed secret format
@@ -61,9 +61,9 @@ func TestHpccSealedSecretWorkload(t *testing.T) {
 	assert.Equal(t, 64, len(encryptedSha), "Encrypted SHA should be 64 characters (SHA-256 hex)")
 }
 
-// TestHpccSealedSecretEnv tests sealing an environment secret.
-func TestHpccSealedSecretEnv(t *testing.T) {
-	sealedSecret, _, _, _, _, err := HpccSealedSecret("test-secret", "env", "", "")
+// TestCccoSealedSecretEnv tests sealing an environment secret.
+func TestCccoSealedSecretEnv(t *testing.T) {
+	sealedSecret, _, _, _, _, err := CccoSealedSecret("test-secret", "env", "", "")
 	assert.NoError(t, err, "Failed to seal secret")
 
 	assert.True(t, strings.HasPrefix(sealedSecret, "sealed."), "Sealed secret doesn't have 'sealed.' prefix")
@@ -73,26 +73,26 @@ func TestHpccSealedSecretEnv(t *testing.T) {
 	assert.Equal(t, 4, len(parts), "Expected 4 parts in sealed secret")
 }
 
-// TestHpccSealedSecretEmptySecret tests that empty secrets are rejected.
-func TestHpccSealedSecretEmptySecret(t *testing.T) {
-	_, _, _, _, _, err := HpccSealedSecret("", "workload", "", "")
+// TestCccoSealedSecretEmptySecret tests that empty secrets are rejected.
+func TestCccoSealedSecretEmptySecret(t *testing.T) {
+	_, _, _, _, _, err := CccoSealedSecret("", "workload", "", "")
 	assert.Error(t, err, "Expected error for empty secret")
 	assert.Contains(t, err.Error(), "empty", "Expected error message to mention 'empty'")
 }
 
-// TestHpccSealedSecretInvalidType tests that invalid secret types are rejected.
-func TestHpccSealedSecretInvalidType(t *testing.T) {
-	_, _, _, _, _, err := HpccSealedSecret("test", "invalid", "", "")
+// TestCccoSealedSecretInvalidType tests that invalid secret types are rejected.
+func TestCccoSealedSecretInvalidType(t *testing.T) {
+	_, _, _, _, _, err := CccoSealedSecret("test", "invalid", "", "")
 	assert.Error(t, err, "Expected error for invalid secret type")
 	assert.Contains(t, err.Error(), "invalid secret type", "Expected error message to mention 'invalid secret type'")
 }
 
-// TestHpccSealedSecretDifferentSecrets tests that different secrets produce different results.
-func TestHpccSealedSecretDifferentSecrets(t *testing.T) {
-	sealed1, decKey1, _, inputSha1, encSha1, err := HpccSealedSecret("secret1", "workload", "", "")
+// TestCccoSealedSecretDifferentSecrets tests that different secrets produce different results.
+func TestCccoSealedSecretDifferentSecrets(t *testing.T) {
+	sealed1, decKey1, _, inputSha1, encSha1, err := CccoSealedSecret("secret1", "workload", "", "")
 	assert.NoError(t, err, "Failed to seal first secret")
 
-	sealed2, decKey2, _, inputSha2, encSha2, err := HpccSealedSecret("secret2", "workload", "", "")
+	sealed2, decKey2, _, inputSha2, encSha2, err := CccoSealedSecret("secret2", "workload", "", "")
 	assert.NoError(t, err, "Failed to seal second secret")
 
 	// Sealed secrets should be different
@@ -108,16 +108,16 @@ func TestHpccSealedSecretDifferentSecrets(t *testing.T) {
 	assert.NotEqual(t, encSha1, encSha2, "Different secrets produced identical encrypted SHAs")
 }
 
-// TestHpccSealedSecretLongSecret tests sealing a longer secret.
-func TestHpccSealedSecretLongSecret(t *testing.T) {
+// TestCccoSealedSecretLongSecret tests sealing a longer secret.
+func TestCccoSealedSecretLongSecret(t *testing.T) {
 	longSecret := strings.Repeat("This is a long secret. ", 100)
-	sealedSecret, _, _, _, _, err := HpccSealedSecret(longSecret, "workload", "", "")
+	sealedSecret, _, _, _, _, err := CccoSealedSecret(longSecret, "workload", "", "")
 	assert.NoError(t, err, "Failed to seal long secret")
 	assert.True(t, strings.HasPrefix(sealedSecret, "sealed."), "Sealed secret doesn't have 'sealed.' prefix")
 }
 
-// TestHpccSealedSecretSpecialCharacters tests sealing secrets with special characters.
-func TestHpccSealedSecretSpecialCharacters(t *testing.T) {
+// TestCccoSealedSecretSpecialCharacters tests sealing secrets with special characters.
+func TestCccoSealedSecretSpecialCharacters(t *testing.T) {
 	specialSecrets := []string{
 		"password!@#$%^&*()",
 		"key with spaces",
@@ -128,17 +128,17 @@ func TestHpccSealedSecretSpecialCharacters(t *testing.T) {
 
 	for _, secret := range specialSecrets {
 		t.Run(secret, func(t *testing.T) {
-			sealedSecret, _, _, _, _, err := HpccSealedSecret(secret, "workload", "", "")
+			sealedSecret, _, _, _, _, err := CccoSealedSecret(secret, "workload", "", "")
 			assert.NoError(t, err, "Failed to seal secret with special characters")
 			assert.True(t, strings.HasPrefix(sealedSecret, "sealed."), "Sealed secret doesn't have 'sealed.' prefix")
 		})
 	}
 }
 
-// BenchmarkHpccSealedSecret benchmarks the complete seal secret operation.
-func BenchmarkHpccSealedSecret(b *testing.B) {
+// BenchmarkCccoSealedSecret benchmarks the complete seal secret operation.
+func BenchmarkCccoSealedSecret(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_, _, _, _, _, err := HpccSealedSecret("benchmark-secret", "workload", "", "")
+		_, _, _, _, _, err := CccoSealedSecret("benchmark-secret", "workload", "", "")
 		assert.NoError(b, err, "Failed to seal secret")
 	}
 }
@@ -149,7 +149,7 @@ func TestDecryptWithGoCrypto(t *testing.T) {
 	originalSecret := "my-test-password-123"
 
 	// Step 1: Create sealed secret using our package
-	sealedSecret, decryptionKeyPEM, _, inputSha, encryptedSha, err := HpccSealedSecret(originalSecret, "workload", "", "")
+	sealedSecret, decryptionKeyPEM, _, inputSha, encryptedSha, err := CccoSealedSecret(originalSecret, "workload", "", "")
 	assert.NoError(t, err, "Failed to seal secret")
 
 	// Verify input SHA matches
@@ -237,7 +237,7 @@ func TestDecryptWithGoCrypto(t *testing.T) {
 // TestVerifySignatureWithGoCrypto demonstrates signature verification using Go crypto.
 func TestVerifySignatureWithGoCrypto(t *testing.T) {
 	// Step 1: Create sealed secret
-	sealedSecret, _, verificationKeyPEM, _, _, err := HpccSealedSecret("test-secret", "workload", "", "")
+	sealedSecret, _, verificationKeyPEM, _, _, err := CccoSealedSecret("test-secret", "workload", "", "")
 	assert.NoError(t, err, "Failed to seal secret")
 
 	// Step 2: Parse JWS (format: sealed.header.payload.signature)
@@ -268,8 +268,8 @@ func TestVerifySignatureWithGoCrypto(t *testing.T) {
 	assert.NoError(t, err, "Signature verification failed")
 }
 
-// TestHpccSealedSecretWithProvidedKeys tests sealing with user-provided encryption and signing keys as strings.
-func TestHpccSealedSecretWithProvidedKeys(t *testing.T) {
+// TestCccoSealedSecretWithProvidedKeys tests sealing with user-provided encryption and signing keys as strings.
+func TestCccoSealedSecretWithProvidedKeys(t *testing.T) {
 	// Generate keys to use
 	_, encPrivKey, err := generateRSAKeyPairNative()
 	assert.NoError(t, err, "Failed to generate encryption key pair")
@@ -278,7 +278,7 @@ func TestHpccSealedSecretWithProvidedKeys(t *testing.T) {
 	assert.NoError(t, err, "Failed to generate signing key pair")
 
 	// Seal secret with provided key strings
-	sealedSecret, decryptionKey, _, _, _, err := HpccSealedSecret("test-secret", "workload", string(encPrivKey), string(signPrivKey))
+	sealedSecret, decryptionKey, _, _, _, err := CccoSealedSecret("test-secret", "workload", string(encPrivKey), string(signPrivKey))
 	assert.NoError(t, err, "Failed to seal secret with provided keys")
 
 	// Verify sealed secret format
@@ -292,14 +292,14 @@ func TestHpccSealedSecretWithProvidedKeys(t *testing.T) {
 	assert.Equal(t, 4, len(parts), "Expected 4 parts in sealed secret")
 }
 
-// TestHpccSealedSecretWithPartialKeys tests that providing only one key generates the other.
-func TestHpccSealedSecretWithPartialKeys(t *testing.T) {
+// TestCccoSealedSecretWithPartialKeys tests that providing only one key generates the other.
+func TestCccoSealedSecretWithPartialKeys(t *testing.T) {
 	// Generate only encryption key
 	_, encPrivKey, err := generateRSAKeyPairNative()
 	assert.NoError(t, err, "Failed to generate encryption key pair")
 
 	// Seal with only encryption key provided (signing key should be generated)
-	sealed1, decKey1, verKey1, _, _, err := HpccSealedSecret("test-secret", "workload", string(encPrivKey), "")
+	sealed1, decKey1, verKey1, _, _, err := CccoSealedSecret("test-secret", "workload", string(encPrivKey), "")
 	assert.NoError(t, err, "Failed to seal secret with partial keys")
 
 	// Verify sealed secret was created
@@ -316,7 +316,7 @@ func TestHpccSealedSecretWithPartialKeys(t *testing.T) {
 	assert.NoError(t, err, "Failed to generate signing key pair")
 
 	// Seal with only signing key provided (encryption key should be generated)
-	sealed2, decKey2, _, _, _, err := HpccSealedSecret("test-secret", "env", "", string(signPrivKey))
+	sealed2, decKey2, _, _, _, err := CccoSealedSecret("test-secret", "env", "", string(signPrivKey))
 	assert.NoError(t, err, "Failed to seal secret with partial keys")
 
 	// Verify sealed secret was created

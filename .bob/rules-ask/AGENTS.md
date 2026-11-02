@@ -9,4 +9,4 @@ This file provides guidance to agents when working with code in this repository.
 - `encryption/` has no logic beyond cert map init — it's embedded `.crt` files + `ccco/release-map.yaml`.
 - `samples/` (subdir per feature) is the canonical fixture set used by tests via relative paths; API docs are in `docs/README.md`.
 - Platforms: `ccrt`, `ccrv` (RHEL virtualization), `ccco` (OpenShift containers; template variants `ccco-peerpod`, `ccco-bmtl`), `hpvs` (legacy HyperProtect). Empty/unknown version resolves to `ccrt`/`hpvs` defaults in `common/general`.
-- `HpccInitdata` is CCCO peer-pod specific (TOML initdata, gzipped + base64), not general purpose.
+- `CccoInitdata` is CCCO peer-pod specific (TOML initdata, gzipped + base64), not general purpose.

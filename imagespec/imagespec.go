@@ -30,11 +30,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// HpccGenerateImageSpec fetches the OCI image config and generates a pod YAML snippet.
+// CccoGenerateImageSpec fetches the OCI image config and generates a pod YAML snippet.
 // Returns (yaml, imageUser, inputSHA, outputSHA, error).
 // imageUser is a username (e.g. "postgres"), raw UID ("26"), or "no user specified".
 // Pass empty strings for username and password to access public images anonymously.
-func HpccGenerateImageSpec(imageRef, containerName, username, password string) (string, string, string, string, error) {
+func CccoGenerateImageSpec(imageRef, containerName, username, password string) (string, string, string, string, error) {
 	cfg, err := fetchImageConfig(imageRef, username, password)
 	if err != nil {
 		return "", "", "", "", err
