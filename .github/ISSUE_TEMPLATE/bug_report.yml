@@ -94,7 +94,7 @@ body:
       placeholder: |
         package main
 
-        import "github.com/ibm-hyper-protect/contract-go/v2/contract"
+        import "github.com/ibm-hyper-protect/contract-go/v3/contract"
 
         func main() {
             // Your code here
