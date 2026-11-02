@@ -660,7 +660,7 @@ func main() {
 
 ### Generate an RSA Key Pair
 
-**Without expiry (plain public key):**
+**Without Expiry (Plain Public Key):**
 
 ```go
 package main
@@ -695,7 +695,7 @@ func main() {
 }
 ```
 
-**With expiry (self-signed certificate in public key slot):**
+**With Expiry (Self-Signed Certificate in Public Key slot):**
 
 ```go
 package main
