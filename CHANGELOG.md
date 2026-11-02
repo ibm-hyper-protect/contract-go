@@ -1,3 +1,13 @@
+## 3.0.0 (2026-11-02)
+
+* feat: trigger v3 changes ([4daca74](https://github.com/ibm-hyper-protect/contract-go/commit/4daca74))
+* feat!: move from contract-go/v2 to contract-go/v3 (#333) ([0f37be4](https://github.com/ibm-hyper-protect/contract-go/commit/0f37be4)), closes [#333](https://github.com/ibm-hyper-protect/contract-go/issues/333)
+* chore(deps): update docker.io/library/hello-world docker digest to c567b23 (#332) ([c3187eb](https://github.com/ibm-hyper-protect/contract-go/commit/c3187eb)), closes [#332](https://github.com/ibm-hyper-protect/contract-go/issues/332)
+
+### BREAKING CHANGE
+
+* module path changed from github.com/ibm-hyper-protect/contract-go/v2 to github.com/ibm-hyper-protect/contract-go/v3
+
 ## 2.52.0 (2026-10-29)
 
 * feat: Add Aman Dhasmana as Security Maintainer (#330) ([ecf723a](https://github.com/ibm-hyper-protect/contract-go/commit/ecf723a)), closes [#330](https://github.com/ibm-hyper-protect/contract-go/issues/330)
