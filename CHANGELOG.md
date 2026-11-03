@@ -1,3 +1,7 @@
+## 3.3.0 (2026-11-03)
+
+* feat: update go packages to latest (#337) ([94c6944](https://github.com/ibm-hyper-protect/contract-go/commit/94c6944)), closes [#337](https://github.com/ibm-hyper-protect/contract-go/issues/337)
+
 ## 3.2.0 (2026-11-03)
 
 * feat: Add CCRV 1.1.3.2 encryption cert (#338) ([9e2fc88](https://github.com/ibm-hyper-protect/contract-go/commit/9e2fc88)), closes [#338](https://github.com/ibm-hyper-protect/contract-go/issues/338)
