@@ -1,3 +1,7 @@
+## 3.1.0 (2026-11-03)
+
+* feat: Add CCRT 2.2.4.3 encryption cert (#336) ([ac1f467](https://github.com/ibm-hyper-protect/contract-go/commit/ac1f467)), closes [#336](https://github.com/ibm-hyper-protect/contract-go/issues/336)
+
 ## 3.0.0 (2026-11-02)
 
 * feat: trigger v3 changes ([4daca74](https://github.com/ibm-hyper-protect/contract-go/commit/4daca74))
