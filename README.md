@@ -541,7 +541,7 @@ import (
 
 func main() {
     // Example 1: Seal a workload secret with auto-generated keys
-    sealedSecret, decryptionKey, verificationKey, inputHash, encryptedHash, err := secrets.HpccSealedSecret(
+    sealedSecret, decryptionKey, verificationKey, inputHash, encryptedHash, err := secrets.CccoSealedSecret(
         "my-database-password",
         "workload",
         "",  // Auto-generate encryption key
@@ -566,7 +566,7 @@ MIIEpAIBAAKCAQEA...
 MIIEpAIBAAKCAQEA...
 -----END RSA PRIVATE KEY-----`
 
-    sealedSecret2, _, _, _, _, err := secrets.HpccSealedSecret(
+    sealedSecret2, _, _, _, _, err := secrets.CccoSealedSecret(
         "my-api-key",
         "env",
         encryptionKeyPEM,  // Provide encryption key as PEM string
@@ -630,7 +630,7 @@ import (
 
 func main() {
     // Public image — container name auto-derived
-    yaml, imageUser, inputSHA, outputSHA, err := imagespec.HpccGenerateImageSpec(
+    yaml, imageUser, inputSHA, outputSHA, err := imagespec.CccoGenerateImageSpec(
         "quay.io/sclorg/postgresql-15-c9s:latest",
         "",  // empty → derived from image reference
         "",  // no credentials needed
@@ -645,7 +645,7 @@ func main() {
     fmt.Println("Output SHA256:", outputSHA)
 
     // Private registry
-    yaml, _, _, _, err = imagespec.HpccGenerateImageSpec(
+    yaml, _, _, _, err = imagespec.CccoGenerateImageSpec(
         "us.icr.io/my-ns/my-app:latest",
         "my-app",
         "iamapikey",

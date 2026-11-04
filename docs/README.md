@@ -2138,7 +2138,7 @@ func main() {
 - `"failed to generate signed and encrypted contract"` - Signing or encryption operation failed
 - All errors from `HpcrContractSignedEncrypted` also apply
 
-### HpccInitdata
+### CccoInitdata
 
 Generates gzipped and encoded initdata string. Supports both peerpod and baremetal solutions, and optionally embeds extra root certificates into the `cdh.toml` section.
 
@@ -2146,7 +2146,7 @@ Generates gzipped and encoded initdata string. Supports both peerpod and baremet
 
 **Signature:**
 ```go
-func HpccInitdata(contract, encodedHdrBin string, extraRootCerts []string) (string, string, string, error)
+func CccoInitdata(contract, encodedHdrBin string, extraRootCerts []string) (string, string, string, error)
 ```
 
 **Parameters:**
@@ -2181,7 +2181,7 @@ func main() {
     contractYAML := `...your signed and encrypted contract...`
 
     // Pass empty string for encodedHdrBin and nil for extraRootCerts
-    encodedString, inputHash, outputHash, err := contract.HpccInitdata(
+    encodedString, inputHash, outputHash, err := contract.CccoInitdata(
         contractYAML,
         "", // No SE header for peerpod deployment
         nil, // No extra root certificates
@@ -2213,7 +2213,7 @@ func main() {
     // Base64-encoded SE header for baremetal deployment
     encodedHdrBin := "VGVzdCBiYXNlNjQgaGVkZXIgb2YgaW1hZ2UgZ2V0dGluZyB1c2VkCg=="
 
-    encodedString, inputHash, outputHash, err := contract.HpccInitdata(
+    encodedString, inputHash, outputHash, err := contract.CccoInitdata(
         contractYAML,
         encodedHdrBin, // Provide base64-encoded SE header for baremetal deployment
         nil,           // No extra root certificates
@@ -2253,7 +2253,7 @@ func main() {
         log.Fatal(err)
     }
 
-    encodedString, inputHash, outputHash, err := contract.HpccInitdata(
+    encodedString, inputHash, outputHash, err := contract.CccoInitdata(
         contractYAML,
         "",   // No SE header (peerpod)
         []string{string(cert1), string(cert2)},
@@ -2451,7 +2451,7 @@ func main() {
 
 ## Sealed Secret Functions
 
-### HpccSealedSecret
+### CccoSealedSecret
 
 Encrypts a secret using AES-256-GCM with RSA key wrapping and RSA-SHA512 signing for CCCO workload or environment configurations.
 
@@ -2459,7 +2459,7 @@ Encrypts a secret using AES-256-GCM with RSA key wrapping and RSA-SHA512 signing
 
 **Signature:**
 ```go
-func HpccSealedSecret(secret, secretType, encryptionKey, signingKey string) (string, string, string, string, string, error)
+func CccoSealedSecret(secret, secretType, encryptionKey, signingKey string) (string, string, string, string, string, error)
 ```
 
 **Parameters:**
@@ -2507,7 +2507,7 @@ func main() {
     secret := "my-database-password"
 
     // Seal the secret - generates new keys automatically
-    sealedSecret, decryptionKey, verificationKey, inputHash, encryptedHash, err := secrets.HpccSealedSecret(
+    sealedSecret, decryptionKey, verificationKey, inputHash, encryptedHash, err := secrets.CccoSealedSecret(
         secret,
         "workload",
         "",  // Empty string to auto-generate encryption key
@@ -2564,7 +2564,7 @@ MIIEpAIBAAKCAQEAabcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMN
 
     // Seal secret with provided key strings
     secret := "my-api-token"
-    sealedSecret, _, _, inputHash, encryptedHash, err := secrets.HpccSealedSecret(
+    sealedSecret, _, _, inputHash, encryptedHash, err := secrets.CccoSealedSecret(
         secret,
         "env",
         encryptionKeyPEM,  // Provide encryption key as PEM string
@@ -2594,7 +2594,7 @@ import (
 
 func main() {
     // Generate keys once
-    firstSealed, decryptKey, signKey, _, _, err := secrets.HpccSealedSecret(
+    firstSealed, decryptKey, signKey, _, _, err := secrets.CccoSealedSecret(
         "first-secret",
         "workload",
         "",  // Auto-generate
@@ -2605,7 +2605,7 @@ func main() {
     }
 
     // Reuse the same keys (as strings) for additional secrets
-    secondSealed, _, _, _, _, err := secrets.HpccSealedSecret(
+    secondSealed, _, _, _, _, err := secrets.CccoSealedSecret(
         "second-secret",
         "workload",
         decryptKey,  // Reuse encryption key string
@@ -2635,7 +2635,7 @@ import (
 func main() {
     // Seal database password for workload
     dbPassword := "super-secret-db-password"
-    workloadSealed, _, _, _, _, err := secrets.HpccSealedSecret(
+    workloadSealed, _, _, _, _, err := secrets.CccoSealedSecret(
         dbPassword,
         "workload",
         "",
@@ -2647,7 +2647,7 @@ func main() {
 
     // Seal API key for environment
     apiKey := "my-api-key-12345"
-    envSealed, _, _, _, _, err := secrets.HpccSealedSecret(
+    envSealed, _, _, _, _, err := secrets.CccoSealedSecret(
         apiKey,
         "env",
         "",
@@ -2958,7 +2958,7 @@ On OpenSSL 3.x, `genrsa` emits PKCS#8 format (`-----BEGIN PRIVATE KEY-----`) ins
 
 ## Image Spec Functions
 
-### HpccGenerateImageSpec
+### CccoGenerateImageSpec
 
 Fetches the OCI image config from a container registry and generates a Kubernetes pod YAML snippet in a single call. Designed for use with the `registryMapping` feature of confidential-containers workload contracts.
 
@@ -2975,7 +2975,7 @@ The generated YAML includes a `# image user: <value>` comment at the top that id
 
 **Signature:**
 ```go
-func HpccGenerateImageSpec(imageRef, containerName, username, password string) (string, string, string, string, error)
+func CccoGenerateImageSpec(imageRef, containerName, username, password string) (string, string, string, string, error)
 ```
 
 **Parameters:**
@@ -3002,7 +3002,7 @@ func HpccGenerateImageSpec(imageRef, containerName, username, password string) (
 import "github.com/ibm-hyper-protect/contract-go/v3/imagespec"
 
 // Public image — postgres uses numeric UID 26
-yaml, imageUser, inputSHA, outputSHA, err := imagespec.HpccGenerateImageSpec(
+yaml, imageUser, inputSHA, outputSHA, err := imagespec.CccoGenerateImageSpec(
     "quay.io/sclorg/postgresql-15-c9s:latest",
     "",  // auto-derive name → "postgresql-15-c9s"
     "",  // no credentials needed
@@ -3012,7 +3012,7 @@ yaml, imageUser, inputSHA, outputSHA, err := imagespec.HpccGenerateImageSpec(
 // yaml starts with: # image user: 26
 
 // Image with a named user (e.g. "postgres")
-yaml, imageUser, _, _, err = imagespec.HpccGenerateImageSpec(
+yaml, imageUser, _, _, err = imagespec.CccoGenerateImageSpec(
     "docker.io/library/postgres:16",
     "postgres",
     "",
@@ -3023,7 +3023,7 @@ yaml, imageUser, _, _, err = imagespec.HpccGenerateImageSpec(
 // NOTE: no securityContext.runAsUser is emitted for named users.
 
 // Private registry
-yaml, imageUser, _, _, err = imagespec.HpccGenerateImageSpec(
+yaml, imageUser, _, _, err = imagespec.CccoGenerateImageSpec(
     "us.icr.io/my-ns/my-app:latest",
     "my-app",
     "iamapikey",

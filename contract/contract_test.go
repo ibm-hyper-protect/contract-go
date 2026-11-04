@@ -29,7 +29,7 @@ import (
 	gen "github.com/ibm-hyper-protect/contract-go/v3/common/general"
 )
 
-// decodeInitdata decodes the base64+gzip output of HpccInitdata back to the
+// decodeInitdata decodes the base64+gzip output of CccoInitdata back to the
 // raw initdata.toml string so tests can inspect its content.
 func decodeInitdata(t *testing.T, encoded string) string {
 	t.Helper()
@@ -429,8 +429,8 @@ func TestHpcrContractSign(t *testing.T) {
 	assert.Equal(t, outputSha, sampleSignEncryptOutputSha)
 }
 
-// Testcase to check HpccInitdata() is able to gzip data.
-func TestHpccInitdata(t *testing.T) {
+// Testcase to check CccoInitdata() is able to gzip data.
+func TestCccoInitdata(t *testing.T) {
 	if !gen.CheckFileFolderExists(sampleSignedEncryptedContract) {
 		t.Errorf("failed, file does not exits on defined path")
 	}
@@ -440,7 +440,7 @@ func TestHpccInitdata(t *testing.T) {
 		t.Errorf("failed to read content from encrypted contract - %v", err)
 	}
 
-	encodedString, inputCheckSum, _, err := HpccInitdata(inputData, "", nil)
+	encodedString, inputCheckSum, _, err := CccoInitdata(inputData, "", nil)
 	if err != nil {
 		t.Errorf("failed to gzipped encoded initdata - %v", err)
 	}
@@ -453,8 +453,8 @@ func TestHpccInitdata(t *testing.T) {
 	assert.Equal(t, sampleSingedEncryptedContractInputChecksum, inputCheckSum, "Checksum does not match with expected input checksum of encrypted contract")
 }
 
-// Testcase to check HpccInitdata() is able to gzip data with HDR binary(sehdr bin).
-func TestHpccInitdataWithHdrBinary(t *testing.T) {
+// Testcase to check CccoInitdata() is able to gzip data with HDR binary(sehdr bin).
+func TestCccoInitdataWithHdrBinary(t *testing.T) {
 	if !gen.CheckFileFolderExists(sampleSignedEncryptedContract) {
 		t.Errorf("failed, file does not exits on defined path")
 	}
@@ -464,7 +464,7 @@ func TestHpccInitdataWithHdrBinary(t *testing.T) {
 		t.Errorf("failed to read content from encrypted contract - %v", err)
 	}
 
-	encodedString, inputCheckSum, _, err := HpccInitdata(inputData, sampleBase64EndcodedHeaderString, nil)
+	encodedString, inputCheckSum, _, err := CccoInitdata(inputData, sampleBase64EndcodedHeaderString, nil)
 	if err != nil {
 		t.Errorf("failed to gzipped encoded initdata with HDR binary - %v", err)
 	}
@@ -478,15 +478,15 @@ func TestHpccInitdataWithHdrBinary(t *testing.T) {
 	assert.Equal(t, sampleSingedEncryptedContractInputChecksum, inputCheckSum, "Checksum does not match with expected input checksum of encrypted contract")
 }
 
-// Testcase to check HpccInitdata() is able to handle empty contract case.
-func TestHpccInitdataEmptyContract(t *testing.T) {
-	_, _, _, err := HpccInitdata("", "", nil)
+// Testcase to check CccoInitdata() is able to handle empty contract case.
+func TestCccoInitdataEmptyContract(t *testing.T) {
+	_, _, _, err := CccoInitdata("", "", nil)
 	assert.EqualError(t, err, emptyParameterErrStatement)
 }
 
-// Testcase to check HpccInitdata() embeds a single extra root certificate and verifies
+// Testcase to check CccoInitdata() embeds a single extra root certificate and verifies
 // all required fields and the cert content are present in the decoded initdata.toml.
-func TestHpccInitdataWithExtraRootCerts(t *testing.T) {
+func TestCccoInitdataWithExtraRootCerts(t *testing.T) {
 	inputData, err := gen.ReadDataFromFile(sampleSignedEncryptedContract)
 	if err != nil {
 		t.Fatalf("failed to read signed contract: %v", err)
@@ -497,9 +497,9 @@ func TestHpccInitdataWithExtraRootCerts(t *testing.T) {
 		t.Fatalf("failed to read extra-root-cert1.pem: %v", err)
 	}
 
-	encodedString, inputCheckSum, _, err := HpccInitdata(inputData, "", []string{cert1})
+	encodedString, inputCheckSum, _, err := CccoInitdata(inputData, "", []string{cert1})
 	if err != nil {
-		t.Fatalf("HpccInitdata failed: %v", err)
+		t.Fatalf("CccoInitdata failed: %v", err)
 	}
 
 	// Decode base64+gzip to get the raw initdata.toml string.
@@ -532,9 +532,9 @@ func TestHpccInitdataWithExtraRootCerts(t *testing.T) {
 	assert.Equal(t, sampleSingedEncryptedContractInputChecksum, inputCheckSum)
 }
 
-// Testcase to check HpccInitdata() embeds two extra root certs and verifies both
+// Testcase to check CccoInitdata() embeds two extra root certs and verifies both
 // appear verbatim in extra_root_certificates when combined with a HDR binary.
-func TestHpccInitdataWithHdrBinaryAndExtraRootCerts(t *testing.T) {
+func TestCccoInitdataWithHdrBinaryAndExtraRootCerts(t *testing.T) {
 	inputData, err := gen.ReadDataFromFile(sampleSignedEncryptedContract)
 	if err != nil {
 		t.Fatalf("failed to read signed contract: %v", err)
@@ -549,9 +549,9 @@ func TestHpccInitdataWithHdrBinaryAndExtraRootCerts(t *testing.T) {
 		t.Fatalf("failed to read extra-root-cert2.pem: %v", err)
 	}
 
-	encodedString, inputCheckSum, _, err := HpccInitdata(inputData, sampleBase64EndcodedHeaderString, []string{cert1, cert2})
+	encodedString, inputCheckSum, _, err := CccoInitdata(inputData, sampleBase64EndcodedHeaderString, []string{cert1, cert2})
 	if err != nil {
-		t.Fatalf("HpccInitdata failed: %v", err)
+		t.Fatalf("CccoInitdata failed: %v", err)
 	}
 
 	toml := decodeInitdata(t, encodedString)
@@ -585,16 +585,16 @@ func TestHpccInitdataWithHdrBinaryAndExtraRootCerts(t *testing.T) {
 	assert.Equal(t, sampleSingedEncryptedContractInputChecksum, inputCheckSum)
 }
 
-// Testcase to check HpccInitdata() without certs does NOT include cdh.toml or aa.toml.
-func TestHpccInitdataWithoutCertsHasNoCdhToml(t *testing.T) {
+// Testcase to check CccoInitdata() without certs does NOT include cdh.toml or aa.toml.
+func TestCccoInitdataWithoutCertsHasNoCdhToml(t *testing.T) {
 	inputData, err := gen.ReadDataFromFile(sampleSignedEncryptedContract)
 	if err != nil {
 		t.Fatalf("failed to read signed contract: %v", err)
 	}
 
-	encodedString, _, _, err := HpccInitdata(inputData, "", nil)
+	encodedString, _, _, err := CccoInitdata(inputData, "", nil)
 	if err != nil {
-		t.Fatalf("HpccInitdata failed: %v", err)
+		t.Fatalf("CccoInitdata failed: %v", err)
 	}
 
 	toml := decodeInitdata(t, encodedString)

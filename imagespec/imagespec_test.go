@@ -128,13 +128,13 @@ func TestFetchImageConfig_InvalidRef(t *testing.T) {
 	assert.ErrorContains(t, err, "failed to parse image reference")
 }
 
-func TestHpccGenerateImageSpec_EmptyRef(t *testing.T) {
-	_, _, _, _, err := HpccGenerateImageSpec("", "", "", "")
+func TestCccoGenerateImageSpec_EmptyRef(t *testing.T) {
+	_, _, _, _, err := CccoGenerateImageSpec("", "", "", "")
 	assert.ErrorContains(t, err, "imageRef must not be empty")
 }
 
-func TestHpccGenerateImageSpec_InvalidRef(t *testing.T) {
-	_, _, _, _, err := HpccGenerateImageSpec(":::bad:::", "", "", "")
+func TestCccoGenerateImageSpec_InvalidRef(t *testing.T) {
+	_, _, _, _, err := CccoGenerateImageSpec(":::bad:::", "", "", "")
 	assert.ErrorContains(t, err, "failed to parse image reference")
 }
 

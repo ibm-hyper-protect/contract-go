@@ -43,7 +43,7 @@ func mustDecodeBase64(t *testing.T, s string) string {
 
 // TestGenerateRegoPolicy_Minimal verifies the basic policy structure from a no-command pod.
 func TestGenerateRegoPolicy_Minimal(t *testing.T) {
-	podYAML, err := os.ReadFile(sampleFile("samples", "hpcc", "minimal-pod.yaml"))
+	podYAML, err := os.ReadFile(sampleFile("samples", "ccco", "minimal-pod.yaml"))
 	require.NoError(t, err)
 
 	policy, inputB64, outputB64, err := GenerateRegoPolicy(string(podYAML), "")
@@ -58,7 +58,7 @@ func TestGenerateRegoPolicy_Minimal(t *testing.T) {
 // TestGenerateRegoPolicy_MultiContainer verifies both init and main container image rules
 // are generated, and that sha256-digest images with special characters are correctly escaped.
 func TestGenerateRegoPolicy_MultiContainer(t *testing.T) {
-	podYAML, err := os.ReadFile(sampleFile("samples", "hpcc", "multi-container-pod.yaml"))
+	podYAML, err := os.ReadFile(sampleFile("samples", "ccco", "multi-container-pod.yaml"))
 	require.NoError(t, err)
 
 	policy, _, _, err := GenerateRegoPolicy(string(podYAML), "")
@@ -258,8 +258,8 @@ func TestGenerateCommandRule_SimpleArgNoValidator(t *testing.T) {
 // both allow_image and allow_command for pods with and without explicit commands.
 func TestCreateContainerRequest_AlwaysRequiresBothRules(t *testing.T) {
 	files := []string{
-		sampleFile("samples", "hpcc", "minimal-pod.yaml"),         // no command/args
-		sampleFile("samples", "hpcc", "multi-container-pod.yaml"), // with command/args
+		sampleFile("samples", "ccco", "minimal-pod.yaml"),         // no command/args
+		sampleFile("samples", "ccco", "multi-container-pod.yaml"), // with command/args
 	}
 	const fullWiring = "CreateContainerRequest if {\n" +
 		"    allow_image(input.OCI.Annotations[\"io.kubernetes.cri-o.ImageName\"])\n" +
@@ -285,7 +285,7 @@ func TestCreateContainerRequest_AlwaysRequiresBothRules(t *testing.T) {
 // TestNoCommandPod_PermissiveAllowCommand verifies containers with no command/args get a
 // permissive allow_command rule (image-only, no count constraint).
 func TestNoCommandPod_PermissiveAllowCommand(t *testing.T) {
-	podYAML, err := os.ReadFile(sampleFile("samples", "hpcc", "minimal-pod.yaml"))
+	podYAML, err := os.ReadFile(sampleFile("samples", "ccco", "minimal-pod.yaml"))
 	require.NoError(t, err)
 
 	policy, _, _, err := GenerateRegoPolicy(string(podYAML), "")
@@ -298,7 +298,7 @@ func TestNoCommandPod_PermissiveAllowCommand(t *testing.T) {
 // TestCommandPod_StrictAllowCommand verifies a container with explicit args generates a
 // strict allow_command with count(args) and per-index arg checks.
 func TestCommandPod_StrictAllowCommand(t *testing.T) {
-	podYAML, err := os.ReadFile(sampleFile("samples", "hpcc", "multi-container-pod.yaml"))
+	podYAML, err := os.ReadFile(sampleFile("samples", "ccco", "multi-container-pod.yaml"))
 	require.NoError(t, err)
 
 	policy, _, _, err := GenerateRegoPolicy(string(podYAML), "")
@@ -310,7 +310,7 @@ func TestCommandPod_StrictAllowCommand(t *testing.T) {
 // TestMultiContainerPod_DeduplicatesImages verifies that when init and main containers
 // share an image, only one allow_image rule body is generated.
 func TestMultiContainerPod_DeduplicatesImages(t *testing.T) {
-	podYAML, err := os.ReadFile(sampleFile("samples", "hpcc", "kata-cc-pod.yaml"))
+	podYAML, err := os.ReadFile(sampleFile("samples", "ccco", "kata-cc-pod.yaml"))
 	require.NoError(t, err)
 
 	policy, _, _, err := GenerateRegoPolicy(string(podYAML), "")
@@ -323,7 +323,7 @@ func TestMultiContainerPod_DeduplicatesImages(t *testing.T) {
 // TestGenerateRegoPolicy_InsertionBeforeSandbox verifies generated allow_image rules
 // appear before the default CreateSandboxRequest definition in the policy.
 func TestGenerateRegoPolicy_InsertionBeforeSandbox(t *testing.T) {
-	podYAML, err := os.ReadFile(sampleFile("samples", "hpcc", "kata-cc-pod.yaml"))
+	podYAML, err := os.ReadFile(sampleFile("samples", "ccco", "kata-cc-pod.yaml"))
 	require.NoError(t, err)
 
 	policy, _, _, err := GenerateRegoPolicy(string(podYAML), "")
@@ -355,7 +355,7 @@ func TestTemplate_CoversAllModuleQueryNames(t *testing.T) {
 		"UpdateInterfaceRequest", "UpdateRoutesRequest", "VolumeStatsRequest",
 		"WaitProcessRequest", "WriteStreamRequest",
 	}
-	podYAML, err := os.ReadFile(sampleFile("samples", "hpcc", "minimal-pod.yaml"))
+	podYAML, err := os.ReadFile(sampleFile("samples", "ccco", "minimal-pod.yaml"))
 	require.NoError(t, err)
 
 	policy, _, _, err := GenerateRegoPolicy(string(podYAML), "")
@@ -373,7 +373,7 @@ func TestTemplate_NoDeadRules(t *testing.T) {
 		"ReadStderrRequest", "VersionRequest", "PullImageRequest",
 		"StartTracingRequest", "StopTracingRequest",
 	}
-	podYAML, err := os.ReadFile(sampleFile("samples", "hpcc", "minimal-pod.yaml"))
+	podYAML, err := os.ReadFile(sampleFile("samples", "ccco", "minimal-pod.yaml"))
 	require.NoError(t, err)
 
 	policy, _, _, err := GenerateRegoPolicy(string(podYAML), "")
@@ -384,12 +384,12 @@ func TestTemplate_NoDeadRules(t *testing.T) {
 	}
 }
 
-// ─── kata-cc-pod end-to-end (hpcc sample) ────────────────────────────────────
+// ─── kata-cc-pod end-to-end (ccco sample) ────────────────────────────────────
 
 // kataCCPolicy is a shared helper that reads kata-cc-pod.yaml and generates its policy once.
 func kataCCPolicy(t *testing.T) string {
 	t.Helper()
-	podYAML, err := os.ReadFile(sampleFile("samples", "hpcc", "kata-cc-pod.yaml"))
+	podYAML, err := os.ReadFile(sampleFile("samples", "ccco", "kata-cc-pod.yaml"))
 	require.NoError(t, err)
 	policy, _, _, err := GenerateRegoPolicy(string(podYAML), "")
 	require.NoError(t, err)
@@ -464,7 +464,7 @@ func TestMultilineScript_PolicyOutput(t *testing.T) {
 // ─── Benchmark ────────────────────────────────────────────────────────────────
 
 func BenchmarkGenerateRegoPolicy(b *testing.B) {
-	podYAML, err := os.ReadFile(sampleFile("samples", "hpcc", "minimal-pod.yaml"))
+	podYAML, err := os.ReadFile(sampleFile("samples", "ccco", "minimal-pod.yaml"))
 	require.NoError(b, err)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

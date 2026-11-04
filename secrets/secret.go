@@ -22,7 +22,7 @@ import (
 	csecrets "github.com/ibm-hyper-protect/contract-go/v3/common/secrets"
 )
 
-// HpccSealedSecret encrypts a secret using AES-256-GCM with RSA key wrapping and RSA-SHA512 signing.
+// CccoSealedSecret encrypts a secret using AES-256-GCM with RSA key wrapping and RSA-SHA512 signing.
 //
 // Use this function to create sealed secrets for IBM Confidential Computing workload or environment
 // configurations. The function performs the complete encryption workflow: generates or uses provided
@@ -43,7 +43,7 @@ import (
 //   - inputSecretSha: SHA-256 hash of the input plaintext secret
 //   - encryptedSecretSha: SHA-256 hash of the sealed secret (output)
 //   - Error if encryption fails, keys cannot be parsed/generated, or inputs are invalid
-func HpccSealedSecret(secret, secretType, encryptionKey, signingKey string) (string, string, string, string, string, error) {
+func CccoSealedSecret(secret, secretType, encryptionKey, signingKey string) (string, string, string, string, string, error) {
 	var err error
 	if secret == "" {
 		return "", "", "", "", "", fmt.Errorf("secret cannot be empty")

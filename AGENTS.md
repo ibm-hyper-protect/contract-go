@@ -16,7 +16,7 @@ go test ./contract/... -v -run TestFunctionName      # single test (any package 
 
 ## Architecture
 
-- **`contract/contract.go`** — public API for contracts (`Hpcr*`, `HpccInitdata`). Other public packages: `attestation/`, `certificate/`, `image/`, `imagespec/`, `network/`, `secrets/`, `crypto/`, `rego/`.
+- **`contract/contract.go`** — public API for contracts (`Hpcr*`, `CccoInitdata`). Other public packages: `attestation/`, `certificate/`, `image/`, `imagespec/`, `network/`, `secrets/`, `crypto/`, `rego/`.
 - **`common/general/general.go`** (~1300 lines, aliased `gen`) — catch-all utilities: exec, temp files, checksums, YAML↔JSON, schema validation, cert fetching. Check here before writing a helper.
 - **`common/{encrypt,decrypt,cert,secrets}/`** — internal helpers behind the public packages.
 - **`encryption/`** and **`schema/{contract,network}/`** — leaf packages with only embedded assets (`//go:embed`), no logic besides cert map init.

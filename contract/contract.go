@@ -49,7 +49,7 @@ const (
 	SectionEnv      = "env"      // Validate only env section
 )
 
-// HPCC initdata.toml file template without sehdr bin.
+// CCCO initdata.toml file template without sehdr bin.
 const tomlTemplate = `
 algorithm = "sha384"
 version = "0.1.0"
@@ -58,7 +58,7 @@ version = "0.1.0"
 "contract.yaml" = '''{{ .Contract }}'''
 `
 
-// HPCC initdata.toml file template with sehdr bin.
+// CCCO initdata.toml file template with sehdr bin.
 const tomlTemplateWithHdr = `
 algorithm = "sha384"
 version = "0.1.0"
@@ -69,7 +69,7 @@ boot: |
     sehdr: {{ .HdrBin }}'''
 `
 
-// HPCC initdata.toml file template without sehdr bin but with extra root certificates.
+// CCCO initdata.toml file template without sehdr bin but with extra root certificates.
 const tomlTemplateWithCerts = `
 algorithm = "sha384"
 version = "0.1.0"
@@ -94,7 +94,7 @@ extra_root_certificates = [{{ range .ExtraRootCertificates }}"""
 '''
 `
 
-// HPCC initdata.toml file template with sehdr bin and extra root certificates.
+// CCCO initdata.toml file template with sehdr bin and extra root certificates.
 const tomlTemplateWithHdrAndCerts = `
 algorithm = "sha384"
 version = "0.1.0"
@@ -646,8 +646,8 @@ func resolveEnvTemplateFile(os string) string {
 	}
 }
 
-// HpccInitdata generates gzipped and Base64-encoded initdata for IBM Confidential Computing
-// Containers for Red Hat OpenShift Container Platform (HPCC) peer pod deployments.
+// CccoInitdata generates gzipped and Base64-encoded initdata for IBM Confidential Computing
+// Containers for Red Hat OpenShift Container Platform (CCCO) peer pod deployments.
 //
 // Use this function to prepare initdata for Kata Containers peer pod VMs on OpenShift.
 // The initdata is a TOML file containing the contract, which is gzipped and Base64-encoded
@@ -670,7 +670,7 @@ func resolveEnvTemplateFile(os string) string {
 //   - SHA256 hash of the original contract (input checksum)
 //   - SHA256 hash of the encoded initdata string (output checksum)
 //   - Error if the contract is empty, template parsing fails, or gzip/encoding fails
-func HpccInitdata(contract, encodedHdrBin string, extraRootCerts []string) (string, string, string, error) {
+func CccoInitdata(contract, encodedHdrBin string, extraRootCerts []string) (string, string, string, error) {
 
 	var buf bytes.Buffer
 
