@@ -731,9 +731,9 @@ func main() {
     os.WriteFile("cert.pem",    []byte(certPEM), 0644)
 
     // Verify the expiry on disk:
-    //   openssl x509 -in cert.pem -noout -dates
-    //   openssl x509 -in cert.pem -noout -enddate
-    //   openssl x509 -in cert.pem -noout -text
+    // - openssl x509 -in cert.pem -noout -dates
+    // - openssl x509 -in cert.pem -noout -enddate
+    // - openssl x509 -in cert.pem -noout -text
 }
 ```
 
@@ -778,7 +778,7 @@ func main() {
 ```
 
 > For the full parameter reference, return-value tables, and error list see
-> [docs/README.md — OpenSSL Key and Certificate Generation](docs/README.md#openssl-key-and-certificate-generation). 
+> [docs/README.md — OpenSSL Key and Certificate Generation](docs/README.md#openssl-key-and-certificate-generation).
 
 ## Documentation
 
