@@ -291,7 +291,7 @@ func HpcrValidateCertificateRevocationList(certificateDocument, ibmIntermediateC
 //
 //	// Get all OS types in JSON format
 //	allCerts, err := certificate.HpcrListAvailableEncCertVersions("", "json")
-//	// Returns: {"ccrt":["26.2.0","25.11.0"],"ccrv":["26.4.1","25.11.0"],"ccco":[{"mod":"1.2.2","fixpacks":["1.2.2.1","1.2.2.2"]},{"mod":"1.2.1","fixpacks":[]},{"mod":"1.2.0","fixpacks":[]}],"hpvs":["26.5.0","26.2.0"]}
+//	// Returns: {"ccrt":["26.2.0","25.11.0"],"ccrv":["26.4.1","25.11.0"],"ccco":[{"mod":"1.2.2","fixpacks":["1.2.2.1","1.2.2.2","1.2.2.3"]},{"mod":"1.2.1","fixpacks":[]},{"mod":"1.2.0","fixpacks":[]}],"hpvs":["26.5.0","26.2.0"]}
 //
 //	// Get specific OS type in YAML format
 //	hpvsCerts, err := certificate.HpcrListAvailableEncCertVersions("hpvs", "yaml")
@@ -302,7 +302,7 @@ func HpcrValidateCertificateRevocationList(certificateDocument, ibmIntermediateC
 //
 //	// Get CCCO mod releases with their fixpacks
 //	cccoCerts, err := certificate.HpcrListAvailableEncCertVersions("ccco", "json")
-//	// Returns: {"ccco":[{"mod":"1.2.2","fixpacks":["1.2.2.1","1.2.2.2"]},{"mod":"1.2.1","fixpacks":[]},{"mod":"1.2.0","fixpacks":[]}]}
+//	// Returns: {"ccco":[{"mod":"1.2.2","fixpacks":["1.2.2.1","1.2.2.2","1.2.2.3"]},{"mod":"1.2.1","fixpacks":[]},{"mod":"1.2.0","fixpacks":[]}]}
 //
 //	// Default to JSON if format not specified
 //	certs, err := certificate.HpcrListAvailableEncCertVersions("", "")
