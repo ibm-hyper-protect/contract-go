@@ -1,3 +1,7 @@
+## 3.5.0 (2026-11-09)
+
+* feat: add CCCO fixpack 1.2.2.3 (#340) ([286f763](https://github.com/ibm-hyper-protect/contract-go/commit/286f763)), closes [#340](https://github.com/ibm-hyper-protect/contract-go/issues/340)
+
 ## 3.4.0 (2026-11-09)
 
 * feat: fix release (#339) ([1d3cf82](https://github.com/ibm-hyper-protect/contract-go/commit/1d3cf82)), closes [#339](https://github.com/ibm-hyper-protect/contract-go/issues/339)
