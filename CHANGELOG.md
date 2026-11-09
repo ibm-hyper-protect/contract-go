@@ -1,3 +1,8 @@
+## 3.4.0 (2026-11-09)
+
+* feat: fix release (#339) ([1d3cf82](https://github.com/ibm-hyper-protect/contract-go/commit/1d3cf82)), closes [#339](https://github.com/ibm-hyper-protect/contract-go/issues/339)
+* chore: rename HPCC to CCCO across all functions and documents (#334) ([a1c8f5c](https://github.com/ibm-hyper-protect/contract-go/commit/a1c8f5c)), closes [#334](https://github.com/ibm-hyper-protect/contract-go/issues/334)
+
 ## 3.3.0 (2026-11-03)
 
 * feat: update go packages to latest (#337) ([94c6944](https://github.com/ibm-hyper-protect/contract-go/commit/94c6944)), closes [#337](https://github.com/ibm-hyper-protect/contract-go/issues/337)
