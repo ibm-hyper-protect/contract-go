@@ -731,9 +731,9 @@ func main() {
     os.WriteFile("cert.pem",    []byte(certPEM), 0644)
 
     // Verify the expiry on disk:
-    //   openssl x509 -in cert.pem -noout -dates
-    //   openssl x509 -in cert.pem -noout -enddate
-    //   openssl x509 -in cert.pem -noout -text
+    // - openssl x509 -in cert.pem -noout -dates
+    // - openssl x509 -in cert.pem -noout -enddate
+    // - openssl x509 -in cert.pem -noout -text
 }
 ```
 
