@@ -778,7 +778,7 @@ func main() {
 ```
 
 > For the full parameter reference, return-value tables, and error list see
-> [docs/README.md — OpenSSL Key and Certificate Generation](docs/README.md#openssl-key-and-certificate-generation).
+> [docs/README.md — OpenSSL Key and Certificate Generation](docs/README.md#openssl-key-and-certificate-generation). 
 
 ## Documentation
 
