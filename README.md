@@ -312,6 +312,25 @@ workload: |
 
 > For individual section validation and full parameter reference, see [docs/README.md](docs/README.md#hpcrverifycontract).
 
+Individual sections use the same platform schema as complete contracts. Invalid
+YAML mapping keys, duplicate keys and additional YAML documents are rejected.
+Encryption/decryption preserves plaintext bytes; generated encryption passwords
+encode 32 random bytes as 44 ASCII characters. See the [API documentation](docs/README.md)
+for compatibility details.
+
+### Import Prepared Retrievable Secrets (CCRV)
+
+Use `contract.WithRetrievableSecrets` to add one to eight prepared binary
+`pvsecret` requests and their host key documents to an environment. Existing
+logging, registry authentication and volumes are preserved. The same validation
+rules apply to standalone sections and complete contracts, including sequential
+indices, certificate parsing and volume references.
+
+See the [prepared retrievable-secret guide](docs/retrievable-secrets.md) for the
+API, certificate roles, locking policy and IBM prerequisites. This imports
+prepared requests; request creation and Ultravisor add/retrieve operations remain
+with trusted tooling and the supported Secure Execution runtime.
+
 ### Generate a Signed and Encrypted Contract
 
 ```go

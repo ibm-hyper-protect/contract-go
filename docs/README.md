@@ -47,10 +47,18 @@ Encrypted sections use one of two formats depending on the target platform:
 `hyper-protect-basic.<encrypted-password>.<encrypted-data>`
 
 The encryption process:
-1. Generate a random 32-byte AES password
+1. Generate 32 random bytes and Base64-encode them as a line-safe AES password
 2. Encrypt the password with the IBM encryption certificate (RSA)
 3. Encrypt the section data with the AES password (AES-256-CBC)
 4. Combine as `<format-prefix>.<base64-encrypted-password>.<base64-encrypted-data>`
+
+
+Plaintext bytes, including meaningful leading/trailing whitespace, are preserved
+through encryption and decryption. Existing stored passwords are read unchanged.
+`RandomPasswordGenerator` now returns 44 ASCII characters encoding 32 random
+bytes; callers must not treat its return value as a fixed-length AES key.
+The serialized encrypted-section format is unchanged. Decryption accepts salted
+AES-CBC bodies with 8-byte salts and, on OpenSSL 3.2+, 16-byte salts.
 
 ### Supported Platforms
 
@@ -68,6 +76,7 @@ The encryption process:
 - [Attestation Functions](#attestation-functions)
 - [Certificate Functions](#certificate-functions)
 - [Contract Functions](#contract-functions)
+- [Prepared Retrievable Secrets](retrievable-secrets.md)
 - [Rego Policy Functions](#rego-policy-functions)
 - [Sealed Secret Functions](#sealed-secret-functions)
 - [OpenSSL Key and Certificate Generation](#openssl-key-and-certificate-generation)
@@ -1647,6 +1656,42 @@ func main() {
 
 ---
 
+### WithRetrievableSecrets
+
+Adds prepared retrievable-secret requests to one raw CCRV environment, preserving
+its existing configuration. Rejects existing `uv-secrets` or `host-attestation`
+blocks instead of overwriting them.
+
+**Package:** `github.com/ibm-hyper-protect/contract-go/v3/contract`
+
+```go
+func WithRetrievableSecrets(environment, platform string, options RetrievableSecretsOptions) (string, error)
+
+type RetrievableSecretRequest struct {
+    Data        []byte // Binary pvsecret request, not the secret or its ID YAML
+    Certificate []byte // Optional PEM or DER request-signature certificate
+}
+
+type HostKeyDocument struct {
+    Description string
+    Data        []byte // Classical PEM/DER certificate or two-certificate hybrid PEM HKD
+}
+
+type RetrievableSecretsOptions struct {
+    Requests []RetrievableSecretRequest       // 1–8, assigned sequential indices
+    Hosts    map[string]HostKeyDocument       // HKD-MODEL-PLANTSERIAL identifiers
+    Lock     *bool                           // nil defaults to true
+}
+```
+
+`environment` must include its normal required fields, including logging.
+`platform` must be `"ccrv"`. Returns validated environment YAML or an error.
+The helper encodes request and certificate bytes once; it does not create
+requests, verify request signatures/HKD trust chains, or call the Ultravisor.
+
+See [Prepared retrievable-secret requests](retrievable-secrets.md) for the full
+flow, volume references, validation boundaries and IBM hardware requirements.
+
 ### HpcrVerifyContract
 
 Validates a contract against the JSON schema for the specified Confidential Computing platform. Supports validating a complete contract (both `workload` and `env` sections together) or an individual section independently — useful for multi-persona workflows where different teams author each section separately.
@@ -1744,6 +1789,14 @@ logging:
 - Required fields presence
 - Data types and formats
 - Platform-specific requirements
+- CCRV prepared retrievable-secret blocks, binary request structure, certificates
+  and volume references (see the [guide](retrievable-secrets.md))
+
+Individual sections and complete contracts use the original platform schema,
+including every `allOf` rule. A section that previously passed only because
+repeated definitions were merged incorrectly can now fail correctly (for
+example, `type: env` without logging). Additional YAML documents are rejected,
+including inside wrapped section strings.
 
 **Common Errors:**
 - `"failed to convert to map"` - Invalid contract YAML structure
