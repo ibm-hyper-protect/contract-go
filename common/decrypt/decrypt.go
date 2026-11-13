@@ -17,6 +17,7 @@ package decrypt
 
 import (
 	"fmt"
+	"strings"
 
 	enc "github.com/ibm-hyper-protect/contract-go/v3/common/encrypt"
 	gen "github.com/ibm-hyper-protect/contract-go/v3/common/general"
@@ -49,7 +50,7 @@ func DecryptPassword(base64EncryptedData, privateKey, password string) (string, 
 		return "", fmt.Errorf("failed to decode Base64 - %v", err)
 	}
 
-	encryptedDataPath, err := gen.CreateTempFile(decodedEncryptedData)
+	encryptedDataPath, err := gen.CreateTempBinaryFile([]byte(decodedEncryptedData))
 	if err != nil {
 		return "", fmt.Errorf("failed to generate temp file - %v", err)
 	}
@@ -95,19 +96,22 @@ func DecryptWorkload(password, encryptedWorkload string) (string, error) {
 		return "", fmt.Errorf("failed to decode base64 data - %v", err)
 	}
 
-	encryptedDataPath, err := gen.CreateTempFile(decodedEncryptedWorkload)
+	encryptedDataPath, err := gen.CreateTempBinaryFile([]byte(decodedEncryptedWorkload))
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}
+	defer gen.RemoveTempFile(encryptedDataPath)
 
-	result, err := gen.ExecCommand(gen.GetOpenSSLPath(), password, "aes-256-cbc", "-d", "-pbkdf2", "-in", encryptedDataPath, "-pass", "stdin")
+	args := []string{"aes-256-cbc", "-d", "-pbkdf2", "-in", encryptedDataPath, "-pass", "stdin"}
+	// Salted__ has no salt-length field. For AES-CBC its block-aligned
+	// ciphertext distinguishes an 8-byte salt from a 16-byte salt. The latter
+	// needs an explicit override on OpenSSL versions whose default is 8.
+	if strings.HasPrefix(decodedEncryptedWorkload, "Salted__") && len(decodedEncryptedWorkload) >= 40 && (len(decodedEncryptedWorkload)-24)%16 == 0 {
+		args = append(args, "-saltlen", "16")
+	}
+	result, err := gen.ExecCommand(gen.GetOpenSSLPath(), password, args...)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
-	}
-
-	err = gen.RemoveTempFile(encryptedDataPath)
-	if err != nil {
-		return "", fmt.Errorf("failed to remove temp file - %v", err)
 	}
 
 	return result, nil

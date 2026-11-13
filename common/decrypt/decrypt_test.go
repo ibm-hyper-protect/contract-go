@@ -16,6 +16,8 @@
 package decrypt
 
 import (
+	"fmt"
+	"os/exec"
 	"strings"
 	"testing"
 
@@ -54,6 +56,20 @@ func TestDecryptPassword(t *testing.T) {
 	}
 }
 
+func TestDecryptPasswordPreservesBinaryBoundaryBytes(t *testing.T) {
+	// Disposable PKCS#1 v1.5 ciphertext for the existing sample key. Its final
+	// byte is FF (0x0c), which the text temporary-file helper would remove.
+	const ciphertext = "fsXsPARJVK7xP7iYkHQt1KTP6fA8wkz4K13POG7s5suqr2mqRbGOt6L54yFLcb76SsM0hiE3x1vY9w3nwgJoV4YBWbSMR1tmuHPKJGC4oXLxKXlXM4X3tplsXMTr+V1njnFcPlcoC6k1sgZbVVynoeIWEogtlJDzixhsTUbZ+Rj5kE4w5m74lGDgstWM/+m/espCZtcCUH0BaMkOU02P5qI6LlEcRIhBYyrDboMxQ2Nwm1XdW/k0Q+9d8bxntcepHqWZRdMPGuTXYGI/sqmtfABj01Gxtjs6z/HHjgeOcrohT2CnRKOq3pYBWEM/n66VAbr5pTE+O54iSjVAzTUk8ukpSDVkgtWHrbLi2qSrM2VUW4vQshAcajmXnynGn/AUw04S55K/794/oodMushrUpecWzXs1G+l2QAbz1rIiQ5JINTypb6Ex1U0CtqhiNLMuFXQXVKyLyL4aFhetFVVaxQSnxI4YjDBRYYj8bH0p6qE6AizXVhvgVCzR+zkEqPCnl3tKieTtjlt9TPcXrnh1F5aogguwdHOTOd/F8IijaPNOvNqTUhSm9JqxH9y5pDm1O2PxBKwYIMnBOTe1E+JkRVIoZ8poV8oI44totY5QITRdpc+xMwxfVy0DmWZSxMhkXXiVDN0z/f5RROdzJXYxHA8vxOnN2qea/hRvoKFdgw="
+	key, err := gen.ReadDataFromFile(privateKeyPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	password, err := DecryptPassword(ciphertext, key, "")
+	if err != nil || password != "binary boundary password 2" {
+		t.Fatalf("binary RSA ciphertext was changed: %v", err)
+	}
+}
+
 // Testcase to check if DecryptWorkload() is able to decrypt workload
 func TestDecryptWorkload(t *testing.T) {
 	encChecksum, err := gen.ReadDataFromFile(encryptedChecksumPath)
@@ -80,6 +96,32 @@ func TestDecryptWorkload(t *testing.T) {
 	}
 
 	assert.Contains(t, result, sampleAttestationRecordKey)
+}
+
+func TestDecryptWorkloadPreservesBinaryBoundaryBytes(t *testing.T) {
+	// Fixed OpenSSL PBKDF2/AES fixtures for its 8- and 16-byte salt defaults.
+	// Their final ciphertext bytes are LF and FF, which must never be trimmed.
+	fixtures := map[int]string{
+		8:  "U2FsdGVkX18BAgMEBQYHCJThSnnJ3H5P6QPGNkfE2/BRZflMgTs9ZFEJbZ76PNMK",
+		16: "U2FsdGVkX18BAgMEBQYHCAkKCwwNDg8QJIIz/tqXgTZx7dzAXswGzqoRNyDMsJ1PZgNYUim1UQw=",
+	}
+	for saltLength, fixture := range fixtures {
+		t.Run(fmt.Sprintf("salt-%d", saltLength), func(t *testing.T) {
+			if saltLength == 16 {
+				help, err := exec.Command(gen.GetOpenSSLPath(), "enc", "-help").CombinedOutput()
+				if err != nil {
+					t.Fatalf("cannot inspect OpenSSL options: %v", err)
+				}
+				if !strings.Contains(string(help), "-saltlen") {
+					t.Skip("16-byte salts require OpenSSL 3.2+; 8-byte regression remains covered")
+				}
+			}
+			clear, err := DecryptWorkload("test-password", fixture)
+			if err != nil || clear != "binary boundary fixture 40" {
+				t.Fatalf("binary ciphertext was changed: %v", err)
+			}
+		})
+	}
 }
 
 // Testcase to check if DecryptPassword() handles invalid private key

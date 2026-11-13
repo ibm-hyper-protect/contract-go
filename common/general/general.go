@@ -31,7 +31,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -64,10 +63,6 @@ type Contract struct {
 	Workload          string `yaml:"workload"`
 	WorkloadSignature string `yaml:"envWorkloadSignature"`
 }
-
-// allOfDefsRefRe matches any $ref of the form #/allOf/N/$defs/ so they can be
-// rewritten to #/$defs/ after all definitions are merged into one place.
-var allOfDefsRefRe = regexp.MustCompile(`#/allOf/[0-9]+/\$defs/`)
 
 // CheckIfEmpty checks if any of the provided values are empty strings.
 // It iterates through all provided arguments and returns true if at least one value is an empty string.
@@ -758,6 +753,12 @@ func VerifyContractWithSchema(contract, version, section string) error {
 		return fmt.Errorf("invalid section %q: must be \"\" (both), \"workload\", or \"env\"", section)
 	}
 
+	// A second YAML document must not be silently discarded before encryption.
+	var document any
+	if err := DecodeContractYAML(contract, &document); err != nil {
+		return fmt.Errorf("invalid contract YAML - %v", err)
+	}
+
 	// First, check what sections exist in the contract
 	data := Contract{}
 	yaml.Unmarshal([]byte(contract), &data)
@@ -796,17 +797,16 @@ func VerifyContractWithSchema(contract, version, section string) error {
 		return fmt.Errorf("error fetching contract schema")
 	}
 
-	// For individual section validation, create a wrapper schema
-	if section == "workload" || section == "env" {
-		return validateIndividualSection(contractStringMap, contractSchema, section)
+	// Individual and complete validation use the same unchanged platform schema.
+	if err := validateContractSchema(contractStringMap, contractSchema); err != nil {
+		return err
 	}
-
-	// For complete contract validation (both sections)
-	return validateCompleteContract(contractStringMap, contractSchema)
+	return nil
 }
 
-// validateCompleteContract validates a complete contract with both workload and env sections.
-func validateCompleteContract(contractMap map[string]any, schemaJSON string) error {
+// validateContractSchema preserves every original allOf rule for a complete
+// contract or a map containing only the requested individual section.
+func validateContractSchema(contractMap map[string]any, schemaJSON string) error {
 	compiled, err := compileSchema(schemaJSON)
 	if err != nil {
 		return err
@@ -819,119 +819,65 @@ func validateCompleteContract(contractMap map[string]any, schemaJSON string) err
 	return nil
 }
 
-// validateIndividualSection validates a single section (workload or env) against the schema.
-// It creates a wrapper schema that references only the specific section definition.
-func validateIndividualSection(contractMap map[string]any, schemaJSON string, section string) error {
-	// Step 1: Parse the schema JSON
-	var schemaMap map[string]interface{}
-	if err := json.Unmarshal([]byte(schemaJSON), &schemaMap); err != nil {
-		return fmt.Errorf("failed to parse schema JSON - %v", err)
+// DecodeContractYAML decodes exactly one contract YAML document. Mapping keys
+// must be strings and duplicates are rejected, including keys resolved through
+// aliases. YAML merge keys and scalar aliases remain supported.
+//
+// Parameters:
+//   - input: A complete contract or one raw environment/workload section.
+//   - value: Pointer to the destination value, as for yaml.Unmarshal.
+//
+// Returns:
+//   - Error if parsing, key validation or decoding fails, or more than one document exists.
+func DecodeContractYAML(input string, value any) error {
+	decoder := yaml.NewDecoder(strings.NewReader(input))
+	var document yaml.Node
+	if err := decoder.Decode(&document); err != nil {
+		return err
 	}
-
-	// Step 2: Merge all schema definitions into one place
-	mergedDefs := mergeSchemaDefinitions(schemaMap)
-
-	// Step 3: Create a wrapper schema that points to the specific section
-	wrapperSchema := createSectionWrapperSchema(section, mergedDefs)
-
-	// Step 4: Compile the wrapper schema
-	wrapperBytes, err := json.Marshal(wrapperSchema)
-	if err != nil {
-		return fmt.Errorf("failed to create wrapper schema - %v", err)
+	if err := validateContractMappingKeys(&document); err != nil {
+		return err
 	}
-
-	compiled, err := compileSchema(string(wrapperBytes))
-	if err != nil {
-		return fmt.Errorf("failed to compile %s schema - %v", section, err)
+	if err := document.Decode(value); err != nil {
+		return err
 	}
-
-	// Step 5: Validate the section data
-	sectionData, ok := contractMap[section]
-	if !ok {
-		return fmt.Errorf("section '%s' not found in contract", section)
+	var extra any
+	if err := decoder.Decode(&extra); err != io.EOF {
+		return fmt.Errorf("provide exactly one contract YAML document")
 	}
-
-	if err := compiled.Validate(sectionData); err != nil {
-		return fmt.Errorf("%s section validation failed - %v", section, err)
-	}
-
 	return nil
 }
 
-// mergeSchemaDefinitions merges schema definitions from root $defs and all allOf[i]/$defs entries.
-// The JSON schema spreads definitions across multiple allOf entries; we need them all in one place.
-// It also fixes references from #/allOf/N/$defs/... to #/$defs/...
-// Later allOf entries take precedence over earlier ones for the same key.
-func mergeSchemaDefinitions(schemaMap map[string]interface{}) map[string]interface{} {
-	mergedDefs := make(map[string]interface{})
-
-	// Copy definitions from root $defs
-	if rootDefs, ok := schemaMap["$defs"].(map[string]interface{}); ok {
-		for k, v := range rootDefs {
-			mergedDefs[k] = v
-		}
-	}
-
-	// Copy definitions from every allOf[i]/$defs and fix their internal references
-	if allOf, ok := schemaMap["allOf"].([]interface{}); ok {
-		for _, item := range allOf {
-			allOfItem, ok := item.(map[string]interface{})
-			if !ok {
-				continue
+// JSON schema object keys are strings. Inspect the original YAML nodes before
+// decoding maps can coerce a key or overwrite another key with the same value.
+// Alias targets are checked at their declarations, so cyclic aliases are not
+// followed recursively. YAML merge keys remain supported.
+func validateContractMappingKeys(node *yaml.Node) error {
+	if node.Kind == yaml.MappingNode {
+		seen := make(map[string]bool, len(node.Content)/2)
+		for i := 0; i < len(node.Content); i += 2 {
+			key := node.Content[i]
+			line := key.Line
+			if key.Kind == yaml.AliasNode {
+				key = key.Alias
 			}
-			allOfDefs, ok := allOfItem["$defs"].(map[string]interface{})
-			if !ok {
-				continue
+			if key.Kind != yaml.ScalarNode || (key.Tag != "!!str" && key.Tag != "!!merge") {
+				return fmt.Errorf("contract mapping keys must be strings (line %d)", line)
 			}
-			for k, v := range allOfDefs {
-				// Fix references so they point to the merged $defs location
-				mergedDefs[k] = fixSchemaReferences(v)
-			}
-		}
-	}
-
-	return mergedDefs
-}
-
-// createSectionWrapperSchema creates a simple schema that references a specific section definition.
-// This allows us to validate just one section (workload or env) independently.
-func createSectionWrapperSchema(section string, definitions map[string]interface{}) map[string]interface{} {
-	return map[string]interface{}{
-		"$ref":  "#/$defs/" + section,
-		"$defs": definitions,
-	}
-}
-
-// fixSchemaReferences recursively updates schema references from #/allOf/N/$defs/... to #/$defs/...
-// This is needed because we're merging definitions from all allOf[i]/$defs into the root $defs.
-func fixSchemaReferences(v interface{}) interface{} {
-	switch val := v.(type) {
-	case map[string]interface{}:
-		result := make(map[string]interface{})
-		for k, v := range val {
-			if k == "$ref" {
-				// Fix the reference path
-				if ref, ok := v.(string); ok {
-					result[k] = allOfDefsRefRe.ReplaceAllLiteralString(ref, "#/$defs/")
-				} else {
-					result[k] = v
+			if key.Tag == "!!str" {
+				if seen[key.Value] {
+					return fmt.Errorf("duplicate contract mapping key %q (line %d)", key.Value, line)
 				}
-			} else {
-				// Recursively fix nested references
-				result[k] = fixSchemaReferences(v)
+				seen[key.Value] = true
 			}
 		}
-		return result
-	case []interface{}:
-		// Recursively fix references in arrays
-		result := make([]interface{}, len(val))
-		for i, v := range val {
-			result[i] = fixSchemaReferences(v)
-		}
-		return result
-	default:
-		return v
 	}
+	for _, child := range node.Content {
+		if err := validateContractMappingKeys(child); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // stringToMap converts a contract YAML string to a nested map structure.
@@ -996,7 +942,7 @@ func stringToMap(contract, section string) (map[any]any, error) {
 		// Parse env section if requested or if no specific section is specified
 		if section == "" || section == "env" {
 			dataEnv := make(map[any]any)
-			err = yaml.Unmarshal([]byte(data.Env), &dataEnv)
+			err = DecodeContractYAML(data.Env, &dataEnv)
 			if err != nil {
 				return nil, err
 			}
@@ -1006,7 +952,7 @@ func stringToMap(contract, section string) (map[any]any, error) {
 		// Parse workload section if requested or if no specific section is specified
 		if section == "" || section == "workload" {
 			dataWorkload := make(map[any]any)
-			err = yaml.Unmarshal([]byte(data.Workload), &dataWorkload)
+			err = DecodeContractYAML(data.Workload, &dataWorkload)
 			if err != nil {
 				return nil, err
 			}
