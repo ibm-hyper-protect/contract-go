@@ -1,1 +1,6 @@
 type: env
+logging:
+  logRouter:
+    hostname: logs.example.com
+    iamApiKey: example-api-key
+    port: 443

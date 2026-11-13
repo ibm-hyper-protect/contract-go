@@ -81,10 +81,11 @@ func GeneratePublicKey(privateKey, password string) (string, error) {
 }
 
 // RandomPasswordGenerator generates a cryptographically secure random password.
-// It uses OpenSSL to generate 32 bytes of random data for use as an encryption password.
+// It Base64-encodes 32 random bytes so OpenSSL's line-based password input cannot
+// truncate the password at an embedded NUL or newline. All 256 bits are retained.
 //
 // Returns:
-//   - Random password string (32 bytes)
+//   - Random ASCII password string (44 characters, 32 random bytes)
 //   - Error if OpenSSL is not found or random generation fails
 func RandomPasswordGenerator() (string, error) {
 	err := OpensslCheck()
@@ -97,7 +98,7 @@ func RandomPasswordGenerator() (string, error) {
 		return "", fmt.Errorf("failed to execute openssl command - %v", err)
 	}
 
-	return randomPassword, nil
+	return gen.EncodeToBase64([]byte(randomPassword)), nil
 }
 
 // EncryptPassword encrypts a password using OpenSSL PKEYUTL encryption with a certificate.
@@ -161,7 +162,9 @@ func EncryptString(password, section string) (string, error) {
 		return "", fmt.Errorf("openssl not found - %v", err)
 	}
 
-	contractPath, err := gen.CreateTempFile(section)
+	// YAML block scalars and arbitrary text can contain meaningful whitespace.
+	// Encrypt exactly the supplied bytes rather than trimming them as PEM files.
+	contractPath, err := gen.CreateTempBinaryFile([]byte(section))
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp file - %v", err)
 	}

@@ -47,10 +47,18 @@ Encrypted sections use one of two formats depending on the target platform:
 `hyper-protect-basic.<encrypted-password>.<encrypted-data>`
 
 The encryption process:
-1. Generate a random 32-byte AES password
+1. Generate 32 random bytes and Base64-encode them as a line-safe AES password
 2. Encrypt the password with the IBM encryption certificate (RSA)
 3. Encrypt the section data with the AES password (AES-256-CBC)
 4. Combine as `<format-prefix>.<base64-encrypted-password>.<base64-encrypted-data>`
+
+
+Plaintext bytes, including meaningful leading/trailing whitespace, are preserved
+through encryption and decryption. Existing stored passwords are read unchanged.
+`RandomPasswordGenerator` now returns 44 ASCII characters encoding 32 random
+bytes; callers must not treat its return value as a fixed-length AES key.
+The serialized encrypted-section format is unchanged. Decryption accepts salted
+AES-CBC bodies with 8-byte salts and, on OpenSSL 3.2+, 16-byte salts.
 
 ### Supported Platforms
 
@@ -1744,6 +1752,12 @@ logging:
 - Required fields presence
 - Data types and formats
 - Platform-specific requirements
+
+Individual sections and complete contracts use the original platform schema,
+including every `allOf` rule. A section that previously passed only because
+repeated definitions were merged incorrectly can now fail correctly (for
+example, `type: env` without logging). Additional YAML documents are rejected,
+including inside wrapped section strings.
 
 **Common Errors:**
 - `"failed to convert to map"` - Invalid contract YAML structure

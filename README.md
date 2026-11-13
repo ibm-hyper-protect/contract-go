@@ -312,6 +312,12 @@ workload: |
 
 > For individual section validation and full parameter reference, see [docs/README.md](docs/README.md#hpcrverifycontract).
 
+Individual sections use the same platform schema as complete contracts. Invalid
+YAML mapping keys, duplicate keys and additional YAML documents are rejected.
+Encryption/decryption preserves plaintext bytes; generated encryption passwords
+encode 32 random bytes as 44 ASCII characters. See the [API documentation](docs/README.md)
+for compatibility details.
+
 ### Generate a Signed and Encrypted Contract
 
 ```go
