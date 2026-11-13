@@ -76,6 +76,7 @@ AES-CBC bodies with 8-byte salts and, on OpenSSL 3.2+, 16-byte salts.
 - [Attestation Functions](#attestation-functions)
 - [Certificate Functions](#certificate-functions)
 - [Contract Functions](#contract-functions)
+- [Prepared Retrievable Secrets](retrievable-secrets.md)
 - [Rego Policy Functions](#rego-policy-functions)
 - [Sealed Secret Functions](#sealed-secret-functions)
 - [OpenSSL Key and Certificate Generation](#openssl-key-and-certificate-generation)
@@ -1655,6 +1656,42 @@ func main() {
 
 ---
 
+### WithRetrievableSecrets
+
+Adds prepared retrievable-secret requests to one raw CCRV environment, preserving
+its existing configuration. Rejects existing `uv-secrets` or `host-attestation`
+blocks instead of overwriting them.
+
+**Package:** `github.com/ibm-hyper-protect/contract-go/v3/contract`
+
+```go
+func WithRetrievableSecrets(environment, platform string, options RetrievableSecretsOptions) (string, error)
+
+type RetrievableSecretRequest struct {
+    Data        []byte // Binary pvsecret request, not the secret or its ID YAML
+    Certificate []byte // Optional PEM or DER request-signature certificate
+}
+
+type HostKeyDocument struct {
+    Description string
+    Data        []byte // Classical PEM/DER certificate or two-certificate hybrid PEM HKD
+}
+
+type RetrievableSecretsOptions struct {
+    Requests []RetrievableSecretRequest       // 1–8, assigned sequential indices
+    Hosts    map[string]HostKeyDocument       // HKD-MODEL-PLANTSERIAL identifiers
+    Lock     *bool                           // nil defaults to true
+}
+```
+
+`environment` must include its normal required fields, including logging.
+`platform` must be `"ccrv"`. Returns validated environment YAML or an error.
+The helper encodes request and certificate bytes once; it does not create
+requests, verify request signatures/HKD trust chains, or call the Ultravisor.
+
+See [Prepared retrievable-secret requests](retrievable-secrets.md) for the full
+flow, volume references, validation boundaries and IBM hardware requirements.
+
 ### HpcrVerifyContract
 
 Validates a contract against the JSON schema for the specified Confidential Computing platform. Supports validating a complete contract (both `workload` and `env` sections together) or an individual section independently — useful for multi-persona workflows where different teams author each section separately.
@@ -1752,6 +1789,8 @@ logging:
 - Required fields presence
 - Data types and formats
 - Platform-specific requirements
+- CCRV prepared retrievable-secret blocks, binary request structure, certificates
+  and volume references (see the [guide](retrievable-secrets.md))
 
 Individual sections and complete contracts use the original platform schema,
 including every `allOf` rule. A section that previously passed only because

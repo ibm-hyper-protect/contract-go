@@ -27,3 +27,9 @@ var ContractSchemaCcrv string
 
 //go:embed hpse-contract-schema-coco-1.0.93-rhel.json
 var ContractSchemaCcco string
+
+// RetrievableSecretsSchemaCcrv adds prepared-request rules to the original CCRV
+// platform schema. Validate against both schemas when using these assets directly.
+//
+//go:embed retrievable-secrets-ccrv.json
+var RetrievableSecretsSchemaCcrv string

@@ -801,7 +801,7 @@ func VerifyContractWithSchema(contract, version, section string) error {
 	if err := validateContractSchema(contractStringMap, contractSchema); err != nil {
 		return err
 	}
-	return nil
+	return validateRetrievableSecrets(contractStringMap, version)
 }
 
 // validateContractSchema preserves every original allOf rule for a complete
