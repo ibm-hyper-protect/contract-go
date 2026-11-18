@@ -803,7 +803,7 @@ func VerifyContractWithSchema(contract, version, section string) error {
 	}
 	contractSchema, err := fetchContractSchema(version)
 	if err != nil {
-		return fmt.Errorf("error fetching contract schema")
+		return fmt.Errorf("UNSUPPORTED_CONTRACT_PLATFORM: profile %q is unsupported; supported profiles are ccrt, ccrv, ccco and hpvs (empty defaults to ccrt)", version)
 	}
 
 	// Individual and complete validation use the same unchanged platform schema.

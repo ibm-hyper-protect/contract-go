@@ -21,6 +21,18 @@ import (
 	"testing"
 )
 
+func TestUnsupportedContractPlatformIsActionable(t *testing.T) {
+	input := "type: env\nlogging:\n  logRouter:\n    hostname: logs.example.com\n    iamApiKey: test-only\n"
+	for _, platform := range []string{"unknown", "CCRV", "ccco-bmtl", " ccrv "} {
+		t.Run(platform, func(t *testing.T) {
+			err := VerifyContractWithSchema(input, platform, "env")
+			if err == nil || !strings.Contains(err.Error(), "UNSUPPORTED_CONTRACT_PLATFORM") || !strings.Contains(err.Error(), "ccrt, ccrv, ccco and hpvs") {
+				t.Fatalf("unsupported profile has no actionable error: %v", err)
+			}
+		})
+	}
+}
+
 func TestSectionValidationKeepsAllSchemaRules(t *testing.T) {
 	workload := "type: workload\nplay:\n  archive: YWJjZA==\n"
 	environment := "type: env\nlogging:\n  logRouter:\n    hostname: logs.example.com\n    iamApiKey: test-key\n    port: 443\n"
