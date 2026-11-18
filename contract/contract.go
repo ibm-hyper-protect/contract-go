@@ -524,6 +524,8 @@ func HpcrContractSignedEncryptedContractExpiry(contract, confidentialComputingOs
 // Use this function when you have already encrypted the workload and env sections of a contract
 // yourself (e.g., using openssl commands or [HpcrTextEncrypted]) and only need to add the
 // envWorkloadSignature. The contract must be a valid YAML with encrypted workload and env values.
+// Both sections must be non-empty strings in one YAML document. An optional
+// attestationPublicKey must also be a string; malformed sections return errors.
 //
 // For most use cases, prefer [HpcrContractSignedEncrypted] which handles both encryption and signing.
 //
@@ -536,24 +538,35 @@ func HpcrContractSignedEncryptedContractExpiry(contract, confidentialComputingOs
 //   - Signed contract YAML with workload, env, and envWorkloadSignature sections
 //   - SHA256 hash of the original contract (input checksum)
 //   - SHA256 hash of the final signed contract (output checksum)
-//   - Error if YAML parsing or signing fails
+//   - Error if YAML/section validation or signing fails
 func HpcrContractSign(contract, privateKey, password string) (string, string, string, error) {
 	var contractMap map[string]interface{}
 
-	err := yaml.Unmarshal([]byte(contract), &contractMap)
+	err := gen.DecodeContractYAML(contract, &contractMap)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to unmarshal YAML - %v", err)
 	}
 
-	workload := contractMap["workload"].(string)
-	env := contractMap["env"].(string)
+	workload, ok := contractMap["workload"].(string)
+	if !ok || strings.TrimSpace(workload) == "" {
+		return "", "", "", fmt.Errorf("contract workload must be a non-empty string")
+	}
+	env, ok := contractMap["env"].(string)
+	if !ok || strings.TrimSpace(env) == "" {
+		return "", "", "", fmt.Errorf("contract env must be a non-empty string")
+	}
+	attestationPublicKey := ""
+	if value, exists := contractMap["attestationPublicKey"]; exists {
+		attestationPublicKey, ok = value.(string)
+		if !ok {
+			return "", "", "", fmt.Errorf("contract attestationPublicKey must be a string")
+		}
+	}
 
 	workloadEnvSignature, err := enc.SignContract(workload, env, privateKey, password)
 	if err != nil {
 		return "", "", "", fmt.Errorf("failed to sign contract - %v", err)
 	}
-
-	attestationPublicKey, _ := contractMap["attestationPublicKey"].(string)
 
 	finalContract, err := enc.GenFinalSignedContract(workload, env, workloadEnvSignature, attestationPublicKey)
 	if err != nil {

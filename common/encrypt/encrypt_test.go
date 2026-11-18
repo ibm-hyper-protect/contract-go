@@ -17,6 +17,7 @@ package encrypt
 
 import (
 	_ "embed"
+	"encoding/base64"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -368,6 +369,24 @@ func TestRandomPasswordGeneratorSuccess(t *testing.T) {
 	password, err := RandomPasswordGenerator()
 	assert.NoError(t, err)
 	assert.NotEmpty(t, password)
+}
+
+func TestRandomPasswordGeneratorRetainsEntropyInLineSafeFormat(t *testing.T) {
+	seen := map[string]bool{}
+	for i := 0; i < 16; i++ {
+		password, err := RandomPasswordGenerator()
+		if err != nil {
+			t.Fatal(err)
+		}
+		raw, err := base64.StdEncoding.Strict().DecodeString(password)
+		if err != nil || len(raw) != 32 || len(password) != 44 {
+			t.Fatal("password must represent 32 random bytes in a line-safe format")
+		}
+		if strings.ContainsAny(password, "\x00\r\n") || seen[password] {
+			t.Fatal("unsafe or repeated random password")
+		}
+		seen[password] = true
+	}
 }
 
 // Testcase to check if EncryptPassword() handles empty certificate
