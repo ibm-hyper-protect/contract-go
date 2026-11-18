@@ -326,6 +326,13 @@ logging, registry authentication and volumes are preserved. The same validation
 rules apply to standalone sections and complete contracts, including sequential
 indices, certificate parsing and volume references.
 
+Use `contract.InspectPreparedSecretRequest` to obtain the embedded UV secret ID,
+numeric type, request version and request checksum before preparing workload and
+environment references. Set `ExpectedSecretID` when importing a request to check
+the ID pinned during preparation. Metadata inspection does not authenticate a
+request. Duplicate requests/inspectable IDs are rejected, and existing host
+documents can be reused without replacing them.
+
 See the [prepared retrievable-secret guide](docs/retrievable-secrets.md) for the
 API, certificate roles, locking policy and IBM prerequisites. This imports
 prepared requests; request creation and Ultravisor add/retrieve operations remain

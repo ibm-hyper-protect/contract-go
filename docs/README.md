@@ -1659,8 +1659,9 @@ func main() {
 ### WithRetrievableSecrets
 
 Adds prepared retrievable-secret requests to one raw CCRV environment, preserving
-its existing configuration. Rejects existing `uv-secrets` or `host-attestation`
-blocks instead of overwriting them.
+its existing configuration. Rejects existing `uv-secrets` instead of reindexing
+them. Leave `Hosts` empty to reuse an existing, validated `host-attestation`
+block; supplying new hosts alongside that block is rejected.
 
 **Package:** `github.com/ibm-hyper-protect/contract-go/v3/contract`
 
@@ -1668,8 +1669,9 @@ blocks instead of overwriting them.
 func WithRetrievableSecrets(environment, platform string, options RetrievableSecretsOptions) (string, error)
 
 type RetrievableSecretRequest struct {
-    Data        []byte // Binary pvsecret request, not the secret or its ID YAML
-    Certificate []byte // Optional PEM or DER request-signature certificate
+    Data             []byte // Binary pvsecret request, not the secret or ID YAML
+    Certificate      []byte // Optional PEM or DER request-signature certificate
+    ExpectedSecretID string // Optional pinned 32-byte hex ID, with/without 0x
 }
 
 type HostKeyDocument struct {
@@ -1691,6 +1693,30 @@ requests, verify request signatures/HKD trust chains, or call the Ultravisor.
 
 See [Prepared retrievable-secret requests](retrievable-secrets.md) for the full
 flow, volume references, validation boundaries and IBM hardware requirements.
+
+### InspectPreparedSecretRequest
+
+Reads public metadata from an already prepared binary request, before the
+workload or environment is submitted. It does not decrypt or authenticate it.
+
+```go
+func InspectPreparedSecretRequest(data []byte) (PreparedSecretRequestInfo, error)
+
+// PreparedSecretRequestInfo aliases the shared ASRCB metadata type:
+// RequestVersion uint32, SecretType uint16, SecretID string, RequestSHA256 string.
+```
+
+`SecretID` is the embedded 32-byte ID in `0x`-prefixed lowercase hex, including
+leading zeros. It is distinct from a catalog UUID, alias or `index-N`. Reading
+the embedded ID also supports requests created with `pvsecret --use-name`;
+do not assume every ID is SHA-256 of a name. Null and Update-CCK control
+requests do not have a listable ID and return errors. Other numeric secret types
+are reported as public claims, not as runtime compatibility or authenticity proof.
+
+Pin this ID to the prepared build version and supply `ExpectedSecretID` during
+import. A mismatch fails without returning contract YAML. `RequestSHA256` hashes
+the complete encrypted request, not the secret value. Verify request signatures
+with trusted tooling before trusting any inspected metadata.
 
 ### HpcrVerifyContract
 

@@ -80,10 +80,12 @@ if err != nil {
 
 The input must be one raw `type: env` document with its normal required fields,
 including logging. Logging, registry authentication, environment variables and
-volume declarations are preserved. The helper rejects existing `uv-secrets` or
-`host-attestation` blocks rather than changing their meaning or reassigning
-existing secret indices. Edit an existing configuration explicitly in YAML and
-validate it with `HpcrVerifyContract`.
+volume declarations are preserved. The helper rejects an existing `uv-secrets`
+block rather than reassigning its indices. If an environment already contains
+the intended `host-attestation` block, leave `options.Hosts` empty to preserve
+and validate those documents. Supplying both existing hosts and new host options
+returns an error; existing documents are never silently replaced. Edit existing
+request configurations explicitly in YAML and validate with `HpcrVerifyContract`.
 
 The first request becomes `index-1`, the second `index-2`, and so on, up to eight
 requests. Omitting `Lock` in Go writes `lock: true`. An explicit `*bool` pointing
@@ -92,6 +94,59 @@ it does not prevent retrieval by the SE guest.
 
 In hand-written YAML, `lock` may be omitted; the runtime's documented default is
 true. Validation does not insert defaults or otherwise modify the input.
+
+## Make IDs available before authoring sections
+
+The actual secret ID can be read as soon as the trusted preparation step has
+created a binary request:
+
+```go
+info, err := contract.InspectPreparedSecretRequest(requestBytes)
+if err != nil {
+    return err
+}
+// After trusted tooling has verified the request, persist info.SecretID and
+// info.RequestSHA256 with its immutable prepared version. Give section authors
+// the required ID/reference, never the plaintext secret or private keys.
+```
+
+The result contains the request version, numeric UV secret type, the complete
+32-byte `0x`-prefixed ID and the request's SHA-256. These are unverified header
+claims. Inspection does not verify the request signature, GCM authentication,
+host trust or guest binding. A modified encrypted payload may retain the same
+claimed ID; trust must come from the preparation/signature-verification process.
+
+On final import, bind the request to the ID already selected for the build:
+
+```go
+request := contract.RetrievableSecretRequest{
+    Data:             requestBytes,
+    Certificate:      requestVerificationCert,
+    ExpectedSecretID: idPinnedDuringPreparation,
+}
+```
+
+`ExpectedSecretID` accepts 64 hex digits, optionally prefixed by `0x`, without
+surrounding whitespace. A mismatch or malformed ID returns an error and no
+environment YAML. Leaving it empty retains the original opaque-request API.
+
+Keep four identifiers separate:
+
+| Identifier | Meaning |
+| --- | --- |
+| Catalog UUID / alias | Application reference to an encrypted stored value/version; never a UV ID. |
+| UV secret ID | Embedded 32-byte identity used by guest retrieval tooling. |
+| `index-N` | Position of a prepared request within this contract; used by volume references. |
+| Request SHA-256 | Checksum of the particular encrypted request, not of its secret value. |
+
+Read the embedded ID rather than hashing a catalog alias. The default `pvsecret`
+name hash and the `--use-name` mode produce different IDs. Use unique versioned
+request names/IDs for rotation; a new ciphertext or IV does not create a new ID.
+Validation rejects repeated request bytes and repeated IDs in inspectable
+listable-secret layouts, including requests with distinct ciphertext bytes.
+It does not authenticate those IDs or otherwise replace runtime verification.
+Null and Update-CCK requests have no listable ID and cannot be inspected or
+imported with an expected ID.
 
 ## Contract layout and volume references
 
@@ -137,6 +192,27 @@ the runtime still needs the appropriate secret for the requested volume use.
 For non-volume secrets, the application retrieves the secret inside the SE guest
 using the generated secret-ID reference and the runtime's retrieval tooling.
 The contract does not automatically create an application environment variable.
+Plaintext retrieval can be consumed directly from standard output, for example
+`pvsecret retrieve --inform hex <ID> --outform bin`; no intermediate secret file
+is required. Do not log that output. Protected-key types return protected/wrapped
+objects rather than the original key bytes, as defined by the target runtime.
+
+Catalog/build roles are enforced by the platform, not this library. UV isolation
+is per guest, not per catalog entry or container role. Knowing an ID is not an
+authorization mechanism. Per-workload restrictions require control of `/dev/uv`
+access or a suitable guest-side broker; do not expose unrestricted device access
+to a workload and assume the UI's catalog grants will constrain its retrieval.
+
+## Platform integration boundary
+
+| Stage | Responsible component | contract-go support |
+| --- | --- | --- |
+| Store neutral secret versions and groups; share within allowed personas | Manager/UI and isolated value worker | No catalog database, persona checks or plaintext reveal API in this library. |
+| Assigned Auditor commits a selected version using the intended SE header and verified HKDs | Trusted `pvsecret` preparation worker | Accepts the resulting binary request; does not generate one from plaintext. |
+| Publish/pin public IDs before workload/environment authoring | Manager | `InspectPreparedSecretRequest`; retain trusted metadata with the prepared version. |
+| Add requests, hosts, locking and volume references | Manager contract adapter | `WithRetrievableSecrets`, optional expected IDs and existing host reuse; standalone/complete validation. |
+| Encrypt and sign; export the contract | Existing contract workflow | Existing signing/encryption APIs preserve requests and unrelated configuration. |
+| Import, lock and retrieve/use inside the guest | Supported runtime, Ultravisor and workload tooling | No host discovery, UV device operations or software fallback disguised as hardware support. |
 
 ## Validation and encryption
 
@@ -157,6 +233,7 @@ Validation checks:
   supported; explicit values may override merged defaults.
 - One to eight sequential request indices starting at `index-1`.
 - Boolean `lock`, `type: pvsecret`, required request bytes and unknown fields.
+- Duplicate binary requests and repeated IDs in inspectable listable layouts.
 - Strict Base64 decoding, ASRCB magic, supported request-header versions
   `0x0100`/`0x0200`, declared lengths, user-data kinds and room for key slots.
 - Required host documents, HKD identifiers and parseable certificates.
@@ -224,4 +301,5 @@ is rejected. These checks are required before claiming hardware verification.
 - [s390-tools generic request header](https://github.com/ibm-s390-linux/s390-tools/blob/master/rust/pv/src/req/header.rs)
 - [s390-tools request verification](https://github.com/ibm-s390-linux/s390-tools/blob/master/rust/pv/src/uvsecret/user_data.rs)
 - [s390-tools classical and hybrid HKD formats](https://github.com/ibm-s390-linux/s390-tools/blob/master/rust/utils/src/hkd.rs)
+- [Pinned listable-secret header layout](https://github.com/ibm-s390-linux/s390-tools/blob/b1d612b4a6a84440e16aae6d66e5f8f4be4e977f/rust/pv/src/uvsecret/guest_secret.rs)
 - [OpenSSL salted encryption and salt-length options](https://docs.openssl.org/3.2/man1/openssl-enc/)

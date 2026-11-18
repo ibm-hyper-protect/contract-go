@@ -17,6 +17,7 @@ package general
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/binary"
@@ -57,6 +58,8 @@ func validateRetrievableSecrets(contract map[string]any, platform string) error 
 
 func validateUVSecrets(env map[string]any) error {
 	secrets := env["uv-secrets"].(map[string]any)
+	seenRequests := make(map[[32]byte]string)
+	seenIDs := make(map[string]string)
 	for i := 1; i <= 8; i++ {
 		name := fmt.Sprintf("index-%d", i)
 		value, exists := secrets[name]
@@ -70,6 +73,19 @@ func validateUVSecrets(env map[string]any) error {
 		}
 		if err := validateAddSecretRequest(request); err != nil {
 			return fmt.Errorf("uv-secrets.%s.pvsecret - %v", name, err)
+		}
+		digest := sha256.Sum256(request)
+		if previous, exists := seenRequests[digest]; exists {
+			return fmt.Errorf("uv-secrets.%s duplicates the request at %s", name, previous)
+		}
+		seenRequests[digest] = name
+		// Only known listable layouts have an inspectable ID. Generic ASRCB
+		// envelope validation remains independent of secret-specific semantics.
+		if info, err := InspectAddSecretRequest(request); err == nil {
+			if previous, exists := seenIDs[info.SecretID]; exists {
+				return fmt.Errorf("uv-secrets.%s reuses the secret ID at %s", name, previous)
+			}
+			seenIDs[info.SecretID] = name
 		}
 		if certificate, exists := entry["pvsecret-crt"]; exists {
 			if err := validateContractCertificate(certificate.(string), "uv-secrets."+name+".pvsecret-crt"); err != nil {
@@ -111,6 +127,61 @@ func validateAddSecretRequest(request []byte) error {
 		return fmt.Errorf("invalid add-secret confidential-data length")
 	}
 	return nil
+}
+
+// AddSecretRequestInfo contains unverified public metadata from a prepared
+// add-secret request. SecretID is a 32-byte ID in 0x-prefixed lowercase hex;
+// SecretType is the numeric Ultravisor type, not a catalog alias or contract index.
+// RequestSHA256 hashes the complete binary request, not the secret value.
+type AddSecretRequestInfo struct {
+	RequestVersion uint32
+	SecretType     uint16
+	SecretID       string
+	RequestSHA256  string
+}
+
+// InspectAddSecretRequest reads the public listable-secret header without
+// decrypting the secret or authenticating the request.
+//
+// Parameters:
+//   - request: Complete binary ASRCB file, not its Base64 or ID-reference YAML.
+//
+// Returns:
+//   - Unverified metadata for an Association or retrievable-secret request.
+//   - Error for malformed envelopes or requests without a listable secret ID.
+func InspectAddSecretRequest(request []byte) (AddSecretRequestInfo, error) {
+	if err := validateAddSecretRequest(request); err != nil {
+		return AddSecretRequestInfo{}, err
+	}
+	version := binary.BigEndian.Uint32(request[8:12])
+	confidentialLength := int(binary.BigEndian.Uint32(request[44:48]))
+	authenticatedLength := len(request) - confidentialLength - 16
+	// RequestHdr + ReqAuthData + user-data area + customer public key.
+	keyslotsOffset := 48 + 0x1e8 + 512 + 160
+	slots := int(request[39])
+	headerOffset := keyslotsOffset + slots*80
+	expectedLength := headerOffset + 48
+	if version == 0x0200 {
+		// ReqAuthDataV2 embeds the 48-byte secret header after flags,
+		// BootHdrTags and ConfigUid, before its reserved area and key slots.
+		headerOffset = 48 + 8 + 208 + 16
+		expectedLength = keyslotsOffset + slots*1680
+	}
+	if authenticatedLength != expectedLength || headerOffset+48 > authenticatedLength {
+		return AddSecretRequestInfo{}, fmt.Errorf("expected a complete listable-secret header")
+	}
+	kind := binary.BigEndian.Uint16(request[headerOffset+2 : headerOffset+4])
+	// Null and Update-CCK are control requests; their header bytes are not IDs.
+	if kind < 2 || kind == 0x0016 {
+		return AddSecretRequestInfo{}, fmt.Errorf("request has no listable secret ID")
+	}
+	digest := sha256.Sum256(request)
+	return AddSecretRequestInfo{
+		RequestVersion: version,
+		SecretType:     kind,
+		SecretID:       fmt.Sprintf("0x%x", request[headerOffset+16:headerOffset+48]),
+		RequestSHA256:  fmt.Sprintf("%x", digest),
+	}, nil
 }
 
 func validateHostAttestation(env map[string]any) error {

@@ -17,7 +17,9 @@ package contract
 
 import (
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
+	"strings"
 
 	gen "github.com/ibm-hyper-protect/contract-go/v3/common/general"
 	"gopkg.in/yaml.v3"
@@ -29,6 +31,31 @@ import (
 type RetrievableSecretRequest struct {
 	Data        []byte
 	Certificate []byte
+	// ExpectedSecretID optionally checks the ID pinned during preparation.
+	// Accepts exactly 32 bytes of hex, optionally prefixed with 0x. This is a
+	// consistency check of public metadata, not request authentication.
+	ExpectedSecretID string
+}
+
+// PreparedSecretRequestInfo contains the unverified public metadata of a
+// prepared Association or retrievable-secret request. SecretID is the actual
+// 0x-prefixed 32-byte UV ID, distinct from an alias, catalog UUID or index-N.
+// It contains no plaintext secret or private key.
+type PreparedSecretRequestInfo = gen.AddSecretRequestInfo
+
+// InspectPreparedSecretRequest reads a prepared request's public secret ID, UV
+// type, request version and request SHA-256 before workload/environment creation.
+// It does not decrypt, authenticate, import or retrieve the secret.
+//
+// Parameters:
+//   - data: Complete binary pvsecret request, not Base64 or an ID-reference YAML.
+//
+// Returns:
+//   - Unverified public request metadata. Treat the reported type and ID as
+//     claims until trusted pvsecret tooling and the target UV verify the request.
+//   - Error for malformed requests or control requests without a secret ID.
+func InspectPreparedSecretRequest(data []byte) (PreparedSecretRequestInfo, error) {
+	return gen.InspectAddSecretRequest(data)
 }
 
 // HostKeyDocument contains a host key document and its description: one PEM or
@@ -44,6 +71,8 @@ type HostKeyDocument struct {
 // Requests are assigned index-1 through index-8 in slice order. Hosts are keyed
 // by their HKD-MODEL-PLANTSERIAL identifier. A nil Lock defaults to true, preventing
 // further additions to the UV secret store after the runtime imports requests.
+// Leave Hosts empty to reuse an existing host-attestation block; providing Hosts
+// alongside an existing block is rejected rather than replacing it.
 type RetrievableSecretsOptions struct {
 	Requests []RetrievableSecretRequest
 	Hosts    map[string]HostKeyDocument
@@ -53,7 +82,8 @@ type RetrievableSecretsOptions struct {
 // WithRetrievableSecrets adds prepared requests and host key documents to raw
 // environment YAML, then validates the complete environment. Existing logging,
 // registry credentials, volumes and other fields are preserved. Existing
-// uv-secrets or host-attestation blocks are rejected rather than overwritten.
+// uv-secrets blocks are rejected rather than overwritten. Existing host documents
+// can be reused by leaving options.Hosts empty; they are still validated.
 //
 // Parameters:
 //   - environment: One raw type: env YAML document.
@@ -62,7 +92,7 @@ type RetrievableSecretsOptions struct {
 //
 // Returns:
 //   - Updated, validated raw environment YAML.
-//   - Error if input is invalid, unsupported or already contains either block.
+//   - Error for invalid/unsupported input, existing requests or conflicting hosts.
 //
 // This function does not create requests, contact a host, verify HKD trust chains
 // or authenticate requests. Those checks remain with trusted preparation tools
@@ -81,10 +111,12 @@ func WithRetrievableSecrets(environment, platform string, options RetrievableSec
 	if section["type"] != "env" {
 		return "", fmt.Errorf("provide raw environment YAML starting with type: env")
 	}
-	for _, field := range []string{"uv-secrets", "host-attestation"} {
-		if _, exists := section[field]; exists {
-			return "", fmt.Errorf("environment already contains %s; edit the existing block explicitly", field)
-		}
+	if _, exists := section["uv-secrets"]; exists {
+		return "", fmt.Errorf("environment already contains uv-secrets; edit the existing block explicitly")
+	}
+	_, hasHosts := section["host-attestation"]
+	if hasHosts && len(options.Hosts) > 0 {
+		return "", fmt.Errorf("environment already contains host-attestation; omit Hosts to reuse it")
 	}
 	lock := true
 	if options.Lock != nil {
@@ -92,6 +124,19 @@ func WithRetrievableSecrets(environment, platform string, options RetrievableSec
 	}
 	requests := map[string]any{"lock": lock}
 	for i, request := range options.Requests {
+		if request.ExpectedSecretID != "" {
+			expected, err := hex.DecodeString(strings.TrimPrefix(strings.ToLower(request.ExpectedSecretID), "0x"))
+			if err != nil || len(expected) != 32 {
+				return "", fmt.Errorf("request index-%d expected secret ID must be 32 bytes of hex", i+1)
+			}
+			info, err := InspectPreparedSecretRequest(request.Data)
+			if err != nil {
+				return "", fmt.Errorf("request index-%d metadata - %v", i+1, err)
+			}
+			if info.SecretID != fmt.Sprintf("0x%x", expected) {
+				return "", fmt.Errorf("request index-%d does not match the expected secret ID", i+1)
+			}
+		}
 		entry := map[string]any{"type": "pvsecret", "pvsecret": base64.StdEncoding.EncodeToString(request.Data)}
 		if len(request.Certificate) > 0 {
 			entry["pvsecret-crt"] = base64.StdEncoding.EncodeToString(request.Certificate)
@@ -103,7 +148,9 @@ func WithRetrievableSecrets(environment, platform string, options RetrievableSec
 		hosts[name] = map[string]any{"description": document.Description, "host-key-doc": base64.StdEncoding.EncodeToString(document.Data)}
 	}
 	section["uv-secrets"] = requests
-	section["host-attestation"] = hosts
+	if !hasHosts {
+		section["host-attestation"] = hosts
+	}
 	updated, err := yaml.Marshal(section)
 	if err != nil {
 		return "", fmt.Errorf("encode environment YAML - %v", err)
