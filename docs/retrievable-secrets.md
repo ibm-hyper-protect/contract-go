@@ -285,6 +285,49 @@ profile; it does not detect firmware, guest OS or runtime release. Selecting a
 runtime encryption certificate does not establish those capabilities either.
 Contract creation and structural tests can run on a development workstation.
 
+### What is gated, and where
+
+| Operation | Required support | Behavior when unsupported |
+| --- | --- | --- |
+| Offline prepared-request import into a contract | CCRV profile and a supported ASRCB envelope version/user-data layout | Returns the explicit errors below; no output contract or fallback profile. |
+| Offline request inspection | Supported binary header layout | Returns an error and zero metadata for unsupported versions/layouts; no OpenSSL or UV device is needed. |
+| Outer AES encryption/decryption | Configured executable advertises `enc -pbkdf2`; 16-byte salt decryption also needs `-saltlen` | Returns an actionable OpenSSL capability error before attempting the cipher command; never removes required options. |
+| Native Add/List/Lock/Retrieve | Actual target guest, kernel, firmware/UV and secret-type support | Not executed by contract-go. The component invoking `pvsecret` must perform the target preflight described below. |
+
+Library errors include:
+
+| Error prefix | Action |
+| --- | --- |
+| `UNSUPPORTED_CONTRACT_PLATFORM` | Use a recognized contract profile; the message lists them. |
+| `RETRIEVABLE_SECRETS_UNSUPPORTED_PLATFORM` | This prepared-secret format requires `ccrv`; an empty argument still means the default CCRT profile. |
+| `RETRIEVABLE_SECRETS_UNSUPPORTED_REQUEST_VERSION` | Supply a prepared ASRCB V1/V2 request; a later format needs explicit library support. |
+| `RETRIEVABLE_SECRETS_UNSUPPORTED_USER_DATA_TYPE` | Use a supported `pvsecret` user-data format; unknown types are rejected. |
+| `OPENSSL_UNSUPPORTED_FEATURE` | Install a build with the named option or select it through `OPENSSL_BIN`; 16-byte salts need OpenSSL 3.2+. |
+| `OPENSSL_CAPABILITY_CHECK_FAILED` | Fix the executable/configuration so its options can be inspected. |
+
+Unsupported profiles are rejected by the builder and the raw/complete contract
+validators. Full signed/encrypted contract APIs validate before accessing keys
+or invoking OpenSSL. Generic text-encryption/sign-only APIs do not establish
+contract semantics or target compatibility and must not be used as a deployment
+support check.
+
+These PRs contain **no native UV execution API**. Do not gate offline preparation
+on the workstation's CPU model: it is valid to prepare a remote z17 contract on
+a Mac. Conversely, successful preparation or metadata inspection must never
+enable native secret operations automatically.
+
+Before invoking a native command, the guest-side worker must obtain current
+capabilities from the actual target. Reject an unavailable/failed probe rather
+than assuming support. Check SE-guest status and device access, both the kernel
+and UV support for the requested operation, and the requested secret type/request
+version. For Add also check capacity and whether the store is locked. An SE host
+is not an SE guest; Add/List/Lock support does not imply retrievable-type or
+Retrieve support. A new `pvsecret` executable, a valid certificate or a machine
+model alone proves none of those capabilities. These are requirements for the
+component executing native commands, not checks performed by this offline
+library. Any development emulation must remain explicit and must not convert
+an unsupported native operation into reported hardware success.
+
 On supported hardware, separately verify: boot the intended protected image,
 confirm successful request import, retrieve each secret using its ID reference,
 and check the result inside the guest. Compare plaintext secrets with a known

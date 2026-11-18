@@ -87,7 +87,7 @@ type RetrievableSecretsOptions struct {
 //
 // Parameters:
 //   - environment: One raw type: env YAML document.
-//   - platform: Target platform; currently only "ccrv" supports this feature.
+//   - platform: Contract profile; only "ccrv" is supported. Not hardware detection.
 //   - options: Prepared binary requests, host documents and optional locking policy.
 //
 // Returns:
@@ -98,8 +98,8 @@ type RetrievableSecretsOptions struct {
 // or authenticate requests. Those checks remain with trusted preparation tools
 // and the target Secure Execution runtime and Ultravisor.
 func WithRetrievableSecrets(environment, platform string, options RetrievableSecretsOptions) (string, error) {
-	if platform != gen.ConfidentialComputingOsCcrv {
-		return "", fmt.Errorf("retrievable secrets require the CCRV contract profile")
+	if err := gen.RequireRetrievableSecretsPlatform(platform); err != nil {
+		return "", err
 	}
 	if len(options.Requests) == 0 || len(options.Requests) > 8 {
 		return "", fmt.Errorf("provide between 1 and 8 prepared secret requests")

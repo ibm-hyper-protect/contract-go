@@ -792,6 +792,15 @@ func VerifyContractWithSchema(contract, version, section string) error {
 	}
 	contractStringMap := convertToStringkeys(contractMap)
 
+	// Report the unsupported UV feature before unrelated schema diagnostics.
+	// A profile is a contract format, never proof of target UV capabilities.
+	if environment, ok := contractStringMap["env"].(map[string]any); ok {
+		if _, hasSecrets := environment["uv-secrets"]; hasSecrets {
+			if err := RequireRetrievableSecretsPlatform(version); err != nil {
+				return err
+			}
+		}
+	}
 	contractSchema, err := fetchContractSchema(version)
 	if err != nil {
 		return fmt.Errorf("error fetching contract schema")

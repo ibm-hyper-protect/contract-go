@@ -28,6 +28,25 @@ import (
 	sch "github.com/ibm-hyper-protect/contract-go/v3/schema/contract"
 )
 
+// RequireRetrievableSecretsPlatform checks the contract profile for prepared UV
+// secrets. This is an offline format check, not target hardware discovery.
+//
+// Parameters:
+//   - platform: Requested contract profile; only ccrv is currently supported.
+//
+// Returns:
+//   - nil for the supported profile.
+//   - An actionable unsupported-platform error otherwise.
+func RequireRetrievableSecretsPlatform(platform string) error {
+	if platform == ConfidentialComputingOsCcrv {
+		return nil
+	}
+	if platform == "" {
+		platform = ConfidentialComputingOsCcrt + " (default)"
+	}
+	return fmt.Errorf("RETRIEVABLE_SECRETS_UNSUPPORTED_PLATFORM: contract profile %q is unsupported; use the CCRV profile (ccrv)", platform)
+}
+
 // Structural validation runs after the platform schema. The Ultravisor remains
 // responsible for authenticating requests and checking their SE-guest binding.
 func validateRetrievableSecrets(contract map[string]any, platform string) error {
@@ -37,7 +56,7 @@ func validateRetrievableSecrets(contract map[string]any, platform string) error 
 	}
 	if platform != ConfidentialComputingOsCcrv {
 		if _, exists := env["uv-secrets"]; exists {
-			return fmt.Errorf("retrievable secrets require the CCRV contract profile")
+			return RequireRetrievableSecretsPlatform(platform)
 		}
 		return nil
 	}
@@ -104,10 +123,10 @@ func validateAddSecretRequest(request []byte) error {
 	}
 	version := binary.BigEndian.Uint32(request[8:12])
 	if version != 0x0100 && version != 0x0200 {
-		return fmt.Errorf("unsupported add-secret request version")
+		return fmt.Errorf("RETRIEVABLE_SECRETS_UNSUPPORTED_REQUEST_VERSION: 0x%04x; supported ASRCB versions are 0x0100 and 0x0200", version)
 	}
-	if binary.BigEndian.Uint16(request[6:8]) > 4 {
-		return fmt.Errorf("unsupported add-secret user-data type")
+	if userDataType := binary.BigEndian.Uint16(request[6:8]); userDataType > 4 {
+		return fmt.Errorf("RETRIEVABLE_SECRETS_UNSUPPORTED_USER_DATA_TYPE: %d; use a supported pvsecret request user-data format (0 through 4)", userDataType)
 	}
 	if uint64(binary.BigEndian.Uint32(request[12:16])) != uint64(len(request)) {
 		return fmt.Errorf("add-secret request length does not match its header")
