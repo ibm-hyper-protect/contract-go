@@ -60,6 +60,15 @@ bytes; callers must not treat its return value as a fixed-length AES key.
 The serialized encrypted-section format is unchanged. Decryption accepts salted
 AES-CBC bodies with 8-byte salts and, on OpenSSL 3.2+, 16-byte salts.
 
+AES operations check the selected executable's actual `enc -help` capabilities:
+`-pbkdf2` for encryption/decryption and additionally `-saltlen` for 16-byte salts.
+Unsupported options return `OPENSSL_UNSUPPORTED_FEATURE` before a cipher command
+is attempted. Failure to inspect options returns `OPENSSL_CAPABILITY_CHECK_FAILED`.
+Both errors identify the needed action; neither includes plaintext, passwords or
+ciphertext. There is no retry with weaker derivation or a guessed salt length.
+This capability check is per call and follows `OPENSSL_BIN`; it is not cached
+from another executable. A working `version` command alone is insufficient.
+
 ### Supported Platforms
 
 | Platform Identifier | Official Name | Encryption Format |
@@ -89,8 +98,12 @@ AES-CBC bodies with 8-byte salts and, on OpenSSL 3.2+, 16-byte salts.
 
 ### Prerequisites
 
-- **Go 1.24.7 or later**
+- **Go 1.27.1 or later** — the module's `go.mod` requirement
 - **OpenSSL** - Required for cryptographic operations
+
+Contract AES requires PBKDF2 support; 16-byte salt decryption also requires
+`-saltlen` (OpenSSL 3.2+). Schema validation runs offline without OpenSSL or a
+Secure Execution guest. These APIs do not start a guest or execute UV commands.
 
 ### Environment Variables
 
@@ -1761,7 +1774,7 @@ including inside wrapped section strings.
 
 **Common Errors:**
 - `"failed to convert to map"` - Invalid contract YAML structure
-- `"error fetching contract schema"` - Invalid version/platform specified
+- `"UNSUPPORTED_CONTRACT_PLATFORM"` - Unsupported contract profile; the error lists valid identifiers and the empty/default behavior
 - `"failed to parse schema"` - Internal schema parsing error
 - `"contract validation failed"` - Contract does not match the required schema
 - `"invalid section"` - Unrecognised value passed for the `section` parameter

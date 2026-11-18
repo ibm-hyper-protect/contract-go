@@ -151,11 +151,17 @@ go get github.com/ibm-hyper-protect/contract-go/v3
 
 ### Prerequisites
 
-- **Go 1.24.7 or later**
+- **Go 1.27.1 or later** — matches the module's `go.mod` requirement
 - **OpenSSL** - Required for encryption operations
   - On Linux: `apt-get install openssl` or `yum install openssl`
   - On macOS: `brew install openssl`
   - On Windows: [Download OpenSSL](https://slproweb.com/products/Win32OpenSSL.html)
+
+Contract AES encryption/decryption requires `enc -pbkdf2`. Decrypting a body
+with a 16-byte salt also requires `enc -saltlen` (OpenSSL 3.2+). The library
+checks the configured executable's advertised options before those cipher
+operations and returns actionable errors instead of dropping required options.
+Schema-only validation does not require OpenSSL or IBM Z hardware.
 
 #### Optional: Custom OpenSSL Path
 

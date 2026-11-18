@@ -161,6 +161,9 @@ func EncryptString(password, section string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("openssl not found - %v", err)
 	}
+	if err := RequireOpenSSLEncOptions("-pbkdf2"); err != nil {
+		return "", err
+	}
 
 	// YAML block scalars and arbitrary text can contain meaningful whitespace.
 	// Encrypt exactly the supplied bytes rather than trimming them as PEM files.
