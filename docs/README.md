@@ -47,10 +47,27 @@ Encrypted sections use one of two formats depending on the target platform:
 `hyper-protect-basic.<encrypted-password>.<encrypted-data>`
 
 The encryption process:
-1. Generate a random 32-byte AES password
+1. Generate 32 random bytes and Base64-encode them as a line-safe AES password
 2. Encrypt the password with the IBM encryption certificate (RSA)
 3. Encrypt the section data with the AES password (AES-256-CBC)
 4. Combine as `<format-prefix>.<base64-encrypted-password>.<base64-encrypted-data>`
+
+
+Plaintext bytes, including meaningful leading/trailing whitespace, are preserved
+through encryption and decryption. Existing stored passwords are read unchanged.
+`RandomPasswordGenerator` now returns 44 ASCII characters encoding 32 random
+bytes; callers must not treat its return value as a fixed-length AES key.
+The serialized encrypted-section format is unchanged. Decryption accepts salted
+AES-CBC bodies with 8-byte salts and, on OpenSSL 3.2+, 16-byte salts.
+
+AES operations check the selected executable's actual `enc -help` capabilities:
+`-pbkdf2` for encryption/decryption and additionally `-saltlen` for 16-byte salts.
+Unsupported options return `OPENSSL_UNSUPPORTED_FEATURE` before a cipher command
+is attempted. Failure to inspect options returns `OPENSSL_CAPABILITY_CHECK_FAILED`.
+Both errors identify the needed action; neither includes plaintext, passwords or
+ciphertext. There is no retry with weaker derivation or a guessed salt length.
+This capability check is per call and follows `OPENSSL_BIN`; it is not cached
+from another executable. A working `version` command alone is insufficient.
 
 ### Supported Platforms
 
@@ -68,6 +85,7 @@ The encryption process:
 - [Attestation Functions](#attestation-functions)
 - [Certificate Functions](#certificate-functions)
 - [Contract Functions](#contract-functions)
+- [Prepared Retrievable Secrets](retrievable-secrets.md)
 - [Rego Policy Functions](#rego-policy-functions)
 - [Sealed Secret Functions](#sealed-secret-functions)
 - [OpenSSL Key and Certificate Generation](#openssl-key-and-certificate-generation)
@@ -81,8 +99,12 @@ The encryption process:
 
 ### Prerequisites
 
-- **Go 1.24.7 or later**
+- **Go 1.27.1 or later** — the module's `go.mod` requirement
 - **OpenSSL** - Required for cryptographic operations
+
+Contract AES requires PBKDF2 support; 16-byte salt decryption also requires
+`-saltlen` (OpenSSL 3.2+). Schema validation runs offline without OpenSSL or a
+Secure Execution guest. These APIs do not start a guest or execute UV commands.
 
 ### Environment Variables
 
@@ -1647,6 +1669,68 @@ func main() {
 
 ---
 
+### WithRetrievableSecrets
+
+Adds prepared retrievable-secret requests to one raw CCRV environment, preserving
+its existing configuration. Rejects existing `uv-secrets` instead of reindexing
+them. Leave `Hosts` empty to reuse an existing, validated `host-attestation`
+block; supplying new hosts alongside that block is rejected.
+
+**Package:** `github.com/ibm-hyper-protect/contract-go/v3/contract`
+
+```go
+func WithRetrievableSecrets(environment, platform string, options RetrievableSecretsOptions) (string, error)
+
+type RetrievableSecretRequest struct {
+    Data             []byte // Binary pvsecret request, not the secret or ID YAML
+    Certificate      []byte // Optional PEM or DER request-signature certificate
+    ExpectedSecretID string // Optional pinned 32-byte hex ID, with/without 0x
+}
+
+type HostKeyDocument struct {
+    Description string
+    Data        []byte // Classical PEM/DER certificate or two-certificate hybrid PEM HKD
+}
+
+type RetrievableSecretsOptions struct {
+    Requests []RetrievableSecretRequest       // 1–8, assigned sequential indices
+    Hosts    map[string]HostKeyDocument       // HKD-MODEL-PLANTSERIAL identifiers
+    Lock     *bool                           // nil defaults to true
+}
+```
+
+`environment` must include its normal required fields, including logging.
+`platform` must be `"ccrv"`. Returns validated environment YAML or an error.
+The helper encodes request and certificate bytes once; it does not create
+requests, verify request signatures/HKD trust chains, or call the Ultravisor.
+
+See [Prepared retrievable-secret requests](retrievable-secrets.md) for the full
+flow, volume references, validation boundaries and IBM hardware requirements.
+
+### InspectPreparedSecretRequest
+
+Reads public metadata from an already prepared binary request, before the
+workload or environment is submitted. It does not decrypt or authenticate it.
+
+```go
+func InspectPreparedSecretRequest(data []byte) (PreparedSecretRequestInfo, error)
+
+// PreparedSecretRequestInfo aliases the shared ASRCB metadata type:
+// RequestVersion uint32, SecretType uint16, SecretID string, RequestSHA256 string.
+```
+
+`SecretID` is the embedded 32-byte ID in `0x`-prefixed lowercase hex, including
+leading zeros. It is distinct from a catalog UUID, alias or `index-N`. Reading
+the embedded ID also supports requests created with `pvsecret --use-name`;
+do not assume every ID is SHA-256 of a name. Null and Update-CCK control
+requests do not have a listable ID and return errors. Other numeric secret types
+are reported as public claims, not as runtime compatibility or authenticity proof.
+
+Pin this ID to the prepared build version and supply `ExpectedSecretID` during
+import. A mismatch fails without returning contract YAML. `RequestSHA256` hashes
+the complete encrypted request, not the secret value. Verify request signatures
+with trusted tooling before trusting any inspected metadata.
+
 ### HpcrVerifyContract
 
 Validates a contract against the JSON schema for the specified Confidential Computing platform. Supports validating a complete contract (both `workload` and `env` sections together) or an individual section independently — useful for multi-persona workflows where different teams author each section separately.
@@ -1744,10 +1828,18 @@ logging:
 - Required fields presence
 - Data types and formats
 - Platform-specific requirements
+- CCRV prepared retrievable-secret blocks, binary request structure, certificates
+  and volume references (see the [guide](retrievable-secrets.md))
+
+Individual sections and complete contracts use the original platform schema,
+including every `allOf` rule. A section that previously passed only because
+repeated definitions were merged incorrectly can now fail correctly (for
+example, `type: env` without logging). Additional YAML documents are rejected,
+including inside wrapped section strings.
 
 **Common Errors:**
 - `"failed to convert to map"` - Invalid contract YAML structure
-- `"error fetching contract schema"` - Invalid version/platform specified
+- `"UNSUPPORTED_CONTRACT_PLATFORM"` - Unsupported contract profile; the error lists valid identifiers and the empty/default behavior
 - `"failed to parse schema"` - Internal schema parsing error
 - `"contract validation failed"` - Contract does not match the required schema
 - `"invalid section"` - Unrecognised value passed for the `section` parameter

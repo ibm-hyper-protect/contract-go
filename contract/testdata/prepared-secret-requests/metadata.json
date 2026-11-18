@@ -1,0 +1,126 @@
+{
+  "_comment": "Copyright (c) 2026 IBM Corp. SPDX-License-Identifier: Apache-2.0. Metadata from IBM pvsecret reference YAML; binary requests use disposable test secrets only.",
+  "source_commit": "b1d612b4a6a84440e16aae6d66e5f8f4be4e977f",
+  "requests": [
+    {
+      "name": "aes-256",
+      "file": "aes-256.asrcb",
+      "request_version": 256,
+      "secret_type": 6,
+      "secret_id": "0x7237b089a3fcdbef82404477f1f28e20d66de8c80a7dea00cd10520293eefeff",
+      "request_sha256": "0efe9f2eff22d1f4dbe844282252bbc7f10256afb7fc1638758628b0be5d5634"
+    },
+    {
+      "name": "after-lock-new",
+      "file": "after-lock-new.asrcb",
+      "request_version": 256,
+      "secret_type": 3,
+      "secret_id": "0x927ef473a1a7e8e9daeeebc32fb37a1b9584434fe4f97f8f1d575392270a71ca",
+      "request_sha256": "2388712324ed03384c24a9ad5ec22c4dac6576e8eef36a3159d3d30496a9931c"
+    },
+    {
+      "name": "association-test",
+      "file": "association-test.asrcb",
+      "request_version": 256,
+      "secret_type": 2,
+      "secret_id": "0x7193439d2d79432d840efea1c866895098881bd9043061ee180ac30f8205ac02",
+      "request_sha256": "7c800d0b1d77c57468375a7e951a90f3f025aeb962b945d1a732d3131d976de8"
+    },
+    {
+      "name": "ec-p256",
+      "file": "ec-p256.asrcb",
+      "request_version": 256,
+      "secret_type": 17,
+      "secret_id": "0xf90bdd4d1cd7ad49f6f66672d2cb5009c368508faaf189ac5107df4e2533c5c6",
+      "request_sha256": "e1c474812c4ac2e0dc71ed05ec9aaf6991d569b463bb633ea175d4fd50c515d5"
+    },
+    {
+      "name": "hmac-sha256",
+      "file": "hmac-sha256.asrcb",
+      "request_version": 256,
+      "secret_type": 9,
+      "secret_id": "0xd13f21efc50b7e3356b1e915e5ce510271ac2a579e8de4e78e850a70b4f4641d",
+      "request_sha256": "1b664f0985b89704a0863fbd3d04de865be9b2c3dfa81ad2e3501f9acaef909e"
+    },
+    {
+      "name": "hybrid-v2",
+      "file": "hybrid-v2.asrcb",
+      "request_version": 512,
+      "secret_type": 3,
+      "secret_id": "0x2a4126be79f73c7d74912e7aeb2b595cc4479cf735a3bb3e85b1c91e2940e0d1",
+      "request_sha256": "a76c9c9cb69490ee3cb26444659fdbdd41c1bca9c44840bc4e1905101884ef9c"
+    },
+    {
+      "name": "literal-id",
+      "file": "literal-id.asrcb",
+      "request_version": 256,
+      "secret_type": 3,
+      "secret_id": "0x6c69746572616c2d696400000000000000000000000000000000000000000000",
+      "request_sha256": "d41931cb2bf12db1a27c5b46e849d67345e39433423dad37ae399db5034f5d00"
+    },
+    {
+      "name": "plain-current",
+      "file": "plain-current.asrcb",
+      "request_version": 256,
+      "secret_type": 3,
+      "secret_id": "0xaf554a4ffaf6a906eed62ecfe1e54918dfeeff4e0b12cd3f7c9eea900a52a2a9",
+      "request_sha256": "32294dc9a13d6495e335a813ce0aca17b438a370c6450edd8f2683767b70bcd8"
+    },
+    {
+      "name": "plain-empty",
+      "file": "plain-empty.asrcb",
+      "request_version": 256,
+      "secret_type": 3,
+      "secret_id": "0xc1589042448a1960fc4832e717fcfa3b9a74429c100738cd00bf98bbefc6778b",
+      "request_sha256": "db1670ccf26c516e4383ef5bbdc59d30d640b9d845a5e12b03f3d35cb42cb0d1"
+    },
+    {
+      "name": "plain-limit",
+      "file": "plain-limit.asrcb",
+      "request_version": 256,
+      "secret_type": 3,
+      "secret_id": "0x71dfbd3ead4b382f429b6fbe8e459971a69b8ccf0c4e75d592aa4da819181c75",
+      "request_sha256": "1fe3acc5ffe0b9c790e5a67b225a1729af5233a7961cba921b5dca6940a87280"
+    },
+    {
+      "name": "plain-previous",
+      "file": "plain-previous.asrcb",
+      "request_version": 256,
+      "secret_type": 3,
+      "secret_id": "0xf2c8dd7a691f06183476ed84101ba7c1d35db30370f7c4f2c0de033fadab5725",
+      "request_sha256": "a28eef4086738ffce2cdb834878088efafe33a905b59469069fa844adcdfd63a"
+    },
+    {
+      "name": "plain-unsigned",
+      "file": "plain-unsigned.asrcb",
+      "request_version": 256,
+      "secret_type": 3,
+      "secret_id": "0x25ba6bbffde2644e245eb1bdc7fbed1e2263602803721ab7cbd5b1a182aeaa72",
+      "request_sha256": "7467bc8854017733ccd2451e95d0943ce146ae39e642dae8e2933394df085fbf"
+    },
+    {
+      "name": "unsigned-userdata",
+      "file": "unsigned-userdata.asrcb",
+      "request_version": 256,
+      "secret_type": 3,
+      "secret_id": "0xfb477a4f215294b68ed943c9b934455560fc2a12ff46c5ee11d46c503a3be0f7",
+      "request_sha256": "3e9c4ba4610973ed4f870e9a00fde249f65522482fd7b8761c503ff56dfd9719"
+    },
+    {
+      "name": "user-ec521",
+      "file": "user-ec521.asrcb",
+      "request_version": 256,
+      "secret_type": 3,
+      "secret_id": "0xaa5452887c282d48d04b43abf79e9d7e3c203dbb36a38bc39e27a94fe20b307c",
+      "request_sha256": "7ab2bec83bb01ea24c771d7f759a47dca5eb167b2f67403257adcae4df4f9461"
+    },
+    {
+      "name": "user-rsa3072",
+      "file": "user-rsa3072.asrcb",
+      "request_version": 256,
+      "secret_type": 3,
+      "secret_id": "0x2e39b5e96b3b8ed9e47421bbeb21e2a977cfd4060c4541106ba5ac73af444164",
+      "request_sha256": "c89bb984021c331e33aca1ec690e9c9a99aff017f27254bad9c1b411c77699d9"
+    }
+  ]
+}
