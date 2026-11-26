@@ -1,3 +1,9 @@
+## <small>3.5.1 (2026-11-26)</small>
+
+* fix(deps): update module k8s.io/api to v0.37.3 (#347) ([8838efb](https://github.com/ibm-hyper-protect/contract-go/commit/8838efb)), closes [#347](https://github.com/ibm-hyper-protect/contract-go/issues/347)
+* chore(deps): update docker.io/library/hello-world docker digest to 1e4c05b (#346) ([ace43c8](https://github.com/ibm-hyper-protect/contract-go/commit/ace43c8)), closes [#346](https://github.com/ibm-hyper-protect/contract-go/issues/346)
+* chore(deps): update docker.io/library/hello-world docker digest to cf1b20a (#345) ([2be5110](https://github.com/ibm-hyper-protect/contract-go/commit/2be5110)), closes [#345](https://github.com/ibm-hyper-protect/contract-go/issues/345)
+
 ## 3.5.0 (2026-11-09)
 
 * feat: add CCCO fixpack 1.2.2.3 (#340) ([286f763](https://github.com/ibm-hyper-protect/contract-go/commit/286f763)), closes [#340](https://github.com/ibm-hyper-protect/contract-go/issues/340)
